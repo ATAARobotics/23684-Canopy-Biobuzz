@@ -15,7 +15,7 @@ run_dprint_check() {
     if ! command -v dprint >/dev/null 2>&1; then
         return 0
     fi
-    if ! dprint check TeamCode/; then
+    if ! dprint check TeamCode/ --allow-no-files; then
         printf "${YELLOW}Format check failed.${NC}\n" >&2
         printf "${YELLOW}  Fix:       dprint fmt TeamCode/${NC}\n" >&2
         printf "${YELLOW}  Bypass:    git push --no-verify${NC}\n" >&2

@@ -20,7 +20,7 @@ jobs:
         run: curl -fsSL https://dprint.dev/install.sh | DPRINT_INSTALL=/usr/local sh
 
       - name: dprint check
-        run: dprint check
+        run: dprint check --allow-no-files
 
   build:
     name: Build (advisory)
