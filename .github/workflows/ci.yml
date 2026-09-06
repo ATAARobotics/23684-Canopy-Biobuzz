@@ -37,7 +37,7 @@ jobs:
             ${{ runner.os }}-
 
       - name: Install dprint
-        run: curl -fsSL https://dprint.dev/install.sh | sh -s -- --path /usr/local/bin
+        run: DPRINT_INSTALL=/usr/local curl -fsSL https://dprint.dev/install.sh | sh
         continue-on-error: true
 
       - name: Format check (advisory)
