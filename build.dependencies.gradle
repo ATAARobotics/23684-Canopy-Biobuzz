@@ -2,15 +2,14 @@ repositories {
     mavenCentral()
     google() // Needed for androidx
     // AaravLabs pub/sub (com.aaravlabs:pubsub) is published to GitHub Packages.
-    // Auth is required even for public packages — provide credentials via
-    // one of: ~/.gradle/gradle.properties (gpr.user + gpr.key), or environment
-    // variables GITHUB_USER + GITHUB_TOKEN / GITHUB_ACTOR.
+    // Auth is required even for public packages. Configure credentials via
+    // gradle.properties with githubUser=... and githubToken=..., or via the
+    // GITHUB_TOKEN environment variable.
     maven {
-        name = 'GitHubPackages'
-        url = 'https://maven.pkg.github.com/IamCoder18/ftcpubsub'
+        url = uri("https://maven.pkg.github.com/IamCoder18/ftcpubsub")
         credentials {
-            username = project.findProperty('gpr.user') ?: System.getenv('GITHUB_USER') ?: System.getenv('GITHUB_ACTOR')
-            password = project.findProperty('gpr.key')   ?: System.getenv('GITHUB_TOKEN')
+            username = findProperty("githubUser") ?: System.getenv("GITHUB_USER") ?: System.getenv("GITHUB_ACTOR")
+            password = findProperty("githubToken") ?: System.getenv("GITHUB_TOKEN")
         }
     }
 }
