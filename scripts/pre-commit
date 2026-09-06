@@ -7,7 +7,7 @@ if ! command -v dprint >/dev/null 2>&1; then
     exit 0
 fi
 
-dprint fmt
+dprint fmt TeamCode/
 
 # Re-stage any files dprint touched that were already tracked.
 git add -u

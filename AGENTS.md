@@ -6,7 +6,7 @@ FTC robot code for the 2026-2027 Biobuzz season.
 
 Format:
 ```sh
-dprint fmt
+dprint fmt TeamCode/
 ```
 
 Build:
