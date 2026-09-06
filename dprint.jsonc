@@ -2,14 +2,12 @@
   "plugins": [
     "https://github.com/speakeasy-api/dprint-plugin-java/releases/latest/download/dprint_plugin_java.wasm"
   ],
+  "includes": [
+    "TeamCode/**/*.java"
+  ],
   "java": {
     "lineWidth": 120,
     "indentWidth": 4,
     "useTabs": true
-  },
-  "excludes": [
-    "**/build/**",
-    "**/.gradle/**",
-    "**/FtcRobotController/src/main/java/**/samples/**"
-  ]
+  }
 }
