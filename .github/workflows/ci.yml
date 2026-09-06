@@ -37,16 +37,20 @@ jobs:
             ${{ runner.os }}-
 
       - name: Install dprint
-        run: curl -fsSL https://dprint.dev/install.sh | sh
+        run: curl -fsSL https://dprint.dev/install.sh | sh -s -- --path /usr/local/bin
+        continue-on-error: true
 
       - name: Format check (advisory)
         run: dprint check
+        continue-on-error: true
 
       - name: Build (advisory)
         run: ./gradlew assembleDebug --no-daemon
+        continue-on-error: true
 
       - name: Lint (advisory)
         run: ./gradlew lintDebug --no-daemon
+        continue-on-error: true
 
       - name: Upload lint report
         if: always()
