@@ -3,33 +3,26 @@ package org.firstinspires.ftc.teamcode;
 import com.aaravlabs.pubsub.Node;
 import com.aaravlabs.pubsub.Orchestrator;
 import com.aaravlabs.pubsub.annotation.OnHardwareThread;
-import com.aaravlabs.pubsub.annotation.RunPeriodically;
-import com.aaravlabs.pubsub.annotation.RunnableAction;
 import com.aaravlabs.pubsub.annotation.SubscribedTo;
 import com.aaravlabs.pubsub.ftc.GamepadAdaptor;
 import com.aaravlabs.pubsub.ftc.SafeDevice;
 import com.aaravlabs.pubsub.ftc.SafeOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
-import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 
 @TeleOp(name = "PubsubSmokeTest", group = "Test")
 public class PubsubSmokeTest extends SafeOpMode {
 
-    private SafeDevice<DcMotorEx> leftDrive;
-    private SafeDevice<DcMotorEx> rightDrive;
-    private SafeDevice<Servo> intakeServo;
-
     @Override
     protected void onSafeInit() {
-        leftDrive = safeMap.device(DcMotorEx.class, "leftDrive");
-        rightDrive = safeMap.device(DcMotorEx.class, "rightDrive");
-        intakeServo = safeMap.device(Servo.class, "intakeServo");
+        SafeDevice<DcMotorEx> frontLeft  = safeMap.device(DcMotorEx.class, "frontLeft");
+        SafeDevice<DcMotorEx> frontRight = safeMap.device(DcMotorEx.class, "frontRight");
+        SafeDevice<DcMotorEx> backLeft   = safeMap.device(DcMotorEx.class, "backLeft");
+        SafeDevice<DcMotorEx> backRight  = safeMap.device(DcMotorEx.class, "backRight");
 
-        orch.registerNode("drive", new DriveNode(orch, leftDrive, rightDrive));
-        orch.registerNode("intake", new IntakeNode(orch, intakeServo));
-        orch.registerNode("safety", new SafetyNode(orch));
+        orch.registerNode("drive", new DriveNode(orch,
+                frontLeft, frontRight, backLeft, backRight));
 
         GamepadAdaptor.attach(orch, gamepad1, "g1");
 
@@ -41,81 +34,64 @@ public class PubsubSmokeTest extends SafeOpMode {
 
     @Override
     protected void onSafeLoop() {
-        telemetry.addData("drive/l", orch.getLatestValue("drive/powerL", Double.class).orElse(0.0));
-        telemetry.addData("drive/r", orch.getLatestValue("drive/powerR", Double.class).orElse(0.0));
-        telemetry.addData("intake", orch.getLatestValue("intake/power", Double.class).orElse(0.0));
+        telemetry.addData("frontLeft",  orch.getLatestValue("drive/frontLeft",  Double.class).orElse(0.0));
+        telemetry.addData("frontRight", orch.getLatestValue("drive/frontRight", Double.class).orElse(0.0));
+        telemetry.addData("backLeft",   orch.getLatestValue("drive/backLeft",   Double.class).orElse(0.0));
+        telemetry.addData("backRight",  orch.getLatestValue("drive/backRight",  Double.class).orElse(0.0));
         Double battery = orch.getLatestValue("battery/v", Double.class).orElse(null);
         if (battery != null) telemetry.addData("battery", battery);
         telemetry.update();
     }
 
     public static class DriveNode extends Node {
-        private final SafeDevice<DcMotorEx> left;
-        private final SafeDevice<DcMotorEx> right;
+        private final SafeDevice<DcMotorEx> frontLeft;
+        private final SafeDevice<DcMotorEx> frontRight;
+        private final SafeDevice<DcMotorEx> backLeft;
+        private final SafeDevice<DcMotorEx> backRight;
 
-        DriveNode(Orchestrator orch, SafeDevice<DcMotorEx> left, SafeDevice<DcMotorEx> right) {
+        DriveNode(Orchestrator orch,
+                  SafeDevice<DcMotorEx> frontLeft,
+                  SafeDevice<DcMotorEx> frontRight,
+                  SafeDevice<DcMotorEx> backLeft,
+                  SafeDevice<DcMotorEx> backRight) {
             super(orch);
-            this.left = left;
-            this.right = right;
+            this.frontLeft = frontLeft;
+            this.frontRight = frontRight;
+            this.backLeft = backLeft;
+            this.backRight = backRight;
         }
 
-        @SubscribedTo(topic = "drive/powerL")
-        public void leftPower(double p) { left.run(m -> m.setPower(p)); }
+        @SubscribedTo(topic = "g1/a/rising")
+        public void onAPress(Boolean v)   { orchestrator.publish("drive/frontLeft",  1.0); }
+        @SubscribedTo(topic = "g1/a/falling")
+        public void onARelease(Boolean v) { orchestrator.publish("drive/frontLeft",  0.0); }
 
-        @SubscribedTo(topic = "drive/powerR")
-        public void rightPower(double p) { right.run(m -> m.setPower(p)); }
+        @SubscribedTo(topic = "g1/b/rising")
+        public void onBPress(Boolean v)   { orchestrator.publish("drive/frontRight", 1.0); }
+        @SubscribedTo(topic = "g1/b/falling")
+        public void onBRelease(Boolean v) { orchestrator.publish("drive/frontRight", 0.0); }
 
-        @RunPeriodically(hz = 50, hardware = true)
-        public void update() {
-            Double l = orchestrator.getLatestValue("g1/left_stick_y", Double.class).orElse(0.0);
-            Double r = orchestrator.getLatestValue("g1/right_stick_y", Double.class).orElse(0.0);
-            orchestrator.publish("drive/powerL", l);
-            orchestrator.publish("drive/powerR", r);
-        }
-    }
+        @SubscribedTo(topic = "g1/x/rising")
+        public void onXPress(Boolean v)   { orchestrator.publish("drive/backLeft",   1.0); }
+        @SubscribedTo(topic = "g1/x/falling")
+        public void onXRelease(Boolean v) { orchestrator.publish("drive/backLeft",   0.0); }
 
-    public static class IntakeNode extends Node {
-        private final SafeDevice<Servo> servo;
-        IntakeNode(Orchestrator orch, SafeDevice<Servo> servo) {
-            super(orch);
-            this.servo = servo;
-        }
+        @SubscribedTo(topic = "g1/y/rising")
+        public void onYPress(Boolean v)   { orchestrator.publish("drive/backRight",  1.0); }
+        @SubscribedTo(topic = "g1/y/falling")
+        public void onYRelease(Boolean v) { orchestrator.publish("drive/backRight",  0.0); }
 
         @OnHardwareThread
-        @SubscribedTo(topic = "intake/power")
-        public void onPower(double p) { servo.run(s -> s.setPosition(p)); }
-
-        @SubscribedTo(topic = "g1/right_bumper/rising")
-        public void onBumper(Boolean v) {
-            orchestrator.publish("intake/power", 1.0);
-        }
-
-        @SubscribedTo(topic = "g1/right_bumper/falling")
-        public void offBumper(Boolean v) {
-            orchestrator.publish("intake/power", 0.0);
-        }
-
-        @RunnableAction("shoot")
-        public void shoot() {
-            orchestrator.publish("intake/power", 0.5);
-        }
-    }
-
-    public static class SafetyNode extends Node {
-        SafetyNode(Orchestrator orch) { super(orch); }
-
-        @RunPeriodically(hz = 10)
-        public void watch() {
-            Double v = orchestrator.getLatestValue("battery/v", Double.class).orElse(null);
-            if (v != null && v < 11.0) {
-                orchestrator.publish("drive/powerL", 0.0);
-                orchestrator.publish("drive/powerR", 0.0);
-            }
-        }
-
-        @SubscribedTo(topic = "g1/x")
-        public void onX(Boolean v) {
-            orchestrator.runAction("shoot");
-        }
+        @SubscribedTo(topic = "drive/frontLeft")
+        public void fl(double p) { frontLeft.run(m -> m.setPower(p)); }
+        @OnHardwareThread
+        @SubscribedTo(topic = "drive/frontRight")
+        public void fr(double p) { frontRight.run(m -> m.setPower(p)); }
+        @OnHardwareThread
+        @SubscribedTo(topic = "drive/backLeft")
+        public void bl(double p) { backLeft.run(m -> m.setPower(p)); }
+        @OnHardwareThread
+        @SubscribedTo(topic = "drive/backRight")
+        public void br(double p) { backRight.run(m -> m.setPower(p)); }
     }
 }
