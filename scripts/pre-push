@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+# biobuzz-hook-v2
+# Pre-push: dprint check (soft) + gradle build (hard).
+# Bypass with: git push --no-verify
+set -euo pipefail
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+cd "$REPO_ROOT"
+
+YELLOW='\033[33m'
+RED='\033[31m'
+NC='\033[0m'
+
+run_dprint_check() {
+    if ! command -v dprint >/dev/null 2>&1; then
+        return 0
+    fi
+    if ! dprint check; then
+        printf "${YELLOW}Format check failed.${NC}\n" >&2
+        printf "${YELLOW}  Fix:       dprint fmt${NC}\n" >&2
+        printf "${YELLOW}  Bypass:    git push --no-verify${NC}\n" >&2
+        exit 1
+    fi
+}
+
+run_gradle_build() {
+    if ! ./gradlew assembleDebug --quiet --no-daemon; then
+        printf "${RED}Build failed. Fix it before pushing.${NC}\n" >&2
+        exit 1
+    fi
+}
+
+run_dprint_check
+run_gradle_build

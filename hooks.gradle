@@ -1,0 +1,37 @@
+// Installs git hooks from scripts/ into .git/hooks on first build.
+// Cheap to run; no-ops if already installed or not in a git repo.
+tasks.register('installGitHooks') {
+    description = 'Installs pre-commit and pre-push git hooks from scripts/.'
+    group = 'build-setup'
+
+    doLast {
+        def hookDir = file('.git/hooks')
+        if (!hookDir.exists()) {
+            return
+        }
+
+        ['pre-commit', 'pre-push'].each { hookName ->
+            def src = file("scripts/${hookName}")
+            def dst = new File(hookDir, hookName)
+            if (!src.exists()) {
+                return
+            }
+            dst.text = src.text
+            dst.setExecutable(true)
+            println "Installed git hook: ${hookName}"
+        }
+    }
+}
+
+// Auto-run installGitHooks before any :TeamCode:assembleDebug task,
+// so devs don't need to remember to invoke it manually.
+// Skipped in CI (no .git/hooks/) and when hooks already installed.
+gradle.projectsEvaluated {
+    if (!file('.git/hooks').exists()) {
+        return
+    }
+    if (file('.git/hooks/pre-push').exists()) {
+        return
+    }
+    tasks.matching { it.name == 'assembleDebug' }.all { dependsOn 'installGitHooks' }
+}

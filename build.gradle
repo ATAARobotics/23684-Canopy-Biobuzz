@@ -29,3 +29,5 @@ allprojects {
 repositories {
     mavenCentral()
 }
+
+apply from: 'hooks.gradle'
