@@ -78,4 +78,6 @@ lint/intermediates/
 lint/generated/
 lint/outputs/
 lint/tmp/
-# lint/reports/
+# lint/reports/local.properties
+build/
+.gradle/
