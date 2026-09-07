@@ -1,12 +1,12 @@
 package org.firstinspires.ftc.teamcode;
 
-import com.aaravlabs.pubsub.Node;
-import com.aaravlabs.pubsub.Orchestrator;
-import com.aaravlabs.pubsub.annotation.OnHardwareThread;
-import com.aaravlabs.pubsub.annotation.SubscribedTo;
-import com.aaravlabs.pubsub.ftc.GamepadAdaptor;
-import com.aaravlabs.pubsub.ftc.SafeDevice;
-import com.aaravlabs.pubsub.ftc.SafeOpMode;
+import com.aaravlabs.synapse.Node;
+import com.aaravlabs.synapse.Orchestrator;
+import com.aaravlabs.synapse.annotation.OnHardwareThread;
+import com.aaravlabs.synapse.annotation.SubscribedTo;
+import com.aaravlabs.synapse.ftc.GamepadAdaptor;
+import com.aaravlabs.synapse.ftc.SafeDevice;
+import com.aaravlabs.synapse.ftc.SafeOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
