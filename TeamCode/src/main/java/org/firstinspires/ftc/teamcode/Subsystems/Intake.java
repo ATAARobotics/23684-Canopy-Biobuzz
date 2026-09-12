@@ -21,5 +21,6 @@ public class Intake extends Node {
 		double trigger = orchestrator.getLatestValue("g1/left_trigger", Float.class).map(Float::doubleValue).orElse(0.0);
 		double power = Math.max(operator, trigger);
 		intake.run(m -> m.setPower(power));
+		orchestrator.publish("intake/power", power);
 	}
 }

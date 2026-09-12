@@ -49,5 +49,10 @@ public class Drive extends Node {
 		fr.run(m -> m.setPower(pFR / max));
 		bl.run(m -> m.setPower(pBL / max));
 		br.run(m -> m.setPower(pBR / max));
+
+		orchestrator.publish("drive/power/fl", pFL / max);
+		orchestrator.publish("drive/power/fr", pFR / max);
+		orchestrator.publish("drive/power/bl", pBL / max);
+		orchestrator.publish("drive/power/br", pBR / max);
 	}
 }
