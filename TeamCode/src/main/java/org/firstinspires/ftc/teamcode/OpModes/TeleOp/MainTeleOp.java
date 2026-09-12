@@ -36,7 +36,7 @@ public class MainTeleOp extends SafeOpMode {
 
 	@Override
 	protected void onSafeLoop() {
-		telemetry.addData("drive", "g1 left stick");
+		telemetry.addData("drive", "g1 left stick + right X");
 		telemetry.addData("intake", "g2 left stick Y");
 		telemetry.update();
 	}
