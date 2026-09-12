@@ -6,6 +6,7 @@ import com.aaravlabs.synapse.annotation.RunPeriodically;
 import com.aaravlabs.synapse.ftc.SafeDevice;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 
 public class Drive extends Node {
 
@@ -26,10 +27,10 @@ public class Drive extends Node {
 		this.bl = backLeft;
 		this.br = backRight;
 
-		fl.run(m -> m.setDirection(DcMotor.Direction.REVERSE));
-		bl.run(m -> m.setDirection(DcMotor.Direction.REVERSE));
-		fr.run(m -> m.setDirection(DcMotor.Direction.FORWARD));
-		br.run(m -> m.setDirection(DcMotor.Direction.FORWARD));
+		fl.run(m -> m.setDirection(DcMotor.Direction.FORWARD));
+		bl.run(m -> m.setDirection(DcMotor.Direction.FORWARD));
+		fr.run(m -> m.setDirection(DcMotor.Direction.REVERSE));
+		br.run(m -> m.setDirection(DcMotor.Direction.REVERSE));
 	}
 
 	@RunPeriodically(hz = 50, hardware = true)
