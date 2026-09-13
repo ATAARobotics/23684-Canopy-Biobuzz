@@ -23,13 +23,13 @@ public class MotorDirectionTest extends SafeOpMode {
 		backRight = safeMap.device(DcMotorEx.class, "backRight");
 		intake = safeMap.device(DcMotorEx.class, "intake");
 
-		GamepadAdaptor.attach(orch, gamepad1, "g1");
+		GamepadAdaptor.attach(orchestrator, gamepad1, "g1");
 
-		orch.subscribe("g1/x", Boolean.class, v -> frontLeft.run(m -> m.setPower(v ? 1.0 : 0.0)));
-		orch.subscribe("g1/a", Boolean.class, v -> backLeft.run(m -> m.setPower(v ? 1.0 : 0.0)));
-		orch.subscribe("g1/y", Boolean.class, v -> frontRight.run(m -> m.setPower(v ? 1.0 : 0.0)));
-		orch.subscribe("g1/b", Boolean.class, v -> backRight.run(m -> m.setPower(v ? 1.0 : 0.0)));
-		orch.subscribe("g1/left_bumper", Boolean.class, v -> intake.run(m -> m.setPower(v ? 1.0 : 0.0)));
+		orchestrator.subscribe("g1/x", Boolean.class, v -> frontLeft.run(m -> m.setPower(v ? 1.0 : 0.0)));
+		orchestrator.subscribe("g1/a", Boolean.class, v -> backLeft.run(m -> m.setPower(v ? 1.0 : 0.0)));
+		orchestrator.subscribe("g1/y", Boolean.class, v -> frontRight.run(m -> m.setPower(v ? 1.0 : 0.0)));
+		orchestrator.subscribe("g1/b", Boolean.class, v -> backRight.run(m -> m.setPower(v ? 1.0 : 0.0)));
+		orchestrator.subscribe("g1/left_bumper", Boolean.class, v -> intake.run(m -> m.setPower(v ? 1.0 : 0.0)));
 	}
 
 	@Override

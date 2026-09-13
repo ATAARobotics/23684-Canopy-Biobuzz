@@ -16,12 +16,12 @@ public class Drive extends Node {
 	private final SafeDevice<DcMotorEx> br;
 
 	public Drive(
-			Orchestrator orch,
+			Orchestrator orchestrator,
 			SafeDevice<DcMotorEx> frontLeft,
 			SafeDevice<DcMotorEx> frontRight,
 			SafeDevice<DcMotorEx> backLeft,
 			SafeDevice<DcMotorEx> backRight) {
-		super(orch);
+		super(orchestrator);
 		this.fl = frontLeft;
 		this.fr = frontRight;
 		this.bl = backLeft;
