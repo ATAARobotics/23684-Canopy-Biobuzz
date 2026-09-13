@@ -1,6 +1,13 @@
 repositories {
     mavenCentral()
     google() // Needed for androidx
+    maven {
+        url = uri("https://maven.pkg.github.com/IamCoder18/synapse")
+        credentials {
+            username = findProperty("githubUser") ?: System.getenv("GITHUB_USER") ?: System.getenv("GITHUB_ACTOR")
+            password = findProperty("githubToken") ?: System.getenv("GITHUB_TOKEN")
+        }
+    }
 }
 
 dependencies {
@@ -13,5 +20,6 @@ dependencies {
     implementation 'org.firstinspires.ftc:FtcCommon:11.2.1'
     implementation 'org.firstinspires.ftc:Vision:11.2.1'
     implementation 'androidx.appcompat:appcompat:1.2.0'
+    implementation 'com.aaravlabs:synapse:0.3.1'
 }
 
