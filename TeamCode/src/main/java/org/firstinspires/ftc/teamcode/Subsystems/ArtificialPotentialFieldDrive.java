@@ -81,18 +81,27 @@ public class ArtificialPotentialFieldDrive extends Node {
             }
         }
 
-        public double repulsiveForce() {
+        public double[] repulsiveForce(double robotx, double roboty) {
+
+            double shortDis = Double.POSITIVE_INFINITY; //why not
+            FieldBody closeFeildBody = null;
+
             forces.clear();
 
             for (FieldBody fieldBody : rectangle) {
-                forces.add(fieldBody.repulsiveForce());
+                double dis = fieldBody.DistanceFromDia(robotx,roboty);
+
+                if(dis <= shortDis ){
+                    shortDis = dis;
+                    closeFeildBody = fieldBody;
+                }
             }
 
-            if (forces.isEmpty()) {
-                return 0;
+            if (closeFeildBody == null) {
+                return new double[]{0,0};
             }
 
-            return Collections.max(forces);
+            return closeFeildBody.repulsiveForceVector(robotx,roboty) ;
         }
     }
     private class FieldBody{
@@ -113,20 +122,32 @@ public class ArtificialPotentialFieldDrive extends Node {
             return Math.sqrt((deltax*deltax) + (deltay*deltay));
         }
 
-        public double repulsiveForce(){
-            double G = 6.67;
-            double robotM = 15;
-            //return -(G*((robotM + weight)/(DistanceFromDia(5,5)))); //TODO: Make this be safepedro Pose
-            double fin;
+        public double[] repulsiveForceVector(double robotx,double roboty){ //TODO: Make this be safepedro Pose
+            double deltax = robotx - fieldX;
+            double deltay = roboty - fieldY;
 
-            if((0.5*(DistanceFromDia(5,5))-2.5) < 0){
-                fin = 0.5*(DistanceFromDia(5,5))-2.5;
-            }else{
-                fin = 0;
-            }
+            double maguitude;
+            if((1.0/ DistanceFromDia(robotx,roboty)-1.0/15) > 0.1 && (1.0/ DistanceFromDia(robotx,roboty)-1.0/15) < 0.0001 ) maguitude = (1.0/ DistanceFromDia(robotx,roboty)-1.0/15); //we dont want a math error. that would be quite "skibity" as the youth say
+            else maguitude = 0;
 
-            return fin;
+            double fx = maguitude * (deltax / DistanceFromDia(robotx,roboty));
+            double fy = maguitude * (deltay / DistanceFromDia(robotx,roboty));
+
+            return  new double[]{fx,fy};
+
         }
+
+//        public double repulsiveForce(){
+//            double fin;
+//
+//            if((0.5*(DistanceFromDia(5,5))-2.5) < 0){
+//                fin = 0.5*(DistanceFromDia(5,5))-2.5;  Make this be safepedro Pose
+//            }else{
+//                fin = 0;
+//            }
+//
+//            return fin;
+//        }
 
     }
 
