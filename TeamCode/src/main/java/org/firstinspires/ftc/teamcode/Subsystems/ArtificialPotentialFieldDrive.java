@@ -18,53 +18,88 @@ public class ArtificialPotentialFieldDrive extends Node {
     private final SafeDevice<DcMotorEx> bl;
     private final SafeDevice<DcMotorEx> br;
 
-    public class RectanglarFeildBody {
+    public class RectangularFieldBody {
+
         double x, y;
         double fieldX, fieldY;
-
         double weight;
 
-        List <FeildBody> rectangle;
+        List<FieldBody> rectangle;
+        List<Double> forces;
 
-        List <Double> forces;
-
-
-        public RectanglarFeildBody(double x, double y, double fieldX, double fieldY, double weight){
-            this.fieldX = fieldX;
-            this.fieldY = fieldY;
+        public RectangularFieldBody(double x, double y, double fieldX, double fieldY, double weight) {
             this.x = x;
             this.y = y;
+            this.fieldX = fieldX;
+            this.fieldY = fieldY;
             this.weight = weight;
 
-            rectangle  = new ArrayList<>();
+            rectangle = new ArrayList<>();
             forces = new ArrayList<>();
-            if (x <= y) {
-                for (int i = 0; i < x; i++) {
-                   FeildBody feildBody = new FeildBody(y,100, x*(i/x),fieldY);
-                   forces.add(feildBody.repulsiveForce());
-                }
 
-            }else{
-                for (int i = 0; i < y; i++) {
-                    FeildBody feildBody = new FeildBody(x,100,fieldX,y*(i/y));
-                    forces.add(feildBody.repulsiveForce());
-                }
+            int samplesX = Math.max(1, (int) Math.ceil(x));
+            int samplesY = Math.max(1, (int) Math.ceil(y));
+
+            // Bottom edge
+            for (int i = 0; i <= samplesX; i++) {
+                double px = fieldX + (x * i / samplesX);
+                double py = fieldY;
+
+                rectangle.add(
+                        new FieldBody(x, weight, px, py)
+                );
+            }
+
+            // Top edge
+            for (int i = 0; i <= samplesX; i++) {
+                double px = fieldX + (x * i / samplesX);
+                double py = fieldY + y;
+
+                rectangle.add(
+                        new FieldBody(x, weight, px, py)
+                );
+            }
+
+            // Left edge
+            for (int i = 1; i < samplesY; i++) {
+                double px = fieldX;
+                double py = fieldY + (y * i / samplesY);
+
+                rectangle.add(
+                        new FieldBody(y, weight, px, py)
+                );
+            }
+
+            // Right edge
+            for (int i = 1; i < samplesY; i++) {
+                double px = fieldX + x;
+                double py = fieldY + (y * i / samplesY);
+
+                rectangle.add(
+                        new FieldBody(y, weight, px, py)
+                );
             }
         }
 
-        public double repulsiveForce(){
-           return Collections.max(forces);
+        public double repulsiveForce() {
+            forces.clear();
+
+            for (FieldBody fieldBody : rectangle) {
+                forces.add(fieldBody.repulsiveForce());
+            }
+
+            if (forces.isEmpty()) {
+                return 0;
+            }
+
+            return Collections.max(forces);
         }
-
-
-
     }
-
-    private class FeildBody{
+    private class FieldBody{
         double dia;
         double fieldX, fieldY;
         double weight;
-        public FeildBody(double dia, double weight, double fieldX, double fieldY){
+        public FieldBody(double dia, double weight, double fieldX, double fieldY){
             this.fieldX = fieldX;
             this.fieldY = fieldY;
             this.dia = dia;
