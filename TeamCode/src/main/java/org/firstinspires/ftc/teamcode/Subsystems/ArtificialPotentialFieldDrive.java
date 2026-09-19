@@ -18,6 +18,14 @@ public class ArtificialPotentialFieldDrive extends Node {
     private final SafeDevice<DcMotorEx> bl;
     private final SafeDevice<DcMotorEx> br;
 
+    RectangularFieldBody hiveOne;
+    RectangularFieldBody hiveTwo;
+    RectangularFieldBody flowerOne;
+    RectangularFieldBody flowerTwo;
+    RectangularFieldBody flowerThree;
+    RectangularFieldBody flowerFour;
+
+
     public class RectangularFieldBody {
 
         double x, y;
@@ -39,49 +47,45 @@ public class ArtificialPotentialFieldDrive extends Node {
 
             int samplesX = Math.max(1, (int) Math.ceil(x));
             int samplesY = Math.max(1, (int) Math.ceil(y));
+            double minX = fieldX - x / 2.0;
+            double maxX = fieldX + x / 2.0;
+            double minY = fieldY - y / 2.0;
+            double maxY = fieldY + y / 2.0;
 
             // Bottom edge
             for (int i = 0; i <= samplesX; i++) {
-                double px = fieldX + (x * i / samplesX);
-                double py = fieldY;
+                double px = minX + (x * i / samplesX);
+                double py = minY;
 
-                rectangle.add(
-                        new FieldBody(x, weight, px, py)
-                );
+                rectangle.add(new FieldBody(x, weight, px, py));
             }
 
             // Top edge
             for (int i = 0; i <= samplesX; i++) {
-                double px = fieldX + (x * i / samplesX);
-                double py = fieldY + y;
+                double px = minX + (x * i / samplesX);
+                double py = maxY;
 
-                rectangle.add(
-                        new FieldBody(x, weight, px, py)
-                );
+                rectangle.add(new FieldBody(x, weight, px, py));
             }
 
             // Left edge
             for (int i = 1; i < samplesY; i++) {
-                double px = fieldX;
-                double py = fieldY + (y * i / samplesY);
+                double px = minX;
+                double py = minY + (y * i / samplesY);
 
-                rectangle.add(
-                        new FieldBody(y, weight, px, py)
-                );
+                rectangle.add(new FieldBody(y, weight, px, py));
             }
 
             // Right edge
             for (int i = 1; i < samplesY; i++) {
-                double px = fieldX + x;
-                double py = fieldY + (y * i / samplesY);
+                double px = maxX;
+                double py = minY + (y * i / samplesY);
 
-                rectangle.add(
-                        new FieldBody(y, weight, px, py)
-                );
+                rectangle.add(new FieldBody(y, weight, px, py));
             }
         }
 
-        public double[] repulsiveForce(double robotx, double roboty) {
+        public double[] RepulsiveForceVector(double robotx, double roboty) {
 
             double shortDis = Double.POSITIVE_INFINITY; //why not
             FieldBody closeFeildBody = null;
@@ -102,6 +106,18 @@ public class ArtificialPotentialFieldDrive extends Node {
             }
 
             return closeFeildBody.repulsiveForceVector(robotx,roboty) ;
+        }
+
+        public double[] RobotCentricRepulsiveForceVector(double robotx, double roboty,double heading){
+            double robotForceX =
+                    RepulsiveForceVector(robotx,roboty)[1] * Math.cos(heading)
+                            + RepulsiveForceVector(robotx,roboty)[2] * Math.sin(heading);
+
+            double robotForceY =
+                    -RepulsiveForceVector(robotx,roboty)[1] * Math.sin(heading)
+                            + RepulsiveForceVector(robotx,roboty)[2] * Math.cos(heading);
+
+            return new double[]{robotForceX,robotForceY};
         }
     }
     private class FieldBody{
@@ -162,6 +178,8 @@ public class ArtificialPotentialFieldDrive extends Node {
         bl.run(m -> m.setDirection(DcMotor.Direction.FORWARD));
         fr.run(m -> m.setDirection(DcMotor.Direction.REVERSE));
         br.run(m -> m.setDirection(DcMotor.Direction.REVERSE));
+
+
     }
 
     @RunPeriodically(hz = 50, hardware = true)
