@@ -6,7 +6,7 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 
 import org.firstinspires.ftc.teamcode.Subsystems.Shooter;
 
-public class ShooterTest extends SafeOpMode {
+public class ShooterTestOpmode extends SafeOpMode {
 
     private SafeDevice<DcMotorEx> shooter;
 
