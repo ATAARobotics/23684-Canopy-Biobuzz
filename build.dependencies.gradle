@@ -8,9 +8,6 @@ repositories {
             password = findProperty("githubToken") ?: System.getenv("GITHUB_TOKEN")
         }
     }
-    maven {
-        url = "https://mymaven.bylazar.com/releases"
-    }
 }
 
 dependencies {
