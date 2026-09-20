@@ -109,13 +109,11 @@ public class ArtificialPotentialFieldDrive extends Node {
         }
 
         public double[] RobotCentricRepulsiveForceVector(double robotx, double roboty,double heading){
-            double robotForceX =
-                    RepulsiveForceVector(robotx,roboty)[0] * Math.cos(heading)
-                            + RepulsiveForceVector(robotx,roboty)[1] * Math.sin(heading);
 
-            double robotForceY =
-                    -RepulsiveForceVector(robotx,roboty)[0] * Math.sin(heading)
-                            + RepulsiveForceVector(robotx,roboty)[1] * Math.cos(heading);
+            double[] force = RepulsiveForceVector(robotx,roboty);
+            double robotForceX = force[0] * Math.cos(heading) + force[1] * Math.sin(heading);
+
+            double robotForceY = -force[0] * Math.sin(heading) + force[1] * Math.cos(heading);
 
             return new double[]{robotForceX,robotForceY};
         }
@@ -143,7 +141,7 @@ public class ArtificialPotentialFieldDrive extends Node {
             double deltay = roboty - fieldY;
 
             double maguitude;
-            if((1.0/ DistanceFromDia(robotx,roboty)-1.0/15) > 0.1 && (1.0/ DistanceFromDia(robotx,roboty)-1.0/15) < 0.0001 ) maguitude = (1.0/ DistanceFromDia(robotx,roboty)-1.0/15); //we dont want a math error. that would be quite "skibity" as the youth say
+            if((1.0/ DistanceFromDia(robotx,roboty)-1.0/15) > 0.1) maguitude = (1.0/ DistanceFromDia(robotx,roboty)-1.0/15); //we dont want a math error. that would be quite "skibity" as the youth say
             else maguitude = 0;
 
             double fx = maguitude * (deltax / DistanceFromDia(robotx,roboty));
