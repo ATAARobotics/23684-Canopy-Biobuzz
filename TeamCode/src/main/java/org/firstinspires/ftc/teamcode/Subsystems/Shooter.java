@@ -72,6 +72,8 @@ public class Shooter extends Node {
             double ffOutput = shooterFF.calculate(Target, 0);
             sh.run(m -> m.setPower(pidOutput + ffOutput));
         }
+
+        shooter.run( sh -> sh.setPower(Power));
     }
 
     public void setTarget(double target) {
