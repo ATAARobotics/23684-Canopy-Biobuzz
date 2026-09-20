@@ -16,6 +16,16 @@ apply plugin: 'com.android.application'
 apply from: '../build.common.gradle'
 apply from: '../build.dependencies.gradle'
 
+repositories {
+    maven {
+        url = uri("https://maven.pkg.github.com/IamCoder18/SafePedroPathing")
+        credentials {
+            username = findProperty("gpr.user") ?: findProperty("githubUser") ?: System.getenv("GITHUB_USER") ?: System.getenv("GITHUB_ACTOR")
+            password = findProperty("gpr.key") ?: findProperty("githubToken") ?: System.getenv("GITHUB_TOKEN")
+        }
+    }
+}
+
 android {
     namespace = 'org.firstinspires.ftc.teamcode'
 
@@ -26,4 +36,5 @@ android {
 
 dependencies {
     implementation project(':FtcRobotController')
+    implementation 'com.aaravlabs.safepedropathing:revhub:3.0.0'
 }

@@ -1,0 +1,36 @@
+apply plugin: 'com.android.application'
+
+//
+// build.gradle in PedroTuning
+//
+// Tuning-only Android application module. Mirrors TeamCode but depends on
+// upstream PedroPathing (revhub + tuning) for tuning OpModes. Builds a separate
+// APK with the same applicationId as TeamCode; install one or the other on the
+// Control Hub depending on whether you're tuning or competing.
+
+apply from: '../build.common.gradle'
+apply from: '../build.dependencies.gradle'
+
+repositories {
+    // com.pedropathing:tuning:1.0.1 transitively depends on
+    // dev.frozenmilk.sinister:Sloth, which is only published here.
+    maven { url 'https://repo.dairy.foundation/releases' }
+}
+
+android {
+    namespace = 'org.firstinspires.ftc.teamcode.pedro.tuning'
+
+    packagingOptions {
+        jniLibs.useLegacyPackaging true
+    }
+
+    defaultConfig {
+        applicationId 'com.qualcomm.ftcrobotcontroller.pedro.tuning'
+    }
+}
+
+dependencies {
+    implementation project(':FtcRobotController')
+    implementation 'com.pedropathing:revhub:3.0.1'
+    implementation 'com.pedropathing:tuning:1.0.1'
+}
