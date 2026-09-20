@@ -8,6 +8,7 @@ repositories {
             password = findProperty("githubToken") ?: System.getenv("GITHUB_TOKEN")
         }
     }
+    maven { url 'https://repo.dairy.foundation/releases/'}
 }
 
 dependencies {
@@ -21,5 +22,7 @@ dependencies {
     implementation 'org.firstinspires.ftc:Vision:11.2.1'
     implementation 'androidx.appcompat:appcompat:1.2.0'
     implementation 'com.aaravlabs:synapse:0.3.1'
+    implementation 'com.pedropathing:revhub:3.0.1'
+    implementation 'com.pedropathing:tuning:1.0.0'
 }
 
