@@ -16,6 +16,19 @@ apply plugin: 'com.android.application'
 apply from: '../build.common.gradle'
 apply from: '../build.dependencies.gradle'
 
+// SafePedroPathing lives on Maven Central (com.aaravlabs.safepedropathing:revhub).
+// The GitHub Packages repo below is a fallback for builds where Maven Central is
+// unreachable or the artifact hasn't propagated yet; Maven Central is preferred.
+repositories {
+    maven {
+        url = uri("https://maven.pkg.github.com/IamCoder18/SafePedroPathing")
+        credentials {
+            username = findProperty("gpr.user") ?: findProperty("githubUser") ?: System.getenv("GITHUB_USER") ?: System.getenv("GITHUB_ACTOR")
+            password = findProperty("gpr.key") ?: findProperty("githubToken") ?: System.getenv("GITHUB_TOKEN")
+        }
+    }
+}
+
 android {
     namespace = 'org.firstinspires.ftc.teamcode'
 
