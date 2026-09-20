@@ -12,18 +12,17 @@ public class ShooterTestOpmode extends SafeOpMode {
 
     private SafeDevice<DcMotorEx> shooter;
 
-    public static int RPM;
+    public static double RPM = 1000;
 
     @Override
     protected void onSafeInit() {
         shooter = safeMap.device(DcMotorEx.class, "shooter");
-
         orch.registerNode("shooter", new Shooter(orch,shooter));
     }
 
     @Override
     protected void onSafeLoop() {
-        orch.publish();
+        orch.publish("shooter/RPM", RPM);
         telemetry.addData("shooterSpeed",RPM);
     }
 }

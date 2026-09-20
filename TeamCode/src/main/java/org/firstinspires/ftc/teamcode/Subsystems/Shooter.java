@@ -14,8 +14,8 @@ public class Shooter extends Node {
 
     SafeDevice<DcMotorEx> shooter;
 
-    double P,I,D;
-    double kV, kS;
+    double P = 0.013,I = 0 ,D = 0;
+    double kV  = 0.0003, kS =  0.035;
 
     PIDFController shooterPIDF;
     FeedForwardController shooterFF;
