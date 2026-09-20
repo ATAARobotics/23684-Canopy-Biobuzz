@@ -139,13 +139,25 @@ public class ArtificialPotentialFieldDrive extends Node {
         public double[] repulsiveForceVector(double robotx,double roboty){ //TODO: Make this be safepedro Pose
             double deltax = robotx - fieldX;
             double deltay = roboty - fieldY;
+            double dis = DistanceFromDia(robotx,roboty);
+
+
+            if (dis <= 0.001) { // i dont think this is posable but like i dont want any didide by zero errors
+                return new double[]{0, 0};
+            }
 
             double maguitude;
-            if((1.0/ DistanceFromDia(robotx,roboty)-1.0/15) > 0.1) maguitude = (1.0/ DistanceFromDia(robotx,roboty)-1.0/15); //we dont want a math error. that would be quite "skibity" as the youth say
-            else maguitude = 0;
+            //if( dis < 3 && dis > 0.001 && 0.6190489*(dis*dis)-4.21429*dis+ 6.95238 > 0.1) maguitude = 0.6190489*(dis*dis)-4.21429*dis+ 6.95238; //we dont want a math error. that would be quite "skibity" as the youth say
+            //else maguitude = 0;
 
-            double fx = maguitude * (deltax / DistanceFromDia(robotx,roboty));
-            double fy = maguitude * (deltay / DistanceFromDia(robotx,roboty));
+            if(dis < 6 && dis > 0.001){
+                double t = (weight - dis) / weight;
+                double smooth = t * t * (3.0 - 2.0 * t);
+                maguitude = smooth;
+            }else maguitude = 0;
+
+            double fx = maguitude * (deltax / dis);
+            double fy = maguitude * (deltay / dis);
 
             return  new double[]{fx,fy};
 
