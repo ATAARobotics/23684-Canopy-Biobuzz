@@ -2,10 +2,12 @@ package org.firstinspires.ftc.teamcode.OpModes.Tests;
 
 import com.aaravlabs.synapse.ftc.SafeDevice;
 import com.aaravlabs.synapse.ftc.SafeOpMode;
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 
 import org.firstinspires.ftc.teamcode.Subsystems.Shooter;
 
+@Autonomous
 public class ShooterTestOpmode extends SafeOpMode {
 
     private SafeDevice<DcMotorEx> shooter;
@@ -21,7 +23,7 @@ public class ShooterTestOpmode extends SafeOpMode {
 
     @Override
     protected void onSafeLoop() {
-
+        orch.publish();
         telemetry.addData("shooterSpeed",RPM);
     }
 }
