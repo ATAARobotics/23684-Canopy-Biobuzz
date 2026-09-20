@@ -38,6 +38,8 @@ public class Shooter extends Node {
         updateRPM();
         updateMotor();
         atRPM = (Target > 50) && (Math.abs(Target - RPM) < 50);
+
+         double RPM  = orchestrator.getLatestValue("shooter/RPM",Float.class).map(Float::doubleValue).orElse(0.0);
     }
 
     public void SetTarget(double target){
