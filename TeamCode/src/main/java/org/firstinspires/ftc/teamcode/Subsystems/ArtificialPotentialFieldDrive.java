@@ -110,12 +110,12 @@ public class ArtificialPotentialFieldDrive extends Node {
 
         public double[] RobotCentricRepulsiveForceVector(double robotx, double roboty,double heading){
             double robotForceX =
-                    RepulsiveForceVector(robotx,roboty)[1] * Math.cos(heading)
-                            + RepulsiveForceVector(robotx,roboty)[2] * Math.sin(heading);
+                    RepulsiveForceVector(robotx,roboty)[0] * Math.cos(heading)
+                            + RepulsiveForceVector(robotx,roboty)[1] * Math.sin(heading);
 
             double robotForceY =
-                    -RepulsiveForceVector(robotx,roboty)[1] * Math.sin(heading)
-                            + RepulsiveForceVector(robotx,roboty)[2] * Math.cos(heading);
+                    -RepulsiveForceVector(robotx,roboty)[0] * Math.sin(heading)
+                            + RepulsiveForceVector(robotx,roboty)[1] * Math.cos(heading);
 
             return new double[]{robotForceX,robotForceY};
         }
