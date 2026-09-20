@@ -23,8 +23,8 @@ repositories {
     maven {
         url = uri("https://maven.pkg.github.com/IamCoder18/SafePedroPathing")
         credentials {
-            username = findProperty("githubUser") ?: findProperty("gpr.user") ?: System.getenv("GITHUB_USER") ?: System.getenv("GITHUB_ACTOR")
-            password = findProperty("githubToken") ?: findProperty("gpr.key") ?: System.getenv("GITHUB_TOKEN")
+            username = findProperty("githubUser") ?: System.getenv("GITHUB_USER") ?: System.getenv("GITHUB_ACTOR")
+            password = findProperty("githubToken") ?: System.getenv("GITHUB_TOKEN")
         }
     }
 }
