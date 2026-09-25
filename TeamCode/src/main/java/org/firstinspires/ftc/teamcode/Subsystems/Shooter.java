@@ -4,6 +4,7 @@ import com.aaravlabs.synapse.Node;
 import com.aaravlabs.synapse.Orchestrator;
 import com.aaravlabs.synapse.annotation.RunPeriodically;
 import com.aaravlabs.synapse.ftc.SafeDevice;
+import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 
 import org.firstinspires.ftc.teamcode.Utils.FeedForwardController;
@@ -30,28 +31,32 @@ public class Shooter extends Node {
         this.shooter = shooter;
         shooterFF = new FeedForwardController(kV,kS,0);
         shooterPIDF = new PIDFController(P,I,D);
+        shooter.run(m -> m.setDirection(DcMotor.Direction.FORWARD));
 
     }
 
     @RunPeriodically(hz = 50, hardware = true)
     public void Update(){
-        updateRPM();
-        updateMotor();
-        atRPM = (Target > 50) && (Math.abs(Target - RPM) < 50);
+        double targetRPM = orchestrator.getLatestValue("shooter/RPM", Double.class).orElse(0.0);
 
-         double RPM  = orchestrator.getLatestValue("shooter/RPM",Float.class).map(Float::doubleValue).orElse(0.0);
-         SetTarget(RPM);
+        SetTarget(targetRPM);
+
+
+        atRPM = (Target > 50) && (Math.abs(Target - RPM) < 50);
     }
 
     public void SetTarget(double target){
         Target = target;
     }
 
+    @RunPeriodically(hz = 50, hardware = true)
     private void updateRPM() {
         double shooterVelocity = shooter.raw().getVelocity();
         RPM = shooterVelocity * RPM_CONVERSION;
     }
 
+
+    @RunPeriodically(hz = 50, hardware = true)
     private void updateMotor(){
         double Power;
 
