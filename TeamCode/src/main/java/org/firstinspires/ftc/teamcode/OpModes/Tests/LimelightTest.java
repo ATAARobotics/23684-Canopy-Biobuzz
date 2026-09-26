@@ -13,9 +13,6 @@ public class LimelightTest extends SafeOpMode {
     @Override
     protected void onSafeInit() {
         limelight = safeMap.device(Limelight3A.class,"limelight");
-        orch.registerNode("limelight",new Limelight(orch,limelight));
-    }
-
-    protected void onSafeLoop(){
+        orch.registerNode("limelight",new Limelight(orch,limelight,telemetry));
     }
 }

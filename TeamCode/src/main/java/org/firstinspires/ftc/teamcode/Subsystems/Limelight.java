@@ -13,24 +13,29 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
 
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 public class Limelight extends Node {
 
     SafeDevice<Limelight3A> limelight;
 
+    Telemetry telemetry;
 
 
-    public Limelight(Orchestrator orch, SafeDevice<Limelight3A> limelight) {
+
+    public Limelight(Orchestrator orch, SafeDevice<Limelight3A> limelight, Telemetry telemetry) {
         super(orch);
         this.limelight = limelight;
+        this.telemetry = telemetry;
 
         limelight.run(limelight3A -> limelight3A.start());
         limelight.run( limelight3A -> limelight3A.pipelineSwitch(1));
     }
 
     @RunPeriodically(hz = 50, hardware = true)
-    public void Telemetry(Telemetry telemetry){
+    public void Telemetry(){
 
         LLResult llResult = limelight.raw().getLatestResult();
 
@@ -43,16 +48,12 @@ public class Limelight extends Node {
                 if(result.getClassName() == "yellow_pollen") {
 
                     double x = result.getTargetXDegrees();
-                    double closestPollenx = 0;
-
-                    if(result.getTargetArea() > closestPollen){
-                        double closestPolenx = result.getTargetXDegrees();
-                    }
-
-
                     telemetry.addData("Pollen: ", x);
                 }
             }
+            LLResultTypes.DetectorResult closestResult = detectorResults.stream().max(Comparator.comparing(LLResultTypes.DetectorResult::getTargetArea)).orElse(null);
+
+            telemetry.addData("closestPollen",closestResult.getTargetXDegrees());
 
         }
 
