@@ -40,31 +40,31 @@ public class Constants {
             c.offsetUnits.set(DistanceUnit.INCH);
         });
 
-        public static ForesightConfig foresightConfig = new ForesightConfig(
-                c -> {
-                    Controller primaryTranslationalForward = Controller.proportional(0.2202719446529322);
-                    Controller secondaryTranslationalForward = Controller.proportional(0.08138459777449746);
-                    Controller primaryTranslationalLateral = Controller.proportional(0.31329175178980395);
-                    Controller secondaryTranslationalLateral = Controller.proportional(0.1157529309765481);
+    public static ForesightConfig foresightConfig = new ForesightConfig(
+            c -> {
+                Controller primaryTranslationalForward = Controller.proportional(0.23210000797185648);
+                Controller secondaryTranslationalForward = Controller.proportional(0.0857547511191673);
+                Controller primaryTranslationalLateral = Controller.proportional(0.3360340335383034);
+                Controller secondaryTranslationalLateral = Controller.proportional(0.12415559639765843);
 
-                    c.forwardTranslational.set(Controller.piecewise(secondaryTranslationalForward).put(2.5, primaryTranslationalForward));
-                    c.strafeTranslational.set(Controller.piecewise(secondaryTranslationalLateral).put(2.5, primaryTranslationalLateral));
+                c.forwardTranslational.set(Controller.piecewise(secondaryTranslationalForward).put(2.5, primaryTranslationalForward));
+                c.strafeTranslational.set(Controller.piecewise(secondaryTranslationalLateral).put(2.5, primaryTranslationalLateral));
 
-                    c.coast.set(Controller.proportionalFeedforward(0.0095690587013686));
-                    c.brake.set(Controller.proportionalFeedforward(0.00813369989616331));
+                c.coast.set(Controller.proportionalFeedforward(0.010324461266630176));
+                c.brake.set(Controller.proportionalFeedforward(0.00877579207663565));
 
-                    c.headingFeedback.set(Controller.proportional(4.650083943643753));
-                    c.headingBrakeCoefficients.set(Vector2D.cartesian(0.17881558802022274, -0.005374054406345219));
+                c.headingFeedback.set(Controller.proportional(3.9742079831565356));
+                c.headingBrakeCoefficients.set(Vector2D.cartesian(0.05250118782327535, 0.0090366621533246));
 
-                    c.linearBrakeCoefficients.set(Matrix.diag(0.09666738236094859, 0.19512737059580584));
-                    c.quadraticBrakeCoefficients.set(Matrix.diag(0.0012397788720814437, -5.445777182152711E-4));
+                c.linearBrakeCoefficients.set(Matrix.diag(0.08380740225228185, 0.06946605948229298));
+                c.quadraticBrakeCoefficients.set(Matrix.diag(0.0016040022196118508, 0.001948141066986833));
 
-                    c.maxAchievableForwardVelocity.set(91.56943771038799);
-                    c.maxAchievableStrafeVelocity.set(78.78967311721264);
-                    c.naturalForwardDeceleration.set(35.98607472684754);
-                    c.naturalStrafeDeceleration.set(57.251377442709554);
-                }
-        );
+                c.maxAchievableForwardVelocity.set(90.42771856860752);
+                c.maxAchievableStrafeVelocity.set(45.856385211775525);
+                c.naturalForwardDeceleration.set(34.11863151483826);
+                c.naturalStrafeDeceleration.set(62.085867207625064);
+            }
+    );
         public static Follower create(SafeHardwareMap h) {
             return new Follower(
                     new PinpointLocalizer(h, localizerConfig),
