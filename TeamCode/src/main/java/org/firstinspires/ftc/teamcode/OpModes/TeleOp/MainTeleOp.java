@@ -27,20 +27,20 @@ public class MainTeleOp extends SafeOpMode {
 		backRight = safeMap.device(DcMotorEx.class, "backRight");
 		intake = safeMap.device(DcMotorEx.class, "intake");
 
-		GamepadAdaptor.attach(orch, gamepad1, "g1");
-		GamepadAdaptor.attach(orch, gamepad2, "g2");
+		GamepadAdaptor.attach(orchestrator, gamepad1, "g1");
+		GamepadAdaptor.attach(orchestrator, gamepad2, "g2");
 
-		orch.registerNode("drive", new Drive(orch, frontLeft, frontRight, backLeft, backRight));
-		orch.registerNode("intake", new Intake(orch, intake));
+		orchestrator.registerNode("drive", new Drive(orchestrator, frontLeft, frontRight, backLeft, backRight));
+		orchestrator.registerNode("intake", new Intake(orchestrator, intake));
 	}
 
 	@Override
 	protected void onSafeLoop() {
-		telemetry.addData("FL", "%.2f", orch.getLatestValue("drive/power/fl", Double.class).orElse(0.0));
-		telemetry.addData("FR", "%.2f", orch.getLatestValue("drive/power/fr", Double.class).orElse(0.0));
-		telemetry.addData("BL", "%.2f", orch.getLatestValue("drive/power/bl", Double.class).orElse(0.0));
-		telemetry.addData("BR", "%.2f", orch.getLatestValue("drive/power/br", Double.class).orElse(0.0));
-		telemetry.addData("Intake", "%.2f", orch.getLatestValue("intake/power", Double.class).orElse(0.0));
+		telemetry.addData("FL", "%.2f", orchestrator.getLatestValue("drive/power/fl", Double.class).orElse(0.0));
+		telemetry.addData("FR", "%.2f", orchestrator.getLatestValue("drive/power/fr", Double.class).orElse(0.0));
+		telemetry.addData("BL", "%.2f", orchestrator.getLatestValue("drive/power/bl", Double.class).orElse(0.0));
+		telemetry.addData("BR", "%.2f", orchestrator.getLatestValue("drive/power/br", Double.class).orElse(0.0));
+		telemetry.addData("Intake", "%.2f", orchestrator.getLatestValue("intake/power", Double.class).orElse(0.0));
 		telemetry.update();
 	}
 }
