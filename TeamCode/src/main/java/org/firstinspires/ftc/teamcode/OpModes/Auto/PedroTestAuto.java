@@ -8,7 +8,7 @@ public class PedroTestAuto extends MainPedroTestAuto {
 
     @Override
     protected Pose getStartingPose() {
-        return new Pose(60.3538, 133.5359, 90);
+        return new Pose(60.3538, 133.5359, 270);
     }
 
     @Override

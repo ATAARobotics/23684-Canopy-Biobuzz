@@ -12,10 +12,10 @@ public class Poses {
     private final PoseFactory poseFactory = PoseFactory.degrees();
 
     public final Pose start = poseFactory.of(60.3538, 133.5359, 270);
-    public final Pose leaveStart = poseFactory.of(60.3538, 116.909, -90);
+    public final Pose leaveStart = poseFactory.of(60.3538, 116.909, 270);
     public final Pose pickupFlower = poseFactory.of(46.2697, 127.238, 90);
     public final Pose leaveFlower = poseFactory.of(44.1718, 121.735, 90);
-    public final Pose park = poseFactory.of(8.016, 100.4927, -90);
+    public final Pose park = poseFactory.of(8.016, 100.4927, 90);
 
     Follower follower;
 
