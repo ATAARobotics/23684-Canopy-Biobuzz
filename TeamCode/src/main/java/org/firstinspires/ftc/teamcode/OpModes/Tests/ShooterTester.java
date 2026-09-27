@@ -3,9 +3,11 @@ package org.firstinspires.ftc.teamcode.OpModes.Tests;
 import com.aaravlabs.synapse.ftc.GamepadAdaptor;
 import com.aaravlabs.synapse.ftc.SafeDevice;
 import com.aaravlabs.synapse.ftc.SafeOpMode;
+import com.bylazar.configurables.annotations.Configurable;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 
+@Configurable
 @TeleOp(name = "Shooter Tester", group = "Tests")
 public class ShooterTester extends SafeOpMode {
 
