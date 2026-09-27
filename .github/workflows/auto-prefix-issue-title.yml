@@ -1,0 +1,53 @@
+name: Auto-prefix issue title with robot name
+description: Reads the `robot` field from the issue form body and prepends "[Robot Name] " to the issue title when missing.
+
+on:
+  issues:
+    types:
+      - opened
+      - edited
+
+permissions:
+  issues: write
+
+jobs:
+  prefix:
+    if: |
+      github.event.action == 'opened' ||
+      (github.event.action == 'edited' &&
+       github.event.changes.body &&
+       github.event.changes.body.from != github.event.issue.body)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Prefix title from issue form robot field
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const body = context.payload.issue.body || '';
+            const match = body.match(/<!--\s*\[robot\]:\s*(.+?)\s*-->/);
+            if (!match) {
+              core.info('No [robot] field found in body; skipping.');
+              return;
+            }
+            const robot = match[1].trim();
+            const prefixMap = {
+              'Starter Bot': '[Starter Bot] ',
+            };
+            const prefix = prefixMap[robot];
+            if (!prefix) {
+              core.info(`Robot "${robot}" has no configured prefix; skipping.`);
+              return;
+            }
+            const current = context.payload.issue.title || '';
+            if (current.startsWith(prefix)) {
+              core.info(`Title already starts with "${prefix}"; no-op.`);
+              return;
+            }
+            const newTitle = prefix + current;
+            core.info(`Renaming: "${current}" -> "${newTitle}"`);
+            await github.rest.issues.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.issue.number,
+              title: newTitle,
+            });
