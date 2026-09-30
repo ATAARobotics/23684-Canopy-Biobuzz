@@ -34,6 +34,11 @@ public abstract class MainPedroTestAuto extends SafeOpMode {
 
     Follower follower;
 
+    Path leave;
+
+    Path flower;
+    Path leaveflower;
+
 
     @Override
     public void onSafeInit() {
@@ -45,6 +50,10 @@ public abstract class MainPedroTestAuto extends SafeOpMode {
         poses = new Poses(follower);
         lastPath = getStartingPose();
         follower.setPose(getStartingPose());
+
+        leave = Paths.line(getStartingPose(),poses.leaveStart).linear(lastPath.heading(),Math.toRadians(270));
+        flower = Paths.line(poses.leaveStart,poses.pickupFlower).linear(lastPath.heading(),Math.toRadians(90));
+        leaveflower = Paths.line(poses.pickupFlower,poses.leaveFlower).constant(Math.toRadians(90));
     }
 
 
@@ -57,7 +66,16 @@ public abstract class MainPedroTestAuto extends SafeOpMode {
     protected void addStep(AutoStates step) {
         actions.add(step);
     }
+
+//    private boolean donePath(){
+//        if (follower != null) {
+//            return Math.abs(follower.tangentialVelocity()) < Constants.foresightConfig.velocityConstraint.get() && follower.distanceToEndpoint() < 4;
+//        }else{
+//            return false;
+//        }
+//    }
     private void updateState(){
+        telemetry.addLine("updateState called with autoStates: " + autoStates.toString());
         switch (autoStates){
             case init:
                 step = 0;
@@ -69,7 +87,6 @@ public abstract class MainPedroTestAuto extends SafeOpMode {
                 getNextState();
                 break;
             case leave:
-                Path leave = Paths.line(lastPath,poses.leaveStart).linear(lastPath.heading(),Math.toRadians(270));
                 follower.follow(leave);
                 if(follower.atParametricEnd()){
                    getNextState();
@@ -115,24 +132,32 @@ public abstract class MainPedroTestAuto extends SafeOpMode {
             default:
                 throw new IllegalArgumentException("Action unknown!");
         }
+        telemetry.addLine("updateState exiting with autoStates: " + autoStates.toString());
 
     }
 
     private void getNextState(){
+        telemetry.addLine("getNextState called with step: " + step);
         boolean checked = false;
         if(!checked){
+            telemetry.addLine("CurrentState = " + actions.get(step).toString());
             step += 1;
             Substep = 0;
             autoStates = actions.get(step);
+            telemetry.addLine("NextState = " + actions.get(step).toString());
             checked = true;
         }
+        telemetry.addLine("getNextState exiting with step: " + step);
     }
 
     @Override
     public void  onSafeLoop() {
         updateState();
-        telemetry.addData("step",step);
+        telemetry.addData("Current State",autoStates.toString());
         telemetry.addData("at end?",follower.atParametricEnd());
+        telemetry.addData("busy?", !follower.isBusy());
+       // telemetry.addData("Done Path",donePath());
+        telemetry.update();
         follower.update();
     }
 }

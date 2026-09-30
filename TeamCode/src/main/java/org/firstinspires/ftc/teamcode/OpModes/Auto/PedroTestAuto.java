@@ -19,7 +19,7 @@ public class PedroTestAuto extends MainPedroTestAuto {
         addStep(AutoStates.shootpreload);
         addStep(AutoStates.leave);
         addStep(AutoStates.pickupFlower);
-        addStep(AutoStates.shoot);
-        addStep(AutoStates.park);
+//        addStep(AutoStates.shoot);
+//        addStep(AutoStates.park);
     }
 }
