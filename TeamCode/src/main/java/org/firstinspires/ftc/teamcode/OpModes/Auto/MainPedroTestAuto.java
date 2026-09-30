@@ -27,6 +27,7 @@ public abstract class MainPedroTestAuto extends SafeOpMode {
 
     AutoStates autoStates;
     int step;
+    int Substep = 0;
 
     Poses poses;
     Pose lastPath;
@@ -64,55 +65,47 @@ public abstract class MainPedroTestAuto extends SafeOpMode {
                 telemetry.addLine("init");
                 break;
             case shootpreload:
-                step += 1;
-                autoStates = actions.get(step);
-                //telemetry.addData("step","shootpreload");
-                telemetry.addLine("I shot my totally real pollen");
-                telemetry.addLine();
+                telemetry.addLine("I shot my totally real preloaded pollen");
+                getNextState();
                 break;
             case leave:
-                step += 1;
-                Path leave = Paths.line(lastPath,poses.leaveStart);
+                Path leave = Paths.line(lastPath,poses.leaveStart).linear(lastPath.heading(),Math.toRadians(270));
                 follower.follow(leave);
-                lastPath = poses.leaveStart;
                 if(follower.atParametricEnd()){
-                    autoStates = actions.get(step);
-                    break;
+                   getNextState();
+                    lastPath = poses.leaveStart;
                 }
+                break;
             case pickupFlower:
-                step += 1;
-                int state = 1;
                 boolean done = false;
-                Path flower = Paths.line(lastPath,poses.pickupFlower);
-                Path leaveflower = Paths.line(poses.pickupFlower,poses.leaveFlower);
-                switch (state){
-                    case 1:
+                Path flower = Paths.line(lastPath,poses.pickupFlower).linear(lastPath.heading(),Math.toRadians(90));
+                Path leaveflower = Paths.line(poses.pickupFlower,poses.leaveFlower).constant(Math.toRadians(90));
+                switch (Substep){
+                    case 0:
                         follower.follow(flower);
-                        if(follower.atParametricEnd()) state =2;
+                        if(follower.atParametricEnd()) Substep = 1;
                         break;
-                    case 2:
+                    case 1:
                         follower.follow(leaveflower);
-                        if(follower.atParametricEnd()) state = 3;
-                    case 3:
+                        if(follower.atParametricEnd()) Substep = 2;
+                       break;
+                    case 2:
                         done = true;
                         lastPath = poses.leaveFlower;
                         break;
                 }
-               if (done){
-                   autoStates = actions.get(step);
-                   break;
-               }
+                if (done) getNextState();
+                break;
             case park:
-                step += 1;
-                Path park = Paths.line(lastPath,poses.park);
+                Path park = Paths.line(lastPath,poses.park).constant(lastPath.heading());
                 follower.follow(park);
-                lastPath = poses.park;
                 if(follower.atParametricEnd()){
-                    autoStates = actions.get(step);
-                    break;
+                    lastPath = poses.park;
+                    getNextState();
                 }
+                break;
             case shoot:
-                step += 1;
+                getNextState();
                 autoStates = actions.get(step);
                 telemetry.addLine("I shot my totally real pollen");
                 break;
@@ -120,15 +113,26 @@ public abstract class MainPedroTestAuto extends SafeOpMode {
             case end:
                 break;
             default:
-                throw new IllegalArgumentException("No actions in list!");
+                throw new IllegalArgumentException("Action unknown!");
         }
 
+    }
+
+    private void getNextState(){
+        boolean checked = false;
+        if(!checked){
+            step += 1;
+            Substep = 0;
+            autoStates = actions.get(step);
+            checked = true;
+        }
     }
 
     @Override
     public void  onSafeLoop() {
         updateState();
-        telemetry.addLine(actions.toString());
+        telemetry.addData("step",step);
+        telemetry.addData("at end?",follower.atParametricEnd());
         follower.update();
     }
 }

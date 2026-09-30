@@ -2,13 +2,16 @@ package org.firstinspires.ftc.teamcode.OpModes.Auto;
 
 import com.aaravlabs.safepedropathing.math.Pose;
 import com.aaravlabs.synapse.ftc.SafeOpMode;
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
+
+@Autonomous
 public class PedroTestAuto extends MainPedroTestAuto {
 
 
     @Override
     protected Pose getStartingPose() {
-        return new Pose(60.3538, 133.5359, 270);
+        return new Pose(60.3538, 133.5359, Math.toRadians(270));
     }
 
     @Override
