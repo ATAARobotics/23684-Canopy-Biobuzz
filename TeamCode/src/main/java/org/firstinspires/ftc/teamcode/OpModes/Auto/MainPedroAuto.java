@@ -25,30 +25,28 @@ public abstract class MainPedroAuto extends StateMachineOpMode {
         shootPreload,
         leave,
         pickFromFlower,
-        park
+        park,
+        wait
     }
 
     List<State> autoStates;
     Follower follower;
 
     Pose lastPath;
+
+    Poses poses;
     public void SetRoute(){}
 
     public void addStep(AutoStates autostates){
         autoStates.add(GetState(autostates));
     }
 
+    public void addStep(int wait){
+        autoStates.add(new WaitState(wait));
+    }
+
     protected abstract Pose getStartingPose();
 
-
-    @Override
-    protected void onSafeInit() {
-        follower = Constants.create(safeMap);
-        autoStates = new ArrayList<>();
-        follower.setPose(getStartingPose());
-        lastPath = getStartingPose();
-
-    }
 
     private State GetState(AutoStates autoStates){
 
@@ -86,30 +84,89 @@ public abstract class MainPedroAuto extends StateMachineOpMode {
 
         @Override
         public void init() {
-            leavepath = Paths.line(lastPath,)
+            leavepath = Paths.line(lastPath, poses.leaveStart).constant(poses.leaveStart);
         }
         @Override
         public void loop() {
+            follower.follow(leavepath);
+            follower.update();
+            setEndCondition(follower::atParametricEnd);
+        }
 
+        @Override
+        public void stop(){
+            lastPath = poses.leaveStart;
         }
     }
 
     private final class FlowerState extends AbstractState {
+
+        int step = 0;
+        Path flowerPath;
+        Path leaveFlower;
+        boolean isDone = false;
+
+        @Override
+        public void init() {
+            flowerPath = Paths.line(lastPath, poses.pickupFlower).linear(lastPath, poses.pickupFlower);
+            leaveFlower = Paths.line(poses.pickupFlower, poses.leaveFlower).constant(poses.pickupFlower);
+            setEndCondition(()->isDone);
+        }
         @Override
         public void loop() {
-
+            follower.update();
+            switch (step){
+                case 0:
+                    follower.follow(flowerPath);
+                    if(follower.atParametricEnd()) step = 1;
+                    break;
+                case 1:
+                    follower.follow(leaveFlower);
+                    if(follower.atParametricEnd()) step = 2;
+                    break;
+                case 2:
+                    isDone = true;
+            }
         }
+
+        @Override
+        public void stop(){
+            lastPath = poses.leaveFlower;
+        }
+
+
     }
 
     private final class ParkState extends AbstractState {
+        Path parkPath;
+
+        @Override
+        public void init() {
+            parkPath = Paths.line(lastPath, poses.park).constant(lastPath);
+        }
         @Override
         public void loop() {
+            follower.follow(parkPath);
+            setEndCondition(follower::atParametricEnd);
+            follower.update();
+        }
 
+        @Override
+        public void stop(){
+            lastPath = poses.park;
         }
     }
 
 
     protected List<State> buildStates() {
+
+        follower = Constants.create(safeMap);
+        autoStates = new ArrayList<>();
+        SetRoute();
+        follower.setPose(getStartingPose());
+        lastPath = getStartingPose();
+        poses = new Poses(follower);
+
         return autoStates;
     }
 }
