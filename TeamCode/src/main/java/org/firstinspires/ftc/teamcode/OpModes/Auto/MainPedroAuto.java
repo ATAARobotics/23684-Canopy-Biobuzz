@@ -13,6 +13,7 @@ import com.aaravlabs.synapse.ftc.SafeDevice;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 
 import org.firstinspires.ftc.robotcore.external.StateMachine;
+import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.pedropathing.Constants;
 
 import java.util.ArrayList;
@@ -85,12 +86,16 @@ public abstract class MainPedroAuto extends StateMachineOpMode {
         @Override
         public void init() {
             leavepath = Paths.line(lastPath, poses.leaveStart).constant(poses.leaveStart);
+            setEndCondition(()-> Math.abs(follower.tangentialVelocity()) < Constants.foresightConfig.velocityConstraint.get() && follower.distanceToEndpoint() < 4);
+            follower.follow(leavepath);
         }
         @Override
         public void loop() {
-            follower.follow(leavepath);
             follower.update();
-            setEndCondition(follower::atParametricEnd);
+            telemetry.addData("isdone?",Math.abs(follower.tangentialVelocity()) < Constants.foresightConfig.velocityConstraint.get() && follower.distanceToEndpoint() < 4);
+            telemetry.addData("Velocity",follower.tangentialVelocity());
+            telemetry.addData("Predicted Velocity",Constants.foresightConfig.velocityConstraint.get());
+            telemetry.addData("distance to end", follower.distanceToEndpoint());
         }
 
         @Override
@@ -118,11 +123,11 @@ public abstract class MainPedroAuto extends StateMachineOpMode {
             switch (step){
                 case 0:
                     follower.follow(flowerPath);
-                    if(follower.atParametricEnd()) step = 1;
+                    if(Math.abs(follower.tangentialVelocity()) < Constants.foresightConfig.velocityConstraint.get() && follower.distanceToEndpoint() < 4) step = 1;
                     break;
                 case 1:
                     follower.follow(leaveFlower);
-                    if(follower.atParametricEnd()) step = 2;
+                    if(Math.abs(follower.tangentialVelocity()) < Constants.foresightConfig.velocityConstraint.get() && follower.distanceToEndpoint() < 4) step = 2;
                     break;
                 case 2:
                     isDone = true;
@@ -143,11 +148,11 @@ public abstract class MainPedroAuto extends StateMachineOpMode {
         @Override
         public void init() {
             parkPath = Paths.line(lastPath, poses.park).constant(lastPath);
+            setEndCondition(()-> Math.abs(follower.tangentialVelocity()) < Constants.foresightConfig.velocityConstraint.get() && follower.distanceToEndpoint() < 4);
+            follower.follow(parkPath);
         }
         @Override
         public void loop() {
-            follower.follow(parkPath);
-            setEndCondition(follower::atParametricEnd);
             follower.update();
         }
 
