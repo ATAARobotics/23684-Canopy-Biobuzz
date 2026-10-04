@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.pedropathing;
+package org.firstinspires.ftc.teamcode.OpModes.pedropathing;
 
 import com.aaravlabs.safepedropathing.algorithm.Foresight;
 import com.aaravlabs.safepedropathing.algorithm.ForesightConfig;
