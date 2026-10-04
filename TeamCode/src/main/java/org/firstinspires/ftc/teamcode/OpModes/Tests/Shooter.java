@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.Subsystems;
+package org.firstinspires.ftc.teamcode.OpModes.Tests;
 
 import com.aaravlabs.synapse.Node;
 import com.aaravlabs.synapse.Orchestrator;
@@ -11,28 +11,27 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.teamcode.Utils.FeedForwardController;
 import org.firstinspires.ftc.teamcode.Utils.PIDController;
 
+public class Shooter extends Node {
+    private final SafeDevice<DcMotorEx> sh;
 
-public class Shoot extends Node {
-
-    private final SafeDevice<DcMotorEx> shooter;
     double P = 0.013, I = 0, D = 0;
     double kV = 0.0003, kS = 0.035;
+
     PIDController shooterPIDF;
     FeedForwardController shooterFF;
-
+    double RPM;
     public static double TICKS_PER_REVOLUTION = 28.0;
     public static final double RPM_CONVERSION = 60.0 / TICKS_PER_REVOLUTION;
     double Target = 0.0;
-    double RPM = 0.0;
     public static double STOP_POWER = 0.0;
     public boolean atRPM;
 
-    public Shoot(Orchestrator orchestrator, SafeDevice<DcMotorEx> shooter) {
+    public Shooter(Orchestrator orchestrator, SafeDevice<DcMotorEx> shooter) {
         super(orchestrator);
-        this.shooter = shooter;
+        this.sh = shooter;
         shooterFF = new FeedForwardController(kS, kV, 0);
         shooterPIDF = new PIDController(P, I, D);
-        shooter.run(m -> m.setDirection(DcMotor.Direction.FORWARD));
+        sh.run(m -> m.setDirection(DcMotor.Direction.FORWARD));
     }
 
     @RunPeriodically(hz = 50, hardware = true)
@@ -57,7 +56,7 @@ public class Shoot extends Node {
     }
 
     private void updateRPM() {
-        shooter.run(m -> {
+        sh.run(m -> {
             double velocity = m.getVelocity(AngleUnit.DEGREES); // degrees per second
             // Conversion: (deg/s) / 360 = rev/s. rev/s * 60 = RPM
             RPM = (velocity / 360.0) * 60.0;
@@ -66,28 +65,16 @@ public class Shoot extends Node {
 
     private void updateMotor() {
         if (Target <= 0) {
-            shooter.run(m -> m.setPower(STOP_POWER));
+            sh.run(m -> m.setPower(STOP_POWER));
             shooterPIDF.reset();
         } else {
             double pidOutput = shooterPIDF.calculate(RPM,Target);
             double ffOutput = shooterFF.calculate(Target, 0);
-            shooter.run(m -> m.setPower(pidOutput + ffOutput));
+            sh.run(m -> m.setPower(pidOutput + ffOutput));
         }
     }
 
     public void setTarget(double target) {
         this.Target = target;
-    }
-
-    @RunPeriodically(hz = 50, hardware = true)
-    public void RunShooter() {
-        double operator = -orchestrator.getLatestValue("g1/right_stick_y", Float.class).map(Float::doubleValue).orElse(0.0);
-        double trigger = orchestrator.getLatestValue("g2/right_trigger", Float.class).map(Float::doubleValue).orElse(0.0);
-        double power = Math.max(operator, trigger);
-        if (power > 0 || Target <= 0) {
-            shooter.run(m -> m.setPower(power));
-        }
-        orchestrator.publish("shoot/power", power);
-        orchestrator.publish("shooter/power", power);
     }
 }

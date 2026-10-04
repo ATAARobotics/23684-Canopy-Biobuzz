@@ -6,8 +6,6 @@ import com.aaravlabs.synapse.ftc.SafeOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 
-import org.firstinspires.ftc.teamcode.Subsystems.Shooter;
-
 @Autonomous
 public class ShooterTestOpmode extends SafeOpMode {
 
