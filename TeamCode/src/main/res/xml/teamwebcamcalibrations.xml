@@ -54,6 +54,50 @@
 
     <!-- ======================================================================================= -->
 
+    <!--
+      ACTIVE CALIBRATION for our camera (USB vid 0xC45, pid 0x366).
+    -->
+    <Camera vid="0xC45" pid="0x366">
+
+        <Calibration
+            size="1280, 800"
+            focalLength="908.758f, 908.758f"
+            principalPoint="696.345f, 376.979f"
+            distortionCoefficients="0.0374901, -0.0506747, 0, 0, -0.00229137, 0, 0, 0"
+            />
+
+        <Calibration
+            size="1280, 720"
+            focalLength="908.785f, 908.785f"
+            principalPoint="706.785f, 337.571f"
+            distortionCoefficients="0.0357156, -0.0435922, 0, 0, -0.00930544, 0, 0, 0"
+            />
+
+        <Calibration
+            size="800, 600"
+            focalLength="684.509f, 684.509f"
+            principalPoint="444.832f, 283.680f"
+            distortionCoefficients="0.034551, -0.0516021, 0, 0, 0.00228923, 0, 0, 0"
+            />
+
+        <Calibration
+            size="640, 480"
+            focalLength="545.584f, 545.584f"
+            principalPoint="350.588f, 223.150f"
+            distortionCoefficients="0.0290195, -0.0238128, 0, 0, -0.0378927, 0, 0, 0"
+            />
+
+        <Calibration
+            size="480, 320"
+            focalLength="270.260f, 270.260f"
+            principalPoint="173.207f, 120.382f"
+            distortionCoefficients="-0.0249932, 0.147249, 0, 0, -0.24925, 0, 0, 0"
+            />
+
+    </Camera>
+
+    <!-- ======================================================================================= -->
+
     <!-- Microsoft Lifecam HD 3000 v1, Calibrated by PTC using unknown tooling -->
     <!-- <Camera vid="Microsoft" pid="0x0779">
         <Calibration
