@@ -29,7 +29,7 @@ public class Shooter extends Node {
     public Shooter(Orchestrator orchestrator, SafeDevice<DcMotorEx> shooter) {
         super(orchestrator);
         this.sh = shooter;
-        shooterFF = new FeedForwardController(kV, kS, 0);
+        shooterFF = new FeedForwardController(kS, kV, 0);
         shooterPIDF = new PIDFController(P, I, D);
         sh.run(m -> m.setDirection(DcMotor.Direction.FORWARD));
     }
@@ -72,8 +72,6 @@ public class Shooter extends Node {
             double ffOutput = shooterFF.calculate(Target, 0);
             sh.run(m -> m.setPower(pidOutput + ffOutput));
         }
-
-        shooter.run( sh -> sh.setPower(Power));
     }
 
     public void setTarget(double target) {
