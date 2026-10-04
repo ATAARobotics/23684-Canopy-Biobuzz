@@ -21,7 +21,7 @@ import com.aaravlabs.synapse.annotation.RunPeriodically;
  *   robot bearing  theta = CAMERA_YAW_DEG + cameraBearing      (clockwise from robot nose)
  *   forward       = SPEED * cos(theta)     -> dominant when the blob is ahead
  *   strafe right  = SPEED * sin(theta)     -> takes over as the blob moves off-axis
- *   turn          = TURN_SIGN * TURN_GAIN * (theta - HOLD_BEARING_DEG)
+ *   turn          = TURN_SIGN * TURN_CURVE_GAIN * x^TURN_CURVE_POWER,  x = error past TURN_DEADBAND_DEG
  * </pre>
  *
  * <p>With a forward-facing camera the blob starts near theta=0, so the robot drives forward
@@ -34,6 +34,11 @@ import com.aaravlabs.synapse.annotation.RunPeriodically;
  * {@link #HOLD_BEARING_DEG} (0 for a forward mount) off the blob, which lines the nose up
  * with the target so the blob stays centred in frame. Setting {@code HOLD_BEARING_DEG} to
  * something else makes the robot approach on an angle while keeping it in view.
+ *
+ * <p>Inside {@link #TURN_DEADBAND_DEG} of that hold bearing no turn is commanded at all, and
+ * beyond it the command follows a power curve up to {@link #MAX_TURN} rather than a straight
+ * line. Together they mean the robot settles onto the target instead of sawing back and forth
+ * around it; see {@link #TURN_CURVE_POWER} and {@link #TURN_CURVE_GAIN}.
  *
  * <p>Sign conventions: bearings clockwise positive; the {@link Drive} mix uses positive
  * {@link Drive#CMD_STRAFE} for a strafe to the robot's right and positive
@@ -70,7 +75,33 @@ public class PollenPursuit extends Node {
 	public static double TURN_GAIN = 0.035;
 
 	/** Ceiling on the turn command. */
-	public static double MAX_TURN = 0.40;
+	public static double MAX_TURN = 0.32;
+
+	/**
+	 * No turn is commanded while the blob sits within this many degrees of
+	 * {@link #HOLD_BEARING_DEG}. Stops the robot chasing detection noise and swapping ends
+	 * once it is already pointed at the blob.
+	 */
+	public static double TURN_DEADBAND_DEG = 1.0;
+
+	/**
+	 * Exponent on the normalised bearing error, i.e. the shape of the turn curve.
+	 *
+	 * <p>1 is linear — the old behaviour. 2 tapers the middle of the range so the robot is
+	 * gentle as it nears the target and commits to the turn only once the error is large.
+	 * 3 and above taper harder. Fractional values are allowed in between.
+	 */
+	public static double TURN_CURVE_POWER = 2.0;
+
+	/**
+	 * Multiplier in front of the curve, so the command is
+	 * {@code TURN_CURVE_GAIN * x^TURN_CURVE_POWER} — gain 3 at power 2 gives 3x^2, gain 9 at
+	 * power 5 gives 9x^5. 1.0 leaves the curve alone.
+	 *
+	 * <p>Anything above 1.0 reaches {@link #MAX_TURN} sooner, since that stays a hard ceiling
+	 * no matter how the curve is tuned.
+	 */
+	public static double TURN_CURVE_GAIN = 1.0;
 
 	/** Speed used to close on the blob, before the cosine taper. */
 	public static double APPROACH_SPEED = 0.40;
@@ -135,7 +166,7 @@ public class PollenPursuit extends Node {
 
 		// Hold the camera side toward the blob instead of nulling the bearing.
 		double turnError = wrapTo180(robotBearing - HOLD_BEARING_DEG);
-		double turn = clamp(TURN_SIGN * TURN_GAIN * turnError, -MAX_TURN, MAX_TURN);
+		double turn = turnCommand(turnError);
 
 		// Both components share one throttle so forward and strafe never sum past
 		// APPROACH_SPEED, and the blend keeps a floor of authority when cos(theta) is ~0.
@@ -158,6 +189,34 @@ public class PollenPursuit extends Node {
 		orchestrator.publish(Drive.CMD_TURN, turn);
 		orchestrator.publish(BEARING_ROBOT_DEG, robotBearing);
 		orchestrator.publish(STRAFE_CMD, strafe);
+	}
+
+	/**
+	 * Turn command for a bearing-hold error: flat zero inside {@link #TURN_DEADBAND_DEG},
+	 * then a power curve off to {@link #MAX_TURN}.
+	 *
+	 * <p>The deadband is subtracted before the curve, which is what lets it start from a
+	 * genuine zero: the deadband and the curve share the edge, so there is no step in the
+	 * command as the error crosses out of the band.
+	 *
+	 * <p>At power 1 and gain 1 this reproduces the old linear law exactly, so those two
+	 * knobs are a clean baseline to tune away from.
+	 */
+	private static double turnCommand(double turnError) {
+		double excess = Math.abs(turnError) - TURN_DEADBAND_DEG;
+		if (excess <= 0.0) {
+			return 0.0;
+		}
+
+		// Normalise to 0..1 across the bearing error the old linear law saturated at
+		// (MAX_TURN / TURN_GAIN, about 9 degrees as tuned), so the power and gain knobs act
+		// on a dimensionless x.
+		double scale = Math.max(MAX_TURN / TURN_GAIN, 1e-6);
+		double x = Math.min(excess / scale, 1.0);
+
+		double magnitude = TURN_CURVE_GAIN * MAX_TURN * Math.pow(x, TURN_CURVE_POWER);
+
+		return clamp(TURN_SIGN * magnitude * Math.copySign(1.0, turnError), -MAX_TURN, MAX_TURN);
 	}
 
 	private static double clamp(double v, double lo, double hi) {

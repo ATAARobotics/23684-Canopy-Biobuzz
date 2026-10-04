@@ -10,12 +10,6 @@ import org.firstinspires.ftc.teamcode.Subsystems.Drive;
 import org.firstinspires.ftc.teamcode.Subsystems.PollenPursuit;
 import org.firstinspires.ftc.teamcode.Subsystems.PollenTracker;
 
-/**
- * Drives onto the closest blob the Limelight can see, and onto the next one after
- * that, for as long as the driver holds A.
- *
- * <p>Hold A to pursue. Release A or press B to stop. Nothing moves until A is held.
- */
 @TeleOp(name = "Pollen Pursuit Test", group = "Tests")
 public class PollenPursuitTest extends SafeOpMode {
 
