@@ -6,7 +6,9 @@ import com.aaravlabs.synapse.ftc.SafeDevice;
 import com.aaravlabs.synapse.ftc.SafeOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DigitalChannel;
 
+import org.firstinspires.ftc.teamcode.Subsystems.BeamBreak;
 import org.firstinspires.ftc.teamcode.Subsystems.Drive;
 import org.firstinspires.ftc.teamcode.Subsystems.Intake;
 import org.firstinspires.ftc.teamcode.Subsystems.Shoot;
@@ -20,6 +22,7 @@ public class MainTeleOp extends SafeOpMode {
 	private SafeDevice<DcMotorEx> backRight;
 	private SafeDevice<DcMotorEx> intake;
 	private SafeDevice<DcMotorEx> shooter;
+	private SafeDevice<DigitalChannel> beambreak;
 
 	@Override
 	protected void onSafeInit() {
@@ -29,6 +32,7 @@ public class MainTeleOp extends SafeOpMode {
 		backRight = safeMap.device(DcMotorEx.class, "backRight");
 		intake = safeMap.device(DcMotorEx.class, "intake");
 		shooter = safeMap.device(DcMotorEx.class, "shooter");
+		beambreak = safeMap.device(DigitalChannel.class,"beambreak");
 
 		GamepadAdaptor.attach(orchestrator, gamepad1, "g1");
 		GamepadAdaptor.attach(orchestrator, gamepad2, "g2");
@@ -36,6 +40,7 @@ public class MainTeleOp extends SafeOpMode {
 		orchestrator.registerNode("drive", new Drive(orchestrator, frontLeft, frontRight, backLeft, backRight));
 		orchestrator.registerNode("intake", new Intake(orchestrator, intake));
 		orchestrator.registerNode("shoot",new Shoot(orchestrator, shooter));
+		orchestrator.registerNode("beambreak", new BeamBreak(orchestrator, beambreak));
 	}
 
 	@Override
