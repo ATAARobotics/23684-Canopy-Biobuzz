@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.OpModes.Auto;
 
 import com.aaravlabs.autonomy.AbstractState;
+import com.aaravlabs.autonomy.HoldState;
 import com.aaravlabs.autonomy.State;
 import com.aaravlabs.autonomy.WaitState;
 import com.aaravlabs.autonomy.ftc.StateMachineOpMode;
@@ -8,21 +9,25 @@ import com.aaravlabs.safepedropathing.api.Paths;
 import com.aaravlabs.safepedropathing.follower.Follower;
 import com.aaravlabs.safepedropathing.math.Pose;
 import com.aaravlabs.safepedropathing.paths.Path;
+import com.aaravlabs.synapse.ftc.SafeDevice;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 
+import org.firstinspires.ftc.robotcore.external.StateMachine;
+import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.OpModes.pedropathing.Constants;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
-public abstract class MainPedroAuto extends StateMachineOpMode {
+public abstract class otherMainPedroAuto extends StateMachineOpMode {
 
     public enum AutoStates{
         shootPreload,
         leave,
         pickFromFlower,
         park,
-        wait,
-        pickupGarden
+        wait
     }
 
     List<State> autoStates;
@@ -55,8 +60,6 @@ public abstract class MainPedroAuto extends StateMachineOpMode {
                 return new FlowerState();
             case park:
                 return new ParkState();
-            case pickupGarden:
-                return new GardenState();
         }
         return null;
 
@@ -82,7 +85,7 @@ public abstract class MainPedroAuto extends StateMachineOpMode {
 
         @Override
         public void init() {
-            leavepath = Paths.line(lastPath, poses.point1).constant(poses.point1);
+            leavepath = Paths.line(lastPath, poses.leaveStart).constant(poses.leaveStart);
             setEndCondition(()-> Math.abs(follower.tangentialVelocity()) < Constants.foresightConfig.velocityConstraint.get() && follower.distanceToEndpoint() < 4);
             follower.follow(leavepath);
         }
@@ -110,8 +113,8 @@ public abstract class MainPedroAuto extends StateMachineOpMode {
 
         @Override
         public void init() {
-            flowerPath = Paths.line(lastPath, poses.flowerIntake).linear(lastPath, poses.flowerIntake);
-            leaveFlower = Paths.line(poses.flowerIntake, poses.flowerLeave).constant(poses.flowerIntake);
+            flowerPath = Paths.line(lastPath, poses.pickupFlower).linear(lastPath, poses.pickupFlower);
+            leaveFlower = Paths.line(poses.flowerIntake, poses.leaveFlower).constant(poses.pickupFlower);
             setEndCondition(()->isDone);
         }
         @Override
@@ -141,32 +144,16 @@ public abstract class MainPedroAuto extends StateMachineOpMode {
 
     private final class ParkState extends AbstractState {
         Path parkPath;
-        Path halfPark;
-        int step = 0;
-        boolean isDone = false;
+
         @Override
         public void init() {
-            halfPark = Paths.line(lastPath, poses.thenShoot).constant(lastPath);
-            parkPath = Paths.line(poses.thenShoot, poses.audiencePark).constant(lastPath);
+            parkPath = Paths.line(lastPath, poses.park).constant(lastPath);
             setEndCondition(()-> Math.abs(follower.tangentialVelocity()) < Constants.foresightConfig.velocityConstraint.get() && follower.distanceToEndpoint() < 4);
             follower.follow(parkPath);
         }
-
         @Override
         public void loop() {
             follower.update();
-            switch (step){
-                case 0:
-                    follower.follow(halfPark);
-                    if(Math.abs(follower.tangentialVelocity()) < Constants.foresightConfig.velocityConstraint.get() && follower.distanceToEndpoint() < 4) step = 1;
-                    break;
-                case 1:
-                    follower.follow(parkPath);
-                    if(Math.abs(follower.tangentialVelocity()) < Constants.foresightConfig.velocityConstraint.get() && follower.distanceToEndpoint() < 4) step = 2;
-                    break;
-                case 2:
-                    isDone = true;
-                    }
         }
 
         @Override
@@ -174,49 +161,7 @@ public abstract class MainPedroAuto extends StateMachineOpMode {
             lastPath = poses.park;
         }
     }
-    private final class GardenState extends AbstractState {
 
-        int step = 0;
-        Path gardenPath;
-        Path leaveGarden;
-        boolean isDone = false;
-
-        @Override
-        public void init() {
-            gardenPath = Paths.line(lastPath, poses.point3).linear(lastPath, poses.point3);
-            leaveGarden = Paths.line(poses.point3, poses.pickupGarden).constant(poses.pickupGarden);
-            setEndCondition(()->isDone);
-        }
-        @Override
-        public void loop() {
-            follower.update();
-            telemetry.addData("isdone?",Math.abs(follower.tangentialVelocity()) < Constants.foresightConfig.velocityConstraint.get() && follower.distanceToEndpoint() < 4);
-            telemetry.addData("Velocity",follower.tangentialVelocity());
-            telemetry.addData("Predicted Velocity",Constants.foresightConfig.velocityConstraint.get());
-            telemetry.addData("distance to end", follower.distanceToEndpoint());
-
-            follower.update();
-            switch (step){
-                case 0:
-                    follower.follow(gardenPath);
-                    if(Math.abs(follower.tangentialVelocity()) < Constants.foresightConfig.velocityConstraint.get() && follower.distanceToEndpoint() < 4) step = 1;
-                    break;
-                case 1:
-                    follower.follow(leaveGarden);
-                    if(Math.abs(follower.tangentialVelocity()) < Constants.foresightConfig.velocityConstraint.get() && follower.distanceToEndpoint() < 4) step = 2;
-                    break;
-                case 2:
-                    isDone = true;
-        }
-
-        }
-
-
-        @Override
-        public void stop(){
-            lastPath = poses.leaveStart;
-        }
-    }
 
     protected List<State> buildStates() {
 

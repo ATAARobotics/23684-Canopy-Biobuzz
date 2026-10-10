@@ -19,9 +19,10 @@ public class PedroPathingTest extends MainPedroAuto {
     }
 
     public void SetRoute(){
-        addStep(AutoStates.shootPreload);
         addStep(AutoStates.leave);
+        addStep(AutoStates.shootPreload);
         addStep(AutoStates.pickFromFlower);
+        addStep(AutoStates.pickupGarden);
         addStep(AutoStates.park);
     }
 }

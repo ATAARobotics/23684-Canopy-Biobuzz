@@ -17,7 +17,7 @@ public class MainTeleOp extends SafeOpMode {
 	private SafeDevice<DcMotorEx> frontRight;
 	private SafeDevice<DcMotorEx> backLeft;
 	private SafeDevice<DcMotorEx> backRight;
-	private SafeDevice<DcMotorEx> intake;
+	private SafeDevice<DcMotorEx> shooter;
 
 	@Override
 	protected void onSafeInit() {
@@ -25,13 +25,13 @@ public class MainTeleOp extends SafeOpMode {
 		frontRight = safeMap.device(DcMotorEx.class, "frontRight");
 		backLeft = safeMap.device(DcMotorEx.class, "backLeft");
 		backRight = safeMap.device(DcMotorEx.class, "backRight");
-		intake = safeMap.device(DcMotorEx.class, "intake");
+		shooter = safeMap.device(DcMotorEx.class, "shooter");
 
 		GamepadAdaptor.attach(orchestrator, gamepad1, "g1");
 		GamepadAdaptor.attach(orchestrator, gamepad2, "g2");
 
 		orchestrator.registerNode("drive", new Drive(orchestrator, frontLeft, frontRight, backLeft, backRight));
-		orchestrator.registerNode("intake", new Intake(orchestrator, intake));
+		orchestrator.registerNode("shooter", new Intake(orchestrator, shooter));
 	}
 
 	@Override
@@ -40,7 +40,7 @@ public class MainTeleOp extends SafeOpMode {
 		telemetry.addData("FR", "%.2f", orchestrator.getLatestValue("drive/power/fr", Double.class).orElse(0.0));
 		telemetry.addData("BL", "%.2f", orchestrator.getLatestValue("drive/power/bl", Double.class).orElse(0.0));
 		telemetry.addData("BR", "%.2f", orchestrator.getLatestValue("drive/power/br", Double.class).orElse(0.0));
-		telemetry.addData("Intake", "%.2f", orchestrator.getLatestValue("intake/power", Double.class).orElse(0.0));
+		telemetry.addData("Shooter", "%.2f", orchestrator.getLatestValue("shooter/power", Double.class).orElse(0.0));
 		telemetry.update();
 	}
 }
