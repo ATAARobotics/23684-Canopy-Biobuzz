@@ -11,7 +11,7 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 @TeleOp(name = "Shooter Tester", group = "Tests")
 public class ShooterTester extends SafeOpMode {
 
-    public static double shooterPower = 0.5;
+    public static double shooterPower = -0.5;
     private SafeDevice<DcMotorEx> shooter;
 
     @Override
