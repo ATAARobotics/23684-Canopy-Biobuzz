@@ -123,10 +123,17 @@ public class AprilTagVision extends Node {
 	/**
 	 * Requested capture size.
 	 *
-	 * <p>Calibrated by us in {@code TeamCode/src/main/res/xml/teamwebcamcalibrations.xml} for USB
+	 * <p>Calibrated by us in {@code FtcRobotController/src/main/res/xml/teamwebcamcalibrations.xml} for USB
 	 * {@code 0xC45:0x366}, which gives focal length {@code 908.758} and principal point
 	 * {@code (696.345, 376.979)} at this size. Keep the two in sync: a size with no matching entry
 	 * there has no intrinsics to scale from and falls back to a generic guess.
+	 *
+	 * <p>The file must live in FtcRobotController, not TeamCode. RobotCore's
+	 * {@code CameraCalibrationHelper} reads calibrations through its own
+	 * {@code com.qualcomm.robotcore.R.xml.teamwebcamcalibrations}, which resolves in the RobotCore
+	 * package. A copy under TeamCode lands in a different resource package and is never read, so the
+	 * processor silently falls back to {@code fx = 578.272} — about 57% under the real value, which
+	 * makes every range come out roughly 0.57x too short.
 	 */
 	public static final int STREAM_WIDTH = 1280;
 	public static final int STREAM_HEIGHT = 800;

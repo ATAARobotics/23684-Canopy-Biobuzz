@@ -56,6 +56,19 @@
 
     <!--
       ACTIVE CALIBRATION for our camera (USB vid 0xC45, pid 0x366).
+
+      This file MUST live in FtcRobotController, not TeamCode. RobotCore's
+      CameraCalibrationHelper loads these calibrations via its own
+      com.qualcomm.robotcore.R.xml.teamwebcamcalibrations, which resolves
+      against the RobotCore package. A copy in TeamCode lands under a different
+      resource package, so the SDK keeps reading the empty stub it ships in
+      RobotCore-12.0.0.aar and silently falls back to fx = fy = 578.272.
+
+      Symptom of getting this wrong, at AprilTag init:
+        "User did not provide a camera calibration, nor was a built-in
+         calibration found for this camera."
+      With the file in the right place you should instead see fx=908.758
+      fy=908.758 cx=696.345 cy=376.979.
     -->
     <Camera vid="0xC45" pid="0x366">
 
