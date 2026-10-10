@@ -26,6 +26,7 @@ public class Shoot extends Node {
     double RPM = 0.0;
     public static double STOP_POWER = 0.0;
     public boolean atRPM;
+    public static final double velocityCoefficient = 1/360.0 * 60.0 ;
 
     public Shoot(Orchestrator orchestrator, SafeDevice<DcMotorEx> shooter) {
         super(orchestrator);
@@ -37,19 +38,13 @@ public class Shoot extends Node {
 
     @RunPeriodically(hz = 50, hardware = true)
     public void update() {
-        updateRPM();
-        updateMotor();
-        atRPM = (Target > 50) && (Math.abs(Target - RPM) < 50);
-
         double targetRPM = orchestrator.getLatestValue("shooter/RPM", Float.class).map(Float::doubleValue).orElse(0.0);
         setTarget(targetRPM);
+        updateRPM();
+        updateMotor();
+        atRPM = (Target > 80) && (Math.abs(Target - RPM) < 50);
 
-        boolean isPressed = orchestrator.getLatestValue("g2/x", Boolean.class).orElse(false);
-        if (isPressed) {
-            setTarget(1000.0); // Example: shoot at 1000 RPM when button pressed
-        } else if (targetRPM <= 0) {
-            setTarget(0.0);
-        }
+
 
         orchestrator.publish("shooter/currentRPM", RPM);
         orchestrator.publish("shooter/targetRPM", Target);
@@ -60,12 +55,12 @@ public class Shoot extends Node {
         shooter.run(m -> {
             double velocity = m.getVelocity(AngleUnit.DEGREES); // degrees per second
             // Conversion: (deg/s) / 360 = rev/s. rev/s * 60 = RPM
-            RPM = (velocity / 360.0) * 60.0;
+            RPM = velocity * velocityCoefficient;
         });
     }
 
     private void updateMotor() {
-        if (Target <= 0) {
+        if (Target < 80) {
             shooter.run(m -> m.setPower(STOP_POWER));
             shooterPIDF.reset();
         } else {
@@ -79,7 +74,7 @@ public class Shoot extends Node {
         this.Target = target;
     }
 
-    @RunPeriodically(hz = 50, hardware = true)
+    @RunPeriodically(hz = 50)
     public void RunShooter() {
         double operator = -orchestrator.getLatestValue("g1/right_stick_y", Float.class).map(Float::doubleValue).orElse(0.0);
         double trigger = orchestrator.getLatestValue("g2/right_trigger", Float.class).map(Float::doubleValue).orElse(0.0);

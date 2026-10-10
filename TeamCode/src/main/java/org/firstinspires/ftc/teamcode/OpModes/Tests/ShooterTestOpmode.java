@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.OpModes.Tests;
 
+import com.aaravlabs.synapse.annotation.RunPeriodically;
 import com.aaravlabs.synapse.ftc.GamepadAdaptor;
 import com.aaravlabs.synapse.ftc.SafeDevice;
 import com.aaravlabs.synapse.ftc.SafeOpMode;
@@ -23,10 +24,18 @@ public class ShooterTestOpmode extends SafeOpMode {
 
     @Override
     protected void onSafeLoop() {
+        boolean isPressed = orchestrator.getLatestValue("g2/x", Boolean.class).orElse(false);
+        if (isPressed) {
+            orchestrator.publish("shooter/RPM",1000.0); // Example: shoot at 1000 RPM when button pressed
+        } else {
+            orchestrator.publish("shooter/RPM",0);
+        }
+
         orchestrator.publish("shooter/RPM", RPM);
         telemetry.addData("shooterSpeed", RPM);
         telemetry.addData("Target", orchestrator.getLatestValue("shooter/targetRPM", Double.class).orElse(0.0));
         telemetry.addData("Current", orchestrator.getLatestValue("shooter/currentRPM", Double.class).orElse(0.0));
         telemetry.addData("At RPM", orchestrator.getLatestValue("shooter/atRPM", Boolean.class).orElse(false));
+
     }
 }
