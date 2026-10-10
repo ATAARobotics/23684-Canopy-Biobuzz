@@ -74,15 +74,15 @@ public class Shoot extends Node {
         this.Target = target;
     }
 
-    @RunPeriodically(hz = 50)
-    public void RunShooter() {
-        double operator = -orchestrator.getLatestValue("g1/right_stick_y", Float.class).map(Float::doubleValue).orElse(0.0);
-        double trigger = orchestrator.getLatestValue("g2/right_trigger", Float.class).map(Float::doubleValue).orElse(0.0);
-        double power = Math.max(operator, trigger);
-        if (power > 0 || Target <= 0) {
-            shooter.run(m -> m.setPower(power));
-        }
-        orchestrator.publish("shoot/power", power);
-        orchestrator.publish("shooter/power", power);
-    }
+//   @RunPeriodically(hz = 50)
+//    public void RunShooter() {
+//        double operator = -orchestrator.getLatestValue("g1/right_stick_y", Float.class).map(Float::doubleValue).orElse(0.0);
+//        double trigger = orchestrator.getLatestValue("g2/right_trigger", Float.class).map(Float::doubleValue).orElse(0.0);
+//        double power = Math.max(operator, trigger);
+//        if (power > 0 || Target <= 0) {
+//            shooter.run(m -> m.setPower(power));
+//        }
+//        orchestrator.publish("shoot/power", power);
+//        orchestrator.publish("shooter/power", power);
+//    }
 }
