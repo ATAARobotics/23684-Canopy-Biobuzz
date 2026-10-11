@@ -43,9 +43,9 @@ public class TurretConfig {
 	// ── Turret mechanics ─────────────────────────────────────────────────────────
 	/**
 	 * Physical travel range, degrees. Turret zero is forward, CCW-positive. Never command outside.
-	 * The min sits 0.5° past zero so the turret can reach slightly behind its forward stop.
+	 * The min sits 1° past zero so the turret can reach slightly behind its forward stop.
 	 */
-	public static double minAngleDeg = -0.5;
+	public static double minAngleDeg = -1.0;
 	public static double maxAngleDeg = 290.0;
 	/** Studica Cypher MAX through-bore encoder, ABI quadrature output (§2.7 of the plan). */
 	public static double encoderCountsPerRev = 2048.0;
@@ -84,7 +84,7 @@ public class TurretConfig {
 	public static boolean verboseTelemetry = false;
 
 	// ── Tuning OpMode step cycle ────────────────────────────────────────────────
-	public static double cycleBaseDeg = 0.0;
+	public static double cycleBaseDeg = -1.0;
 	public static double cycleTargetDeg = 90.0;
 	public static double cycleHalfPeriodSec = 2.0;
 
