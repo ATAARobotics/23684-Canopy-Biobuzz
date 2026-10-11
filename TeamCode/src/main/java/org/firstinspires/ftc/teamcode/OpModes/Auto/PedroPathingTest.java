@@ -15,11 +15,12 @@ public class PedroPathingTest extends MainPedroAuto {
 
     @Override
     protected Pose getStartingPose() {
-        return new Pose(60.3538, 133.5359, Math.toRadians(270));
+        return new Pose(55, 9, Math.toRadians(90));
     }
 
     public void SetRoute(){
         addStep(AutoStates.leave);
+        addStep(1);
         addStep(AutoStates.shootPreload);
         addStep(AutoStates.pickFromFlower);
         addStep(AutoStates.pickupGarden);

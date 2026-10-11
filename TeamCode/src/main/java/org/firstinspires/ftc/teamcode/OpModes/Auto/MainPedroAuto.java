@@ -8,6 +8,8 @@ import com.aaravlabs.safepedropathing.api.Paths;
 import com.aaravlabs.safepedropathing.follower.Follower;
 import com.aaravlabs.safepedropathing.math.Pose;
 import com.aaravlabs.safepedropathing.paths.Path;
+import com.aaravlabs.synapse.ftc.SafeDevice;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 
 import org.firstinspires.ftc.teamcode.OpModes.pedropathing.Constants;
 
@@ -31,6 +33,7 @@ public abstract class MainPedroAuto extends StateMachineOpMode {
     Pose lastPath;
 
     Poses poses;
+    SafeDevice<DcMotorEx> intakeMotor;
     public void SetRoute(){}
 
     public void addStep(AutoStates autostates){
@@ -97,7 +100,7 @@ public abstract class MainPedroAuto extends StateMachineOpMode {
 
         @Override
         public void stop(){
-            lastPath = poses.leaveStart;
+            lastPath = poses.point1;
         }
     }
 
@@ -117,6 +120,7 @@ public abstract class MainPedroAuto extends StateMachineOpMode {
         @Override
         public void loop() {
             follower.update();
+            telemetry.addData("step",step);
             switch (step){
                 case 0:
                     follower.follow(flowerPath);
@@ -124,16 +128,19 @@ public abstract class MainPedroAuto extends StateMachineOpMode {
                     break;
                 case 1:
                     follower.follow(leaveFlower);
+                    intakeMotor.run((m) -> m.setPower(1));
                     if(Math.abs(follower.tangentialVelocity()) < Constants.foresightConfig.velocityConstraint.get() && follower.distanceToEndpoint() < 4) step = 2;
                     break;
                 case 2:
+                    intakeMotor.run((m) -> m.setPower(0));
                     isDone = true;
+                    break;
             }
         }
 
         @Override
         public void stop(){
-            lastPath = poses.leaveFlower;
+            lastPath = poses.flowerLeave;
         }
 
 
@@ -177,11 +184,12 @@ public abstract class MainPedroAuto extends StateMachineOpMode {
     private final class GardenState extends AbstractState {
 
         int step = 0;
+
         Path gardenPath;
         Path leaveGarden;
         boolean isDone = false;
 
-        @Override
+
         public void init() {
             gardenPath = Paths.line(lastPath, poses.point3).linear(lastPath, poses.point3);
             leaveGarden = Paths.line(poses.point3, poses.pickupGarden).constant(poses.pickupGarden);
@@ -198,14 +206,17 @@ public abstract class MainPedroAuto extends StateMachineOpMode {
             follower.update();
             switch (step){
                 case 0:
+
                     follower.follow(gardenPath);
                     if(Math.abs(follower.tangentialVelocity()) < Constants.foresightConfig.velocityConstraint.get() && follower.distanceToEndpoint() < 4) step = 1;
                     break;
                 case 1:
+                    intakeMotor.run((m) -> m.setPower(1));
                     follower.follow(leaveGarden);
                     if(Math.abs(follower.tangentialVelocity()) < Constants.foresightConfig.velocityConstraint.get() && follower.distanceToEndpoint() < 4) step = 2;
                     break;
                 case 2:
+                    intakeMotor.run((m) -> m.setPower(0));
                     isDone = true;
         }
 
@@ -226,6 +237,7 @@ public abstract class MainPedroAuto extends StateMachineOpMode {
         follower.setPose(getStartingPose());
         lastPath = getStartingPose();
         poses = new Poses(follower);
+        intakeMotor = safeMap.device(DcMotorEx.class, "intake");
 
         return autoStates;
     }
