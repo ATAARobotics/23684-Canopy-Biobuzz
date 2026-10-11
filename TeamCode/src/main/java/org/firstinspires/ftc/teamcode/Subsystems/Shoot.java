@@ -4,6 +4,7 @@ import com.aaravlabs.synapse.Node;
 import com.aaravlabs.synapse.Orchestrator;
 import com.aaravlabs.synapse.annotation.RunPeriodically;
 import com.aaravlabs.synapse.ftc.SafeDevice;
+import com.bylazar.configurables.annotations.Configurable;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 
@@ -11,7 +12,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.teamcode.Utils.FeedForwardController;
 import org.firstinspires.ftc.teamcode.Utils.PIDController;
 
-
+@Configurable
 public class Shoot extends Node {
 
     private final SafeDevice<DcMotorEx> shooter;
