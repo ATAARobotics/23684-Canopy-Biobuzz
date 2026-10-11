@@ -42,8 +42,8 @@ public class TurretConfig {
 
 	// ── Turret mechanics ─────────────────────────────────────────────────────────
 	/** Physical travel range, degrees. Turret zero is forward, CCW-positive. Never command outside. */
-	public static double minAngleDeg = -15.0;
-	public static double maxAngleDeg = 375.0;
+	public static double minAngleDeg = 0.0;
+	public static double maxAngleDeg = 290.0;
 	/** Studica Cypher MAX through-bore encoder, ABI quadrature output (§2.7 of the plan). */
 	public static double encoderCountsPerRev = 2048.0;
 	/** Turret gear (150T) driven by the servo pinion (60T) and the encoder gear (60T). */
