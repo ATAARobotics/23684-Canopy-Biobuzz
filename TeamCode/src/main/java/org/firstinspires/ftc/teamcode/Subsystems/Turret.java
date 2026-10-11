@@ -256,8 +256,11 @@ public class Turret extends Node {
 		orchestrator.publish("turret/offsetLateralCm", lateralOffsetCm);
 		orchestrator.publish("turret/atLimit", limitHit);
 		orchestrator.publish("turret/enabled", enabled);
-		// Telemetry-only turret yaw sync for the vision node's resolved.* geometry (§4.5).
-		orchestrator.publish("vision/setCameraYaw", angle);
+		// Telemetry-only turret yaw sync for the vision node's resolved.* geometry (§4.5). The camera
+		// rides the turret, so its yaw relative to the robot is the turret angle plus the mount
+		// offset — the processor is built at yaw 0 and cannot be re-aimed, so this is what corrects
+		// for it. Matches the α = θ + cameraMountYawDeg + β used in computeAim.
+		orchestrator.publish("vision/setCameraYaw", angle + TurretConfig.cameraMountYawDeg);
 	}
 
 	// ── aiming ────────────────────────────────────────────────────────────────────
