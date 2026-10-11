@@ -56,8 +56,8 @@ public class TurretTuning extends SafeOpMode {
 		turret = new Turret(
 				orchestrator,
 				safeMap,
-				safeMap.device(CRServo.class, "turret"),
-				safeMap.device(DcMotorEx.class, "turretEncoderMotorPlaceholder"),
+				safeMap.device(CRServo.class, "turretServo"),
+				safeMap.device(DcMotorEx.class, "intake"),
 				null,
 				null,
 				"g1");
