@@ -18,7 +18,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
 public class Constants {
 	public static MecanumConfig drivetrainConfig = new MecanumConfig(c -> {
-		c.frontLeftName.set(" frontLeft");
+		c.frontLeftName.set("frontLeft");
 		c.frontRightName.set("frontRight");
 		c.backLeftName.set("backLeft");
 		c.backRightName.set("backRight");
