@@ -41,8 +41,11 @@ public class TurretConfig {
 	public static double cellBlueScoringY = 86.0;
 
 	// ── Turret mechanics ─────────────────────────────────────────────────────────
-	/** Physical travel range, degrees. Turret zero is forward, CCW-positive. Never command outside. */
-	public static double minAngleDeg = 0.0;
+	/**
+	 * Physical travel range, degrees. Turret zero is forward, CCW-positive. Never command outside.
+	 * The min sits 0.5° off the mechanical stop so the limit never rests on the hard stop.
+	 */
+	public static double minAngleDeg = 0.5;
 	public static double maxAngleDeg = 290.0;
 	/** Studica Cypher MAX through-bore encoder, ABI quadrature output (§2.7 of the plan). */
 	public static double encoderCountsPerRev = 2048.0;
