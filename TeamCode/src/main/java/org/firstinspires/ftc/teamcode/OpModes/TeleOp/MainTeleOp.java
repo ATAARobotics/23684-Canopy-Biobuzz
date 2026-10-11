@@ -6,7 +6,6 @@ import com.aaravlabs.synapse.ftc.SafeDevice;
 import com.aaravlabs.synapse.ftc.SafeOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
-
 import org.firstinspires.ftc.teamcode.Subsystems.Drive;
 import org.firstinspires.ftc.teamcode.Subsystems.Intake;
 
@@ -36,11 +35,26 @@ public class MainTeleOp extends SafeOpMode {
 
 	@Override
 	protected void onSafeLoop() {
-		telemetry.addData("FL", "%.2f", orchestrator.getLatestValue("drive/power/fl", Double.class).orElse(0.0));
-		telemetry.addData("FR", "%.2f", orchestrator.getLatestValue("drive/power/fr", Double.class).orElse(0.0));
-		telemetry.addData("BL", "%.2f", orchestrator.getLatestValue("drive/power/bl", Double.class).orElse(0.0));
-		telemetry.addData("BR", "%.2f", orchestrator.getLatestValue("drive/power/br", Double.class).orElse(0.0));
-		telemetry.addData("Intake", "%.2f", orchestrator.getLatestValue("intake/power", Double.class).orElse(0.0));
+		telemetry.addData(
+				"FL",
+				"%.2f",
+				orchestrator.getLatestValue("drive/power/fl", Double.class).orElse(0.0));
+		telemetry.addData(
+				"FR",
+				"%.2f",
+				orchestrator.getLatestValue("drive/power/fr", Double.class).orElse(0.0));
+		telemetry.addData(
+				"BL",
+				"%.2f",
+				orchestrator.getLatestValue("drive/power/bl", Double.class).orElse(0.0));
+		telemetry.addData(
+				"BR",
+				"%.2f",
+				orchestrator.getLatestValue("drive/power/br", Double.class).orElse(0.0));
+		telemetry.addData(
+				"Intake",
+				"%.2f",
+				orchestrator.getLatestValue("intake/power", Double.class).orElse(0.0));
 		telemetry.update();
 	}
 }

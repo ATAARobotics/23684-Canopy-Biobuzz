@@ -17,8 +17,15 @@ public class Intake extends Node {
 
 	@RunPeriodically(hz = 50, hardware = true)
 	public void runIntake() {
-		double operator = -orchestrator.getLatestValue("g2/left_stick_y", Float.class).map(Float::doubleValue).orElse(0.0);
-		double trigger = orchestrator.getLatestValue("g1/left_trigger", Float.class).map(Float::doubleValue).orElse(0.0);
+		double operator =
+				-orchestrator
+						.getLatestValue("g2/left_stick_y", Float.class)
+						.map(Float::doubleValue)
+						.orElse(0.0);
+		double trigger = orchestrator
+				.getLatestValue("g1/left_trigger", Float.class)
+				.map(Float::doubleValue)
+				.orElse(0.0);
 		double power = Math.max(operator, trigger);
 		intake.run(m -> m.setPower(power));
 		orchestrator.publish("intake/power", power);

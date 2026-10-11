@@ -5,6 +5,9 @@
   "includes": [
     "TeamCode/**/*.java"
   ],
+  "excludes": [
+    "TeamCode/src/main/java/org/wpilib/**"
+  ],
   "java": {
     "lineWidth": 120,
     "indentWidth": 4,
