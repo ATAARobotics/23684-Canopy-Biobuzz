@@ -10,8 +10,8 @@ public class Intake extends Node {
 
 	private final SafeDevice<DcMotorEx> intake;
 
-	public Intake(Orchestrator orchestrator, SafeDevice<DcMotorEx> intake) {
-		super(orchestrator);
+	public Intake(Orchestrator orch, SafeDevice<DcMotorEx> intake) {
+		super(orch);
 		this.intake = intake;
 	}
 

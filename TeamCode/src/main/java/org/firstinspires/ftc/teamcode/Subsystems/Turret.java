@@ -39,10 +39,15 @@ public class Turret extends Node {
 
     public static double p,i,d,f;
 
-    double TicksToDegree = 0;
+    public static int TicksPerRev = 8192;
+
+    double TicksToRad = (2 * Math.PI) / (TicksPerRev * 2.5);
 
     double currentangle = 0;
     double targetangle = 0;
+
+    int MaxAngle = 0;
+    int MinAngle = 0;
 
     public Turret(SafeDevice<CRServo> turretServo, SafeDevice<DcMotor> encoder, Follower follower, Telemetry telemetry, Orchestrator orch) {
         super(orch);
@@ -54,10 +59,27 @@ public class Turret extends Node {
         turretPIDF = new PIDFController(p,i,d,f);
     }
 
+    private double angleWrap(double angle) {
+        return Math.atan2(Math.sin(angle), Math.cos(angle));
+    }
+
+    private double ClampPosition(double currentPos, double power){
+        if(currentPos > MaxAngle - 10 || currentPos < MinAngle + 10 ){
+            return 0;
+        }
+        else{
+            return power;
+        }
+    }
+
+//    private double CloseestAngle(double localAngle){
+//
+//    }
+
     private double ToLocalAngle(double globalAngle){
         double heading = follower.pose().heading();
 
-        double localangle = globalAngle - heading;
+        double localangle = angleWrap(globalAngle - heading);
         return localangle;
     }
 
@@ -66,27 +88,27 @@ public class Turret extends Node {
         double deltaY = target.y() - robotPose.y();
 
         double Tanang = Math.atan2(deltaY,deltaX);
-        double finalang = Tanang + Math.PI;
+        double finalang = Tanang;
         return finalang;
     }
 
     @RunPeriodically(hz = 50, hardware = true)
     public void Update() {
-        currentangle = encoder.raw().getCurrentPosition() * TicksToDegree;
+        currentangle = encoder.raw().getCurrentPosition() * TicksToRad;
 
         if(follower.pose().y() < 72) targetangle = ToLocalAngle(PinpointAngle(follower.pose(),new Pose(57,51)));
         else targetangle = ToLocalAngle(PinpointAngle(follower.pose(),new Pose(57,91)));
 
         double power = turretPIDF.getOutput(currentangle,targetangle);
 
-        turretServo.run((s)-> s.setPower(power));
+        turretServo.run((s)-> s.setPower(ClampPosition(currentangle,power)));
 
     }
 
     @RunPeriodically(hz = 50, hardware = true)
     public void Telemetry() {
 
-        telemetry.addData("current Angle", currentangle);
+        telemetry.addData("current Angle", Math.toDegrees(currentangle));
 
     }
 }
