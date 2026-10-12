@@ -39,7 +39,7 @@ public class Shoot extends Node {
 
     @RunPeriodically(hz = 50, hardware = true)
     public void update() {
-        double targetRPM = orchestrator.getLatestValue("shooter/RPM", Float.class).map(Float::doubleValue).orElse(0.0);
+        double targetRPM = orchestrator.getLatestValue("shooter/RPM", Double.class).orElse(0.0);
         setTarget(targetRPM);
         updateRPM();
         updateMotor();

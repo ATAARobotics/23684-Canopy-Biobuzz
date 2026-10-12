@@ -19,7 +19,7 @@ public class ShooterTestOpmode extends SafeOpMode {
 
     private SafeDevice<DcMotorEx> shooter;
     private SafeDevice<Servo> hoodServo;
-    public static double RPM = 1000;
+     double RPM = 1000;
 
     @Override
     protected void onSafeInit() {
