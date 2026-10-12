@@ -16,9 +16,9 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.Config.TurretConfig;
 import org.firstinspires.ftc.teamcode.Subsystems.Vision.AprilTagVision;
 import org.firstinspires.ftc.teamcode.Subsystems.Vision.ClusterTarget;
-import org.wpilib.math.controller.ProfiledPIDController;
-import org.wpilib.math.controller.SimpleMotorFeedforward;
-import org.wpilib.math.trajectory.TrapezoidProfile;
+import com.aaravlabs.control.controller.ProfiledPIDController;
+import com.aaravlabs.control.controller.SimpleMotorFeedforward;
+import com.aaravlabs.control.trajectory.TrapezoidProfile;
 
 /**
  * Keeps the turret facing the correct HIVE CELL at all times.
