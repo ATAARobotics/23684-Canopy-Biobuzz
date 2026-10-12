@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.Subsystems;
+package org.firstinspires.ftc.teamcode.OpModes.Tests;
 
 import com.aaravlabs.synapse.Node;
 import com.aaravlabs.synapse.Orchestrator;
@@ -9,7 +9,7 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.teamcode.Utils.FeedForwardController;
-import org.firstinspires.ftc.teamcode.Utils.PIDFController;
+import org.firstinspires.ftc.teamcode.Utils.PIDController;
 
 public class Shooter extends Node {
     private final SafeDevice<DcMotorEx> sh;
@@ -17,7 +17,7 @@ public class Shooter extends Node {
     double P = 0.013, I = 0, D = 0;
     double kV = 0.0003, kS = 0.035;
 
-    PIDFController shooterPIDF;
+    PIDController shooterPIDF;
     FeedForwardController shooterFF;
     double RPM;
     public static double TICKS_PER_REVOLUTION = 28.0;
@@ -29,8 +29,8 @@ public class Shooter extends Node {
     public Shooter(Orchestrator orchestrator, SafeDevice<DcMotorEx> shooter) {
         super(orchestrator);
         this.sh = shooter;
-        shooterFF = new FeedForwardController(kV, kS, 0);
-        shooterPIDF = new PIDFController(P, I, D);
+        shooterFF = new FeedForwardController(kS, kV, 0);
+        shooterPIDF = new PIDController(P, I, D);
         sh.run(m -> m.setDirection(DcMotor.Direction.FORWARD));
     }
 
@@ -68,12 +68,10 @@ public class Shooter extends Node {
             sh.run(m -> m.setPower(STOP_POWER));
             shooterPIDF.reset();
         } else {
-            double pidOutput = shooterPIDF.getOutput(RPM, Target);
+            double pidOutput = shooterPIDF.calculate(RPM,Target);
             double ffOutput = shooterFF.calculate(Target, 0);
             sh.run(m -> m.setPower(pidOutput + ffOutput));
         }
-
-        shooter.run( sh -> sh.setPower(Power));
     }
 
     public void setTarget(double target) {
