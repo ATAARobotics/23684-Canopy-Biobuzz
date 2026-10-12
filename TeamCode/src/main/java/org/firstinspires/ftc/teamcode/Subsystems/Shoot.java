@@ -16,16 +16,16 @@ import org.firstinspires.ftc.teamcode.Utils.PIDController;
 public class Shoot extends Node {
 
     private final SafeDevice<DcMotorEx> shooter;
-    double P = 0.013, I = 0, D = 0;
-    double kV = 0.0003, kS = 0.035;
+    private static final double P = 0.013, I = 0, D = 0;
+    private static final double kV = 0.0003, kS = 0.035;
     PIDController shooterPIDF;
     FeedForwardController shooterFF;
 
     public static double TICKS_PER_REVOLUTION = 28.0;
     public static final double RPM_CONVERSION = 60.0 / TICKS_PER_REVOLUTION;
-    double Target = 0.0;
-    double RPM = 0.0;
-    public static double STOP_POWER = 0.0;
+    int Target = 0;
+    int RPM = 0;
+    public static int STOP_POWER = 0;
     public boolean atRPM;
     public static final double velocityCoefficient = 1/360.0 * 60.0 ;
 
@@ -37,9 +37,9 @@ public class Shoot extends Node {
         shooter.run(m -> m.setDirection(DcMotor.Direction.FORWARD));
     }
 
-    @RunPeriodically(hz = 50, hardware = true)
+    @RunPeriodically(hz = 50)
     public void update() {
-        double targetRPM = orchestrator.getLatestValue("shooter/RPM", Double.class).orElse(0.0);
+        double targetRPM = orchestrator.getLatestValue("shooter/RPM", Integer.class).orElse(0);
         setTarget(targetRPM);
         updateRPM();
         updateMotor();
@@ -56,7 +56,7 @@ public class Shoot extends Node {
         shooter.run(m -> {
             double velocity = m.getVelocity(AngleUnit.DEGREES); // degrees per second
             // Conversion: (deg/s) / 360 = rev/s. rev/s * 60 = RPM
-            RPM = velocity * velocityCoefficient;
+            RPM = (int) (velocity * velocityCoefficient);
         });
     }
 
@@ -72,7 +72,7 @@ public class Shoot extends Node {
     }
 
     public void setTarget(double target) {
-        this.Target = target;
+        this.Target = (int) target;
     }
 
 //   @RunPeriodically(hz = 50)
