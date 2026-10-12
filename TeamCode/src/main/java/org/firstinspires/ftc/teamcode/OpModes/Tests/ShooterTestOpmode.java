@@ -51,7 +51,7 @@ public class ShooterTestOpmode extends SafeOpMode {
 
         boolean angleHigher = orchestrator.getLatestValue("g2/a", Boolean.class).orElse(false);
         if (angleHigher) {
-            orchestrator.publish("servo/pos", servohoodangle);; // Shoots at target RPM when button pressed
+            orchestrator.publish("servo/pos", servohoodangle); // Shoots at target RPM when button pressed
         } else {
             orchestrator.publish("servo/pos",  (double) 0);  // Stops shooter when button released
         }

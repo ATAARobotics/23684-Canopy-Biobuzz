@@ -40,7 +40,7 @@ public class Shoot extends Node {
         shooter.run(m -> m.setDirection(DcMotor.Direction.FORWARD));
     }
 
-    @RunPeriodically(hz = 50, hardware = true)
+    @RunPeriodically(hz = 50)
     public void update() {
         double targetRPM = orchestrator.getLatestValue("shooter/RPM", Integer.class).orElse(0);
         setTarget(targetRPM);

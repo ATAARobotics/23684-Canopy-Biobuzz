@@ -14,8 +14,8 @@ import org.firstinspires.ftc.teamcode.Utils.PIDController;
 public class Shooter extends Node {
     private final SafeDevice<DcMotorEx> sh;
 
-    double P = 0.013, I = 0, D = 0;
-    double kV = 0.0003, kS = 0.035;
+    double P = 0.001, I = 0, D = 0;
+    double kV = 0.00063, kS = 0.17;
 
     PIDController shooterPIDF;
     FeedForwardController shooterFF;
