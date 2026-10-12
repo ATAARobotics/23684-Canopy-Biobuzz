@@ -7,6 +7,7 @@ import com.aaravlabs.synapse.ftc.SafeDevice;
 import com.bylazar.configurables.annotations.Configurable;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.teamcode.Utils.FeedForwardController;
@@ -16,18 +17,20 @@ import org.firstinspires.ftc.teamcode.Utils.PIDController;
 public class Shoot extends Node {
 
     private final SafeDevice<DcMotorEx> shooter;
-    private static final double P = 0.013, I = 0, D = 0;
-    private static final double kV = 0.0003, kS = 0.035;
+    public static double P = 0.001, I = 0, D = 0;
+    public static double kV = 0.00063, kS = 0.17;
     PIDController shooterPIDF;
     FeedForwardController shooterFF;
 
     public static double TICKS_PER_REVOLUTION = 28.0;
     public static final double RPM_CONVERSION = 60.0 / TICKS_PER_REVOLUTION;
-    int Target = 0;
-    int RPM = 0;
-    public static int STOP_POWER = 0;
+    double Target = 0.0;
+    double RPM = 0.0;
+    public static double STOP_POWER = 0.0;
     public boolean atRPM;
-    public static final double velocityCoefficient = 1/360.0 * 60.0 ;
+
+    public static int ticksPerRev = 28;
+    public static final double velocityCoefficient = - (ticksPerRev/360.0 * 60.0);
 
     public Shoot(Orchestrator orchestrator, SafeDevice<DcMotorEx> shooter) {
         super(orchestrator);
@@ -37,7 +40,7 @@ public class Shoot extends Node {
         shooter.run(m -> m.setDirection(DcMotor.Direction.FORWARD));
     }
 
-    @RunPeriodically(hz = 50)
+    @RunPeriodically(hz = 50, hardware = true)
     public void update() {
         double targetRPM = orchestrator.getLatestValue("shooter/RPM", Integer.class).orElse(0);
         setTarget(targetRPM);
@@ -56,7 +59,7 @@ public class Shoot extends Node {
         shooter.run(m -> {
             double velocity = m.getVelocity(AngleUnit.DEGREES); // degrees per second
             // Conversion: (deg/s) / 360 = rev/s. rev/s * 60 = RPM
-            RPM = (int) (velocity * velocityCoefficient);
+            RPM = velocity * velocityCoefficient;
         });
     }
 
@@ -72,7 +75,7 @@ public class Shoot extends Node {
     }
 
     public void setTarget(double target) {
-        this.Target = (int) target;
+        this.Target = target;
     }
 
 //   @RunPeriodically(hz = 50)
