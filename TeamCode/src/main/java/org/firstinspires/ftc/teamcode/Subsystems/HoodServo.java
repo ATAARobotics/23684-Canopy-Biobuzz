@@ -15,17 +15,13 @@ public class HoodServo extends Node {
         hoodServo.run(m -> m.setDirection(Servo.Direction.FORWARD));
     }
 
-//    @SubscribedTo(topic = "g2/a/rising")
-//    public void increaseAngle() throws Exception {
-//        double position = hoodServo.call(Servo::getPosition) + 0.05;
-//        hoodServo.run(m -> m.setPosition(position));
-//        orchestrator.publish("hoodServo/position", position);
-//    }
-//    @SubscribedTo(topic = "g2/b/rising")
-//    public void decreaseAngle() throws Exception{
-//        double position = hoodServo.call(Servo::getPosition) - 0.05;
-//        hoodServo.run(m -> m.setPosition(position));
-//        orchestrator.publish("hoodServo/position", position);
-//    }
-
+    @SubscribedTo(topic = "g1/a/rising")
+    public void increaseAngle() {
+        hoodServo.run(m -> m.setPosition(m.getPosition() + 0.05));
+    }
+    @SubscribedTo(topic = "g1/b/falling")
+    public void decreaseAngle() {
+        hoodServo.run(m -> m.setPosition(m.getPosition() - 0.05));
+    }
 }
+

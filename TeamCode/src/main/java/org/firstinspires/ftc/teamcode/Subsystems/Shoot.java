@@ -16,14 +16,14 @@ import org.firstinspires.ftc.teamcode.Utils.PIDController;
 public class Shoot extends Node {
 
     private final SafeDevice<DcMotorEx> shooter;
-    public static double P = 0.013, I = 0, D = 0;
-    public static double kV = 0.0003, kS = 0.035;
+    double P = 0.013, I = 0, D = 0;
+    double kV = 0.0003, kS = 0.035;
     PIDController shooterPIDF;
     FeedForwardController shooterFF;
 
     public static double TICKS_PER_REVOLUTION = 28.0;
     public static final double RPM_CONVERSION = 60.0 / TICKS_PER_REVOLUTION;
-    public static double Target = 0.0;
+    double Target = 0.0;
     double RPM = 0.0;
     public static double STOP_POWER = 0.0;
     public boolean atRPM;
@@ -37,9 +37,9 @@ public class Shoot extends Node {
         shooter.run(m -> m.setDirection(DcMotor.Direction.FORWARD));
     }
 
-    @RunPeriodically(hz = 50)
+    @RunPeriodically(hz = 50, hardware = true)
     public void update() {
-        double targetRPM = orchestrator.getLatestValue("shooter/RPM", Float.class).map(Float::doubleValue).orElse(0.0);
+        double targetRPM = orchestrator.getLatestValue("shooter/RPM", Double.class).orElse(0.0);
         setTarget(targetRPM);
         updateRPM();
         updateMotor();
@@ -72,7 +72,7 @@ public class Shoot extends Node {
     }
 
     public void setTarget(double target) {
-        Target = target;
+        this.Target = target;
     }
 
 //   @RunPeriodically(hz = 50)
