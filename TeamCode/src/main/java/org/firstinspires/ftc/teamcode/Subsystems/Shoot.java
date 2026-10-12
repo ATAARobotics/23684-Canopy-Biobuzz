@@ -7,6 +7,7 @@ import com.aaravlabs.synapse.ftc.SafeDevice;
 import com.bylazar.configurables.annotations.Configurable;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.teamcode.Utils.FeedForwardController;
@@ -16,8 +17,8 @@ import org.firstinspires.ftc.teamcode.Utils.PIDController;
 public class Shoot extends Node {
 
     private final SafeDevice<DcMotorEx> shooter;
-    double P = 0.013, I = 0, D = 0;
-    double kV = 0.0003, kS = 0.035;
+    public static double P = 0.001, I = 0, D = 0;
+    public static double kV = 0.00063, kS = 0.17;
     PIDController shooterPIDF;
     FeedForwardController shooterFF;
 
@@ -27,7 +28,9 @@ public class Shoot extends Node {
     double RPM = 0.0;
     public static double STOP_POWER = 0.0;
     public boolean atRPM;
-    public static final double velocityCoefficient = 1/360.0 * 60.0 ;
+
+    public static int ticksPerRev = 28;
+    public static final double velocityCoefficient = - (ticksPerRev/360.0 * 60.0);
 
     public Shoot(Orchestrator orchestrator, SafeDevice<DcMotorEx> shooter) {
         super(orchestrator);
@@ -39,7 +42,7 @@ public class Shoot extends Node {
 
     @RunPeriodically(hz = 50, hardware = true)
     public void update() {
-        double targetRPM = orchestrator.getLatestValue("shooter/RPM", Double.class).orElse(0.0);
+        double targetRPM = orchestrator.getLatestValue("shooter/RPM", Integer.class).orElse(0);
         setTarget(targetRPM);
         updateRPM();
         updateMotor();

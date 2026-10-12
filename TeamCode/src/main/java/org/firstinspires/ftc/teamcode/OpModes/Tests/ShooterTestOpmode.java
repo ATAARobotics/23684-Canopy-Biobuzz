@@ -5,6 +5,8 @@ import com.aaravlabs.synapse.ftc.GamepadAdaptor;
 import com.aaravlabs.synapse.ftc.SafeDevice;
 import com.aaravlabs.synapse.ftc.SafeOpMode;
 //import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.bylazar.telemetry.JoinedTelemetry;
+import com.bylazar.telemetry.PanelsTelemetry;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 
@@ -19,7 +21,11 @@ public class ShooterTestOpmode extends SafeOpMode {
 
     private SafeDevice<DcMotorEx> shooter;
     private SafeDevice<Servo> hoodServo;
-     double RPM = 1000;
+     public static int RPM = 1000;
+
+     public static double servohoodangle = 0.7;
+
+     JoinedTelemetry joinedTelemetry;
 
     @Override
     protected void onSafeInit() {
@@ -29,6 +35,8 @@ public class ShooterTestOpmode extends SafeOpMode {
 
         hoodServo = safeMap.device(Servo.class, "hoodServo");
         orchestrator.registerNode("hoodServo", new HoodServo(orchestrator, hoodServo));
+
+        joinedTelemetry = new JoinedTelemetry(PanelsTelemetry.INSTANCE.getFtcTelemetry(), telemetry);
     }
 
     @Override
@@ -38,18 +46,20 @@ public class ShooterTestOpmode extends SafeOpMode {
         if (isPressed) {
             orchestrator.publish("shooter/RPM", RPM); // Shoots at target RPM when button pressed
         } else {
-            orchestrator.publish("shooter/RPM", 0.0);  // Stops shooter when button released
+            orchestrator.publish("shooter/RPM",  0);  // Stops shooter when button released
         }
 
-//        boolean angleHigher = orchestrator.getLatestValue("g2/a", Boolean.class).orElse(false);
-//        if (angleHigher) {
-//            orchestrator.publish("servo/pos",orchestrator.getLatestVal; // Shoots at target RPM when button pressed
-//        } else {
-//            orchestrator.publish("servo/pos", 0.0);  // Stops shooter when button released
-//        }
-        telemetry.addData("shooterSpeed", RPM);
-        telemetry.addData("Target", orchestrator.getLatestValue("shooter/targetRPM", Double.class).orElse(0.0));
-        telemetry.addData("Current", orchestrator.getLatestValue("shooter/currentRPM", Double.class).orElse(0.0));
-        telemetry.addData("At RPM", orchestrator.getLatestValue("shooter/atRPM", Boolean.class).orElse(false));
+        boolean angleHigher = orchestrator.getLatestValue("g2/a", Boolean.class).orElse(false);
+        if (angleHigher) {
+            orchestrator.publish("servo/pos", servohoodangle);; // Shoots at target RPM when button pressed
+        } else {
+            orchestrator.publish("servo/pos",  (double) 0);  // Stops shooter when button released
+        }
+        joinedTelemetry.addData("shooterSpeed", RPM);
+        joinedTelemetry.addData("Target", orchestrator.getLatestValue("shooter/targetRPM", Double.class).orElse(0.0));
+        joinedTelemetry.addData("Current", orchestrator.getLatestValue("shooter/currentRPM", Double.class).orElse(0.0));
+        joinedTelemetry.addData("At RPM", orchestrator.getLatestValue("shooter/atRPM", Boolean.class).orElse(false));
+        joinedTelemetry.addData("Hood Angle", servohoodangle);
+        joinedTelemetry.update();
     }
 }
