@@ -6,15 +6,19 @@ import com.aaravlabs.synapse.Node;
 import com.aaravlabs.synapse.Orchestrator;
 import com.aaravlabs.synapse.annotation.RunPeriodically;
 import com.aaravlabs.synapse.ftc.SafeDevice;
+import com.bylazar.configurables.annotations.Configurable;
 import com.qualcomm.robotcore.hardware.AnalogInput;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.Utils.PIDFController;
 
+
+@Configurable
 public class Turret extends Node {
     /**
      * Create a node bound to the given orchestrator. Every subclass constructor must
@@ -46,7 +50,7 @@ public class Turret extends Node {
     double currentangle = 0;
     double targetangle = 0;
 
-    int MaxAngle = 0;
+    int MaxAngle = 300;
     int MinAngle = 0;
 
     public Turret(SafeDevice<CRServo> turretServo, SafeDevice<DcMotor> encoder, Follower follower, Telemetry telemetry, Orchestrator orch) {
@@ -55,8 +59,9 @@ public class Turret extends Node {
         this.telemetry = telemetry;
         this.turretServo = turretServo;
         this.follower = follower;
-
         turretPIDF = new PIDFController(p,i,d,f);
+        encoder.run((m)-> m.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER));
+        encoder.run((m)-> m.setDirection(DcMotorSimple.Direction.REVERSE));
     }
 
     private double angleWrap(double angle) {
@@ -64,7 +69,7 @@ public class Turret extends Node {
     }
 
     private double ClampPosition(double currentPos, double power){
-        if(currentPos > MaxAngle - 10 || currentPos < MinAngle + 10 ){
+        if(currentPos > MaxAngle - 5 || currentPos < MinAngle + 5 ){
             return 0;
         }
         else{
@@ -101,14 +106,27 @@ public class Turret extends Node {
 
         double power = turretPIDF.getOutput(currentangle,targetangle);
 
-        turretServo.run((s)-> s.setPower(ClampPosition(currentangle,power)));
+        turretServo.raw().setPower(ClampPosition(currentangle,power));
+    }
+
+    @RunPeriodically(hz = 50)
+    public void PIDFupdate(){
 
     }
 
     @RunPeriodically(hz = 50, hardware = true)
     public void Telemetry() {
 
+        double gobalAngle = 0;
+
+        if(follower.pose().y() < 72) gobalAngle = PinpointAngle(follower.pose(),new Pose(57,51));
+        else gobalAngle = PinpointAngle(follower.pose(),new Pose(57,91));
+
         telemetry.addData("current Angle", Math.toDegrees(currentangle));
+        telemetry.addData("Target Angle (Local)", Math.toDegrees(targetangle));
+        telemetry.addData("Target Angle (Global)", Math.toDegrees(gobalAngle));
+        telemetry.addData("Power:", turretPIDF.getOutput(currentangle,targetangle));
+
 
     }
 }
