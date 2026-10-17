@@ -5,6 +5,7 @@ import com.aaravlabs.safepedropathing.algorithm.ForesightConfig;
 import com.aaravlabs.safepedropathing.controllers.Controller;
 import com.aaravlabs.safepedropathing.follower.Follower;
 import com.aaravlabs.safepedropathing.math.Matrix;
+import com.aaravlabs.safepedropathing.math.Pose;
 import com.aaravlabs.safepedropathing.math.Vector2D;
 import com.aaravlabs.safepedropathing.revhub.drivetrains.Mecanum;
 import com.aaravlabs.safepedropathing.revhub.drivetrains.MecanumConfig;
@@ -17,6 +18,21 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
 public class Constants {
+
+	/**
+	 * Where the robot sits when the OpMode starts, in Pedro inches from the field's top-left
+	 * corner with heading in radians, CCW-positive (Pedro's convention, not WPILib's). Heading 90°
+	 * is facing {@code +Y}, up the field toward the scoring half.
+	 *
+	 * <p>Set on the localizer during OpMode init: odometry comes up at whatever the encoder counters
+	 * read, so without this the cached pose — and everything aiming off it — starts out wrong.
+	 *
+	 * <p>The heading has to match how the robot is really parked. {@link
+	 * org.firstinspires.ftc.teamcode.Subsystems.Turret} aims from this pose while the camera aims
+	 * relatively, so a heading that is wrong by some amount points the two sources that far apart.
+	 */
+	public static final Pose startPose = new Pose(63.0, 9.0, Math.PI / 2.0);
+
 	public static MecanumConfig drivetrainConfig = new MecanumConfig(c -> {
 		c.frontLeftName.set("frontLeft");
 		c.frontRightName.set("frontRight");

@@ -78,8 +78,8 @@ public class TurretConfig {
 
 	// ── Feedforward (volts, degrees, seconds) ─────────────────────────────────────
 
-	public static double ks = 0.0;
-	public static double kv = 0.0;
+	public static double ks = 0.9;
+	public static double kv = 0.045;
 	public static double ka = 0.0;
 
 	/** Trapezoid profile limits on the turret's motion, degrees/s and degrees/s². */
@@ -91,7 +91,7 @@ public class TurretConfig {
 
 	// ── PID (volts) ───────────────────────────────────────────────────────────────
 
-	public static double kp = 0.0;
+	public static double kp = 0.215;
 	public static double ki = 0.0;
 	public static double kd = 0.0;
 

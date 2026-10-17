@@ -29,6 +29,11 @@ public class Localization extends Node {
 		this.pose = localizer.pose();
 	}
 
+	public void setStartPose(Pose startPose) {
+		localizer.setPose(startPose);
+		pose = startPose;
+	}
+
 	@RunPeriodically(hz = 50)
 	public void update() {
 		localizer.update();

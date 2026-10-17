@@ -8,9 +8,12 @@ import com.aaravlabs.synapse.ftc.GamepadAdaptor;
 import com.aaravlabs.synapse.ftc.SafeDevice;
 import com.aaravlabs.synapse.ftc.SafeOpMode;
 import com.bylazar.configurables.annotations.Configurable;
+import com.bylazar.telemetry.JoinedTelemetry;
+import com.bylazar.telemetry.PanelsTelemetry;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import java.util.Locale;
 import org.firstinspires.ftc.teamcode.Config.TurretConfig;
 import org.firstinspires.ftc.teamcode.Subsystems.Turret;
 
@@ -49,16 +52,19 @@ public class TurretTuning extends SafeOpMode {
 
 	private Turret turret;
 	private TuningCycle cycle;
+	private JoinedTelemetry joinedTelemetry;
 	private long lastRenderNanos;
 
 	@Override
 	protected void onSafeInit() {
 		GamepadAdaptor.attach(orchestrator, gamepad1, "g1");
 
+		joinedTelemetry = new JoinedTelemetry(PanelsTelemetry.INSTANCE.getFtcTelemetry(), telemetry);
+
 		turret = new Turret(
 				orchestrator,
 				safeMap,
-				safeMap.device(CRServo.class, "turretServo"),
+				safeMap.device(CRServo.class, "turret"),
 				safeMap.device(DcMotorEx.class, "intake"),
 				null,
 				null,
@@ -77,57 +83,78 @@ public class TurretTuning extends SafeOpMode {
 		}
 		lastRenderNanos = now;
 
-		telemetry.addData(
+		joinedTelemetry.addData(
 				"Turret tuning",
-				"cycle  base %.0f°  target %.0f°  half-period %.1fs  [%s]",
-				TurretConfig.cycleBaseDeg,
-				TurretConfig.cycleTargetDeg,
-				TurretConfig.cycleHalfPeriodSec,
-				cycle.isRunning()
-						? "RUNNING"
-						: "PAUSED");
-		telemetry.addData(
+				String.format(
+						Locale.US,
+						"cycle  base %.0f°  target %.0f°  half-period %.1fs  [%s]",
+						TurretConfig.cycleBaseDeg,
+						TurretConfig.cycleTargetDeg,
+						TurretConfig.cycleHalfPeriodSec,
+						cycle.isRunning()
+								? "RUNNING"
+								: "PAUSED"));
+
+		joinedTelemetry.addData("setpoint", turret.getSetpointDeg());
+		joinedTelemetry.addData("current", turret.getAngleDeg());
+
+		joinedTelemetry.addData(
 				"  track",
-				"goal %.1f°   setpoint %.1f° @ %.0f°/s   angle %.1f°   err %+.1f°",
-				turret.getGoalDeg(),
-				turret.getSetpointDeg(),
-				turret.getSetpointVelocityDegPerSec(),
-				turret.getAngleDeg(),
-				turret.getErrorDeg());
-		telemetry.addData(
+				String.format(
+						Locale.US,
+						"goal %.1f°   setpoint %.1f° @ %.0f°/s   angle %.1f°   err %+.1f°",
+						turret.getGoalDeg(),
+						turret.getSetpointDeg(),
+						turret.getSetpointVelocityDegPerSec(),
+						turret.getAngleDeg(),
+						turret.getErrorDeg()));
+		joinedTelemetry.addData(
 				"  volts",
-				"ff %+.2fV   pid %+.2fV   total %+.2fV   battery %.1fV   power %+.2f",
-				turret.getFfVolts(),
-				turret.getPidVolts(),
-				turret.getFfVolts() + turret.getPidVolts(),
-				turret.getBatteryVoltage(),
-				turret.getPower());
-		telemetry.addData(
+				String.format(
+						Locale.US,
+						"ff %+.2fV   pid %+.2fV   total %+.2fV   battery %.1fV   power %+.2f",
+						turret.getFfVolts(),
+						turret.getPidVolts(),
+						turret.getFfVolts() + turret.getPidVolts(),
+						turret.getBatteryVoltage(),
+						turret.getPower()));
+		joinedTelemetry.addData(
 				"  encoder",
-				"%d counts   %.4f counts/deg (%.0f × %.0f/%.0f ÷ 360)   %.4f°/count",
-				turret.getEncoderTicks(),
-				TurretConfig.countsPerTurretDegree(),
-				TurretConfig.encoderCountsPerRev,
-				TurretConfig.turretGearTeeth,
-				TurretConfig.encoderGearTeeth,
-				TurretConfig.degreesPerCount());
-		telemetry.addData(
+				String.format(
+						Locale.US,
+						"%d counts   %.4f counts/deg (%.0f × %.0f/%.0f ÷ 360)   %.4f°/count",
+						turret.getEncoderTicks(),
+						TurretConfig.countsPerTurretDegree(),
+						TurretConfig.encoderCountsPerRev,
+						TurretConfig.turretGearTeeth,
+						TurretConfig.encoderGearTeeth,
+						TurretConfig.degreesPerCount()));
+		joinedTelemetry.addData(
 				"  last cycle",
-				"peak err %.1f°  settle err %.1f°",
-				turret.getLastCyclePeakErrorDeg(),
-				turret.getLastCycleSettleErrorDeg());
-		telemetry.addData(
-				"  offsets", "aim %+.1f°  lateral %+.1f cm", turret.getAimOffsetDeg(), turret.getLateralOffsetCm());
-		telemetry.addData(
+				String.format(
+						Locale.US,
+						"peak err %.1f°  settle err %.1f°",
+						turret.getLastCyclePeakErrorDeg(),
+						turret.getLastCycleSettleErrorDeg()));
+		joinedTelemetry.addData(
+				"  offsets",
+				String.format(
+						Locale.US,
+						"aim %+.1f°  lateral %+.1f cm",
+						turret.getAimOffsetDeg(),
+						turret.getLateralOffsetCm()));
+		joinedTelemetry.addData(
 				"  gains",
-				"ks %.2f kv %.3f ka %.3f | kp %.2f ki %.3f kd %.3f",
-				TurretConfig.ks,
-				TurretConfig.kv,
-				TurretConfig.ka,
-				TurretConfig.kp,
-				TurretConfig.ki,
-				TurretConfig.kd);
-		telemetry.update();
+				String.format(
+						Locale.US,
+						"ks %.2f kv %.3f ka %.3f | kp %.2f ki %.3f kd %.3f",
+						TurretConfig.ks,
+						TurretConfig.kv,
+						TurretConfig.ka,
+						TurretConfig.kp,
+						TurretConfig.ki,
+						TurretConfig.kd));
+		joinedTelemetry.update();
 	}
 
 	/** Drives the square-wave goal; pauses hold the turret at base ({@code a}, {@code b}). */

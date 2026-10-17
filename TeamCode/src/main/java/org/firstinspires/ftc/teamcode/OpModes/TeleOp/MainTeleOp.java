@@ -31,7 +31,6 @@ public class MainTeleOp extends SafeOpMode {
 
 	@Override
 	protected void onSafeInit() {
-		// 1. Existing motor devices + gamepads.
 		frontLeft = safeMap.device(DcMotorEx.class, "frontLeft");
 		frontRight = safeMap.device(DcMotorEx.class, "frontRight");
 		backLeft = safeMap.device(DcMotorEx.class, "backLeft");
@@ -41,36 +40,33 @@ public class MainTeleOp extends SafeOpMode {
 		GamepadAdaptor.attach(orchestrator, gamepad1, "g1");
 		GamepadAdaptor.attach(orchestrator, gamepad2, "g2");
 
-		// 2. Localization (PedroPathing Pinpoint — no Follower in teleop).
+		// Localization
 		localization = new Localization(orchestrator, safeMap, Constants.localizerConfig);
+		localization.setStartPose(Constants.startPose);
 		orchestrator.registerNode("localization", localization);
 
-		// 3. AprilTag cluster vision (camera "gobilda_camera", alliance from TurretConfig at init).
+		// AprilTag cluster vision (camera "gobilda_camera", alliance from TurretConfig at init).
 		VisionCameraPose cameraPose = new VisionCameraPose();
 		PointOfInterest poi = new PointOfInterest("AIM"); // disabled by default
 		vision = new AprilTagVision(orchestrator, safeMap.raw(), cameraPose, poi, TurretConfig.allianceLetter());
 		orchestrator.registerNode("vision", vision);
 
-		// 4. Turret. The operator gamepad (g2) owns the per-run aim offsets and the always-face
-		//    toggle; the driver keeps g1 for driving.
 		turret = new Turret(
 				orchestrator,
 				safeMap,
-				safeMap.device(CRServo.class, "turretServo"),
+				safeMap.device(CRServo.class, "turret"),
 				safeMap.device(DcMotorEx.class, "intake"),
 				localization,
 				vision,
 				"g2");
 		orchestrator.registerNode("turret", turret);
 
-		// 5. Existing Drive + Intake (behavior unchanged).
 		orchestrator.registerNode("drive", new Drive(orchestrator, frontLeft, frontRight, backLeft, backRight));
 		orchestrator.registerNode("intake", new Intake(orchestrator, intake));
 	}
 
 	@Override
 	protected void onSafeLoop() {
-		// Primary block first — the numbers we drive by never scroll off.
 		turret.publishTelemetry(telemetry);
 		telemetry.addData(
 				"Drive",

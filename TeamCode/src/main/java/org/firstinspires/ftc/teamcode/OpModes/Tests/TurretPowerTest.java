@@ -34,7 +34,7 @@ public class TurretPowerTest extends SafeOpMode {
 
 	@Override
 	protected void onSafeInit() {
-		turretServo = safeMap.device(CRServo.class, "turretServo");
+		turretServo = safeMap.device(CRServo.class, "turret");
 		encoder = safeMap.device(DcMotorEx.class, "intake");
 	}
 
