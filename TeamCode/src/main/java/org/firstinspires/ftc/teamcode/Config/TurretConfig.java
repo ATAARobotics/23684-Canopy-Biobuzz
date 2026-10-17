@@ -23,6 +23,14 @@ public class TurretConfig {
 
 	// ── Alliance & field ─────────────────────────────────────────────────────────
 
+	/**
+	 * Whether the turret is allowed to aim from the camera. Off means odometry only: every aim
+	 * comes from the cell's fixed position plus the robot's pose, and the camera keeps streaming
+	 * and reporting so the two can still be compared. Separate from the turret's own on/off,
+	 * which is the x button on the gamepad.
+	 */
+	public static boolean aimFromVision = false;
+
 	/** Alliance to aim for: "RED" or "BLUE". */
 	public static String alliance = "RED";
 

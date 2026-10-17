@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.Subsystems;
 import com.aaravlabs.control.controller.ProfiledPIDController;
 import com.aaravlabs.control.controller.SimpleMotorFeedforward;
 import com.aaravlabs.control.trajectory.TrapezoidProfile;
+import com.aaravlabs.safepedropathing.follower.Follower;
 import com.aaravlabs.safepedropathing.math.Pose;
 import com.aaravlabs.synapse.Node;
 import com.aaravlabs.synapse.Orchestrator;
@@ -51,7 +52,7 @@ public class Turret extends Node {
 	private final SafeDevice<DcMotorEx> encoderMotor;
 	private final SafeHardwareMap safeMap;
 	/** Null on the bench, where the tuning OpMode has no camera and no odometry. */
-	private final Localization localization;
+	private final Follower follower;
 	/** Null on the bench, where the tuning OpMode has no camera and no odometry. */
 	private final AprilTagVision vision;
 	/** Gamepad that owns the offsets and the always-face toggle, "g1" or "g2". */
@@ -111,14 +112,14 @@ public class Turret extends Node {
 			SafeHardwareMap safeMap,
 			SafeDevice<CRServo> turretServo,
 			SafeDevice<DcMotorEx> encoderMotor,
-			Localization localization,
+			Follower follower,
 			AprilTagVision vision,
 			String inputPrefix) {
 		super(orchestrator);
 		this.safeMap = safeMap;
 		this.turretServo = turretServo;
 		this.encoderMotor = encoderMotor;
-		this.localization = localization;
+		this.follower = follower;
 		this.vision = vision;
 		this.inputPrefix = inputPrefix;
 
@@ -137,7 +138,7 @@ public class Turret extends Node {
 	public void controlLoop() {
 		double angle = measureAngle();
 
-		Aim aim = computeAim(angle);
+		Aim aim = computeAim();
 		boolean hasTarget = aim != null;
 		double goal = hasTarget ? track(angle, aim) : holdPosition(angle);
 		hadTarget = hasTarget;
@@ -146,13 +147,21 @@ public class Turret extends Node {
 		}
 
 		refreshBattery();
-		double power = enabled && hasTarget ? toPower(ffVolts + pidVolts) : 0.0;
+		double commandedVolts = ffVolts + pidVolts;
+		double power = enabled && hasTarget ? toPower(commandedVolts) : 0.0;
 
+		// Test the commanded volts, never the servo power. toPower() multiplies by
+		// TurretConfig.powerSign, which records the physical direction of this servo, so positive
+		// volts raise the angle under either sign: on a powerSign -1 mounting positive volts
+		// become negative power, and negative power is clockwise there. Testing power's sign only
+		// agrees when powerSign is +1, and inverted it cuts precisely the power that would back
+		// the turret off a limit it is resting against, so the turret latches at the end of its
+		// travel and the profile setpoint walks away from it.
 		atLimit = false;
-		if (angle >= TurretConfig.maxAngleDeg - LIMIT_EPS_DEG && power > 0.0) {
+		if (angle >= TurretConfig.maxAngleDeg - LIMIT_EPS_DEG && commandedVolts > 0.0) {
 			power = 0.0;
 			atLimit = true;
-		} else if (angle <= TurretConfig.minAngleDeg + LIMIT_EPS_DEG && power < 0.0) {
+		} else if (angle <= TurretConfig.minAngleDeg + LIMIT_EPS_DEG && commandedVolts < 0.0) {
 			power = 0.0;
 			atLimit = true;
 		}
@@ -279,7 +288,14 @@ public class Turret extends Node {
 
 	/** What the turret should be facing this tick. */
 	private static final class Aim {
-		/** Angle to point at, clockwise from forward, in the same frame as the turret angle. */
+		/**
+		 * Absolute turret angle to point at, clockwise from the robot's forward — the same frame
+		 * the measured turret angle lives in, so the two can be compared directly.
+		 *
+		 * <p>Absolute is the whole point. Adding the turret's current angle here would make the goal
+		 * a function of where the turret already is, so the error would never shrink and the loop
+		 * would creep at a constant rate with the goal climbing along behind it.
+		 */
 		final double angleDeg;
 		final String source;
 		final String targetName;
@@ -296,8 +312,13 @@ public class Turret extends Node {
 		}
 	}
 
-	/** Where the turret should point now, or null when there is nothing to aim at. */
-	private Aim computeAim(double angle) {
+	/**
+	 * Where the turret should point now, or null when there is nothing to aim at.
+	 *
+	 * <p>Both branches return a bearing from the robot's forward, which is already the frame the
+	 * turret angle is measured in, so neither adds the current angle.
+	 */
+	private Aim computeAim() {
 		Double manual = manualGoal;
 		if (manual != null) {
 			// Bench override: an absolute angle, so there is no range for the lateral offset to
@@ -312,12 +333,14 @@ public class Turret extends Node {
 
 		ClusterTarget cluster = bestCluster();
 		if (cluster != null) {
-			// The camera rides the turret, so its bearing to the cluster is the mount offset plus
-			// the bearing it reports. The SDK reports bearing positive-left, hence the minus sign.
+			// The camera rides the turret and its zero is the turret's zero, so the angle that
+			// centres the cluster is just the negated bearing it reports — the SDK counts positive
+			// left, we count positive right. The mount yaw shifts where the camera points relative
+			// to the turret, and it is the only term added.
 			double bearing = TurretConfig.cameraMountYawDeg - cluster.rawBearing;
 			double rangeCm = cluster.resolved.horizontalDistance * 2.54;
 			return new Aim(
-					angle + bearing + aimOffsetDeg + lateralShift(rangeCm),
+					bearing + aimOffsetDeg + lateralShift(rangeCm),
 					SOURCE_VISION,
 					cluster.name,
 					rangeCm,
@@ -325,15 +348,18 @@ public class Turret extends Node {
 		}
 
 		double[] cell = cellPosition();
-		Pose pose = localization == null ? null : localization.getPose();
+		Pose pose = follower == null ? null : follower.pose();
 		if (cell != null && pose != null) {
 			double dx = cell[0] - pose.x();
 			double dy = cell[1] - pose.y();
-			// Minus sign as above: Pedro's heading grows counter-clockwise, ours grows clockwise.
+			// Pedro's heading grows counter-clockwise and ours grows clockwise, so subtracting the
+			// cell's field azimuth from the robot's heading gives the angle, clockwise from the
+			// robot's forward, at which the turret must sit. That is already an absolute turret
+			// angle: the current one must not be added.
 			double bearing = wrapDeg(Math.toDegrees(pose.heading() - Math.atan2(dy, dx)));
 			double rangeCm = Math.hypot(dx, dy) * 2.54;
 			return new Aim(
-					angle + bearing + aimOffsetDeg + lateralShift(rangeCm),
+					bearing + aimOffsetDeg + lateralShift(rangeCm),
 					SOURCE_LOCALIZATION,
 					String.format(Locale.US, "CELL(%.1f, %.1f)", cell[0], cell[1]),
 					rangeCm,
@@ -355,7 +381,9 @@ public class Turret extends Node {
 
 	/** Nearest fresh cluster that is ours and on our half of the field. */
 	private ClusterTarget bestCluster() {
-		if (vision == null) {
+		// TurretConfig.aimFromVision off means odometry only: no cluster, so computeAim falls
+		// through to the cell position and the pose. The camera keeps streaming either way.
+		if (vision == null || !TurretConfig.aimFromVision) {
 			return null;
 		}
 		List<ClusterTarget> clusters = vision.getTargets();
@@ -384,10 +412,10 @@ public class Turret extends Node {
 
 	/** "SCORING" or "AUDIENCE" for the half of the field the robot is on, or null if unknown. */
 	private String fieldHalf() {
-		if (localization == null) {
+		if (follower == null) {
 			return null;
 		}
-		Pose pose = localization.getPose();
+		Pose pose = follower.pose();
 		if (pose == null) {
 			return null;
 		}
@@ -418,6 +446,17 @@ public class Turret extends Node {
 	 * Of the wanted angle and the same angle plus or minus a whole turn, pick the one that lands
 	 * inside the travel range and is closest to where the turret is now. This is what stops a
 	 * "turn 20 degrees left" command from being sent the long way round.
+	 *
+	 * <p>The travel range is narrower than a full turn, so there is a dead band of
+	 * {@code 360 − (max − min)} degrees — 69° of it at the current limits — where the target sits
+	 * past the near end and the wrapped copy lands past the far end, and the turret cannot face it
+	 * in either direction. No candidate fits, so this falls back to clamping to the nearest end of
+	 * the travel, which leaves the turret as close to the target as the mechanics allow.
+	 *
+	 * <p>Committing to the long way round inside that band was tried and reverted: driving all the
+	 * way to {@link TurretConfig#maxAngleDeg} parks the turret against the far stop, so the goal
+	 * flips between that stop and the direct angle every time the aim crosses the band edge, and
+	 * the turret answers with a full sweep each time.
 	 */
 	private static double selectGoal(double angleWanted, double currentAngle) {
 		double min = TurretConfig.minAngleDeg;
@@ -705,8 +744,8 @@ public class Turret extends Node {
 				atLimit
 						? "  AT LIMIT"
 						: "");
-		if (localization != null) {
-			Pose pose = localization.getPose();
+		if (follower != null) {
+			Pose pose = follower.pose();
 			if (pose != null) {
 				telemetry.addData("Pose", "x %.1f  y %.1f  h %.1f°", pose.x(), pose.y(), Math.toDegrees(pose.heading()));
 			}

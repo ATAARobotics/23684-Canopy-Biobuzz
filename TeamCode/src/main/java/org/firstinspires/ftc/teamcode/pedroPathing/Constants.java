@@ -33,15 +33,25 @@ public class Constants {
 	 */
 	public static final Pose startPose = new Pose(63.0, 9.0, Math.PI / 2.0);
 
+	/**
+	 * Motor directions for Pedro's {@link Mecanum}, mirroring what {@code Drive} uses so the two
+	 * never disagree: the {@code Mecanum} constructor writes directions to all four motors, so a
+	 * mismatch here would silently flip the drivetrain depending on which node was built last.
+	 *
+	 * <p>These were previously the other way around — the values {@code Drive} had <em>before</em>
+	 * commit {@code 05c75d8}, which added {@code MotorDirectionTest} and flipped them after checking
+	 * each motor against the physical robot. {@code Drive} has carried the verified values since,
+	 * so this config was the stale side.
+	 */
 	public static MecanumConfig drivetrainConfig = new MecanumConfig(c -> {
 		c.frontLeftName.set("frontLeft");
 		c.frontRightName.set("frontRight");
 		c.backLeftName.set("backLeft");
 		c.backRightName.set("backRight");
-		c.frontLeftDirection.set(DcMotorSimple.Direction.REVERSE);
-		c.frontRightDirection.set(DcMotorSimple.Direction.FORWARD);
-		c.backLeftDirection.set(DcMotorSimple.Direction.REVERSE);
-		c.backRightDirection.set(DcMotorSimple.Direction.FORWARD);
+		c.frontLeftDirection.set(DcMotorSimple.Direction.FORWARD);
+		c.frontRightDirection.set(DcMotorSimple.Direction.REVERSE);
+		c.backLeftDirection.set(DcMotorSimple.Direction.FORWARD);
+		c.backRightDirection.set(DcMotorSimple.Direction.REVERSE);
 	});
 
 	public static PinpointConfig localizerConfig = new PinpointConfig(c -> {

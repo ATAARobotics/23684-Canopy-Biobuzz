@@ -31,6 +31,14 @@ public class Drive extends Node {
 		bl.run(m -> m.setDirection(DcMotor.Direction.FORWARD));
 		fr.run(m -> m.setDirection(DcMotor.Direction.REVERSE));
 		br.run(m -> m.setDirection(DcMotor.Direction.REVERSE));
+
+		// Explicit because it is no longer left to the SDK default: Pedro's Mecanum sets FLOAT on
+		// all four motors in its constructor, and the SDK does not promise what the default is.
+		// Drive is the only thing writing power in teleop, so this is the value that counts.
+		fl.run(m -> m.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE));
+		bl.run(m -> m.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE));
+		fr.run(m -> m.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE));
+		br.run(m -> m.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE));
 	}
 
 	@RunPeriodically(hz = 50, hardware = true)
