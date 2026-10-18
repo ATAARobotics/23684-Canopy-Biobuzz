@@ -17,32 +17,19 @@ import java.util.Locale;
 import org.firstinspires.ftc.teamcode.Config.TurretConfig;
 import org.firstinspires.ftc.teamcode.Subsystems.Turret;
 
+// WARNING: all gains start at zero, so the turret will not move until you set some;
+// the gain echo line on screen shows what is loaded.
+// WARNING: one hand turn of the encoder shaft must move counts by ~2048 (a full turret turn is ~5120).
+// WARNING: positive power must turn the turret clockwise towards +angle and the angle must rise
+// clockwise (powerSign / encoderReversed) — get either wrong and the loop runs away instead of settling.
+// g1 (positive = right): dpad_left/right step aim offset (deg) down/up, dpad_up/down lateral (cm) up/down,
+// 1.0 or 0.1 with left_bumper held; y zeroes both, x toggles always-face, a pauses (turret at base), b jumps to base.
+// Tuning order: kv (smooth sweep), then ks (break stiction and hold at the goal), ka only if
+// acceleration tracking is poor, then kp (trim residual error), kd only if it oscillates, ki last and small.
+
 /**
- * Bench tuning for the turret — hub + turret + encoder only (no vision, no localization).
- *
- * <p>Runs an automatic step cycle: a square-wave goal alternating {@code cycleBaseDeg} and {@code
- * cycleTargetDeg} every {@code cycleHalfPeriodSec} (all three live Panels Configurables in {@link
- * TurretConfig}). The goal goes through the same goal selection and profiled controller as match
- * code, so what you tune here is exactly what runs in MainTeleOp. Gains are edited live in Panels
- * while it cycles.
- *
- * <p>Gamepad (g1): the standard offset map, where positive means right. {@code dpad_left} and
- * {@code dpad_right} step the aim offset down and up, {@code dpad_up} and {@code dpad_down} step
- * the lateral offset up and down, 1.0 at a time or 0.1 while {@code left_bumper} is held, and
- * {@code y} zeroes both. {@code x} turns always-face off and on, {@code a} pauses the cycle with
- * the turret held at base, and {@code b} jumps straight to base.
- *
- * <p><b>Tuning order:</b> {@code kv} (smooth sweep), then {@code ks} (break stiction and hold at
- * the goal), then {@code ka} (only if acceleration tracking is poor), then {@code kp} (trim the
- * residual error), {@code kd} only if it oscillates, and {@code ki} last and small. Every gain
- * starts at zero, so the turret will not move at all until you give it something; the gain echo
- * line on screen shows what is loaded.
- *
- * <p>Bench checks before closing the loop: turn the encoder shaft one full turn by hand and
- * confirm the counts line changes by about 2048 (one turret turn is about 5120). Then check the two
- * signs independently: positive power should rotate the turret clockwise towards +angle
- * ({@code powerSign}), and the angle should increase as the turret turns clockwise
- * ({@code encoderReversed}). Get either wrong and the loop runs away instead of settling.
+ * Bench-only turret tuning (hub + turret + encoder, no vision or localization); all values are live in Panels.
+ * Square-wave goal (cycleBaseDeg/cycleTargetDeg every cycleHalfPeriodSec) uses the MainTeleOp controller path.
  */
 @Configurable
 @TeleOp(name = "Turret Tuning", group = "Tests")
@@ -157,7 +144,7 @@ public class TurretTuning extends SafeOpMode {
 		joinedTelemetry.update();
 	}
 
-	/** Drives the square-wave goal; pauses hold the turret at base ({@code a}, {@code b}). */
+	// Drives the square-wave goal; when paused (a/b), holds the turret at base.
 	private static class TuningCycle extends Node {
 
 		private final Turret turret;
@@ -184,7 +171,7 @@ public class TurretTuning extends SafeOpMode {
 				atTarget = !atTarget;
 				lastFlipNanos = System.nanoTime();
 			}
-			// Cycle parameters are read live every tick so Panels edits take effect mid-run.
+			// Read live each tick so Panels edits take effect mid-run.
 			turret.setManualGoal(atTarget ? TurretConfig.cycleTargetDeg : base);
 		}
 

@@ -8,17 +8,8 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import org.firstinspires.ftc.teamcode.Config.TurretConfig;
 
 /**
- * Raw power test for the turret: g2's left stick up is positive power, down is negative, and that
- * is the whole OpMode. No controller, no vision, no localization.
- *
- * <p>Start it with the turret facing straight ahead, because that first reading becomes 0 degrees
- * and everything on screen is measured from it.
- *
- * <p>This is where the two sign questions get settled. Push the stick up: the angle should go
- * positive, which is the clockwise direction ({@link TurretConfig#powerSign}). Then watch that the
- * angle follows the way the turret actually moved ({@link TurretConfig#encoderReversed}). Either one
- * backwards means the closed loop in MainTeleOp has positive feedback, so fix it here rather than
- * on the field.
+ * Raw turret power test: g2 left stick up = +power, down = -power, nothing else. Start with the
+ * turret facing straight ahead -- that first reading becomes 0 degrees for everything on screen.
  */
 @TeleOp(name = "Turret Power Test", group = "Tests")
 public class TurretPowerTest extends SafeOpMode {
@@ -48,6 +39,8 @@ public class TurretPowerTest extends SafeOpMode {
 			zeroTicks = ticks;
 			zeroCaptured = true;
 		}
+		// Push the stick up: the angle must read positive and follow the turret's real motion; a
+		// backwards sign means positive feedback in MainTeleOp -- fix it here, not on the field.
 		double sign = TurretConfig.encoderReversed ? -1.0 : 1.0;
 		double angleDeg = (ticks - zeroTicks) * sign / TurretConfig.countsPerTurretDegree();
 
@@ -77,7 +70,7 @@ public class TurretPowerTest extends SafeOpMode {
 		}
 	}
 
-	/** Zero out small stick readings so a resting stick does not creep the turret. */
+	// Prevent a resting stick from creeping the turret.
 	private static double deadzone(double value) {
 		return Math.abs(value) < DEADZONE ? 0.0 : value;
 	}

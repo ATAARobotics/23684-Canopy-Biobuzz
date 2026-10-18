@@ -26,140 +26,44 @@ import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 import org.firstinspires.ftc.vision.apriltag.AprilTagSingleDetection;
 
 /**
- * AprilTag cluster detection as a Synapse {@link Node}.
- *
- * <p>Polls an {@link AprilTagProcessor} at {@link #POLL_HZ}, converts every detection into a
- * {@link ClusterTarget} with its geometry already resolved, and publishes the results for other
- * nodes. Telemetry is written from this node, so it works from any OpMode that registers it.
- *
- * <h2>Turret yaw and the SDK's camera pose</h2>
- *
- * In SDK 12.0 {@code setCameraPose} exists <b>only</b> on {@code AprilTagProcessor.Builder} ΓÇö the
- * processor itself cannot be re-aimed after it is built. So the camera pose is fixed here at the
- * mounting's pitch, roll and translation, and {@link VisionCameraPose#getYaw() the turret yaw} is
- * applied in {@link TargetingMath} instead, when resolving each detection. That means turret
- * rotation costs nothing at runtime: no portal rebuild, no dropped frames, no stream restart.
- *
- * <p>The practical consequence: {@link ClusterTarget#rawX rawX}/{@code rawY}/{@code rawZ} are the
- * SDK's numbers and ignore turret yaw, while {@link ClusterTarget#resolved} includes it. Always
- * consume {@code resolved} for aiming and driving.
- *
- * <p>Changing pitch, roll or translation has no runtime effect, because there is no supported way
- * to push them into a live processor.
- *
- * <h2>Published topics</h2>
- *
- * <ul>
- *   <li>{@code vision/clusterCount} ΓÇö Integer, detections on the last poll</li>
- *   <li>{@code vision/usableCount} ΓÇö Integer, how many are scorable and fresh</li>
- *   <li>{@code vision/hasTarget} ΓÇö Boolean, whether a usable target exists</li>
- *   <li>{@code vision/best} ΓÇö ClusterTarget, nearest usable cluster. Only published when one
- *       exists, since {@code publish} rejects null</li>
- *   <li>{@code vision/targets} ΓÇö {@code List<ClusterTarget>}, every detection this poll</li>
- *   <li>{@code vision/decimation} ΓÇö Integer, current decimation</li>
- *   <li>{@link #HEADING_TOPIC} ΓÇö Double, robot heading in degrees CCW from field +X</li>
- * </ul>
- *
- * <h2>Subscribed topics</h2>
- *
- * <ul>
- *   <li>{@code vision/setDecimation} ΓÇö Integer, trades detection range for frame rate</li>
- *   <li>{@code vision/nudgeCameraYaw} ΓÇö Double, degrees to add to the turret yaw</li>
- *   <li>{@code vision/setCameraYaw} ΓÇö Double, absolute turret yaw in degrees</li>
- *   <li>{@code vision/resetCameraPose} ΓÇö Boolean, true restores the default extrinsics</li>
- * </ul>
- *
- * <p><b>Heading:</b> this robot has no odometry, so nothing supplies a true field heading yet.
- * {@link #DEFAULT_ROBOT_HEADING_DEG} is assumed, which makes {@code resolved.bearing} an aim error
- * relative to field +X rather than relative to wherever the robot is actually pointing. Once
- * odometry exists, publish heading to {@link #HEADING_TOPIC} and every number becomes correct with
- * no code change.
+ * AprilTag cluster detection as a Synapse Node that publishes ClusterTarget; consume {@code resolved}
+ * for aiming, since turret yaw is folded in there and not in the raw SDK pose.
  */
 public class AprilTagVision extends Node {
 
-	/** Webcam name in the robot configuration. */
 	public static final String DEFAULT_CAMERA_NAME = "gobilda_camera";
 
-	/** Alliance used to decide whether a cluster is ours. */
 	public static final char DEFAULT_ALLIANCE_LETTER = 'B';
 
-	/** Detection poll rate. The camera streams faster than this; this is how often we read it. */
 	public static final int POLL_HZ = 20;
 
-	/**
-	 * Decimation used for detection.
-	 *
-	 * <p>Decimation downsamples the image before searching for tags, so every step throws away
-	 * resolution and blurs tag corners. That directly costs range and bearing accuracy, and it costs it
-	 * unevenly: a small distant tag loses its corners entirely while a large close one survives. That
-	 * shows up as readings that are sometimes nearly perfect and sometimes a few inches out.
-	 *
-	 * <p>1 processes the full 1280x800 frame, which is the most accurate setting. The cost is CPU on
-	 * the RC, so the frame rate may drop; {@link #getActualFps()} and the staleness flag on each target
-	 * will tell you if that has gone too far. Raise it with {@code vision/setDecimation} at runtime.
-	 */
+	/** 1 = full 1280x800 frame, most accurate; higher decimation loses small distant tags first, so
+	 * range and bearing accuracy degrade unevenly while the frame rate improves. */
 	public static final int DEFAULT_DECIMATION = 1;
 
-	/**
-	 * Tags per cluster in BIOBUZZ.
-	 *
-	 * <p>A constant because the SDK does not expose it: {@code AprilTagClusterMetadata.getMemberIds()}
-	 * and its {@code clusterMembers} field are both non-public, so the count cannot be read from
-	 * outside {@code org.firstinspires.ftc.vision.apriltag}. This is what lets telemetry say
-	 * "2 of 4 tags" instead of a bare percentage, which is far easier to act on when a rail or the
-	 * field wall is hiding half the cluster.
-	 */
+	/** BIOBUZZ tags per cluster; the SDK keeps cluster member lists non-public, so this is hard-coded. */
 	public static final int TAGS_PER_CLUSTER = 4;
 
-	/**
-	 * MJPEG rather than the default YUY2. At this resolution YUY2 pushes far more data per frame,
-	 * and MJPEG offloads the compression to the camera itself.
-	 */
+	/** MJPEG rather than the default YUY2: far less data per frame at this resolution. */
 	public static final VisionPortal.StreamFormat STREAM_FORMAT = VisionPortal.StreamFormat.MJPEG;
 
-	/**
-	 * Requested capture size.
-	 *
-	 * <p>Calibrated by us in {@code FtcRobotController/src/main/res/xml/teamwebcamcalibrations.xml} for USB
-	 * {@code 0xC45:0x366}, which gives focal length {@code 908.758} and principal point
-	 * {@code (696.345, 376.979)} at this size. Keep the two in sync: a size with no matching entry
-	 * there has no intrinsics to scale from and falls back to a generic guess.
-	 *
-	 * <p>The file must live in FtcRobotController, not TeamCode. RobotCore's
-	 * {@code CameraCalibrationHelper} reads calibrations through its own
-	 * {@code com.qualcomm.robotcore.R.xml.teamwebcamcalibrations}, which resolves in the RobotCore
-	 * package. A copy under TeamCode lands in a different resource package and is never read, so the
-	 * processor silently falls back to {@code fx = 578.272} ΓÇö about 57% under the real value, which
-	 * makes every range come out roughly 0.57x too short.
-	 */
+	/** 1280x800, calibrated in FtcRobotController's teamwebcamcalibrations.xml (RobotCore reads it
+	 * from its own resource package); without that entry fx falls back to 578.272, ranges ~0.57x short. */
 	public static final int STREAM_WIDTH = 1280;
 	public static final int STREAM_HEIGHT = 800;
 
-	/** Topic for robot heading, in degrees CCW from field +X. */
+	/** Robot heading, in degrees CCW from field +X. */
 	public static final String HEADING_TOPIC = "vision/robotHeading";
 
-	/** Assumed heading until something publishes a real one. */
+	/** No odometry exists, so while this is assumed, resolved.bearing is an aim error from field +X
+	 * rather than from where the robot is actually pointing. */
 	public static final double DEFAULT_ROBOT_HEADING_DEG = 0.0;
 
-	/**
-	 * Minimum age at which a detection is considered stale.
-	 *
-	 * <p>This is a floor, not the real threshold. A detection is normally one frame interval old, so
-	 * a fixed wall-clock limit would condemn perfectly good frames whenever the camera runs slowly.
-	 * At {@link #DEFAULT_DECIMATION} of 1 over a 1280x800 stream the camera may only manage a few
-	 * frames per second, leaving every detection hundreds of milliseconds old by definition.
-	 *
-	 * <p>See {@link #staleThresholdMs()} for the threshold actually applied.
-	 */
+	/** Floor on the staleness limit, not the real threshold: a fixed wall-clock limit would condemn
+	 * perfectly good frames whenever the camera runs slowly. See staleThresholdMs(). */
 	public static final double STALE_AFTER_MS = 250.0;
 
-	/**
-	 * How many frame intervals a detection may lag before it counts as stale.
-	 *
-	 * <p>Staleness should mean the processor has fallen behind, not that time has passed. One
-	 * interval is normal; this many tolerates jitter and a dropped frame while still catching a
-	 * genuinely stuck pipeline.
-	 */
+	/** Frame intervals a detection may lag before it counts as stale; one interval is normal. */
 	public static final double STALE_FRAME_INTERVALS = 3.0;
 
 	private final AprilTagProcessor aprilTag;
@@ -168,7 +72,6 @@ public class AprilTagVision extends Node {
 	private final PointOfInterest poi;
 	private final char allianceLetter;
 
-	/** Camera name in use, echoed into telemetry so the setup line is self-describing. */
 	private final String cameraName;
 
 	private volatile List<ClusterTarget> lastTargets = Collections.emptyList();
@@ -176,23 +79,14 @@ public class AprilTagVision extends Node {
 	private volatile int lastDecimation = DEFAULT_DECIMATION;
 	private volatile double lastHeadingDeg = DEFAULT_ROBOT_HEADING_DEG;
 
-	/** When true, telemetry includes the configuration block and raw SDK numbers. */
 	private volatile boolean verbose;
 
-	/** Focus mode the camera settled into, for telemetry. Null until attempted. */
 	private volatile String focusMode = "unknown";
 
-	/** Whether exposure and white balance were pinned to manual. */
 	private volatile boolean exposureLocked;
 	private volatile boolean whiteBalanceLocked;
 
-	/**
-	 * @param orchestrator bus to publish on
-	 * @param hardwareMap used to resolve the webcam
-	 * @param cameraPose camera extrinsics; only {@code yaw} has any runtime effect
-	 * @param poi point of interest, disabled by default
-	 * @param allianceLetter {@code 'R'} or {@code 'B'}, matched against cluster name prefixes
-	 */
+	/** @param cameraPose extrinsics; only yaw has any runtime effect */
 	public AprilTagVision(
 			Orchestrator orchestrator,
 			HardwareMap hardwareMap,
@@ -202,9 +96,6 @@ public class AprilTagVision extends Node {
 		this(orchestrator, hardwareMap, cameraPose, poi, allianceLetter, DEFAULT_CAMERA_NAME);
 	}
 
-	/**
-	 * @param cameraName webcam name in the robot configuration
-	 */
 	public AprilTagVision(
 			Orchestrator orchestrator,
 			HardwareMap hardwareMap,
@@ -219,8 +110,8 @@ public class AprilTagVision extends Node {
 		this.allianceLetter = Character.toUpperCase(allianceLetter);
 		this.cameraName = cameraName;
 
-		// Build with the mounting's fixed pose. Turret yaw is deliberately left at its resting
-		// value here and applied later in TargetingMath, because the processor cannot be re-aimed.
+		// Fixed mounting pose: the processor cannot be re-aimed after build, so turret yaw is
+		// deliberately left at rest here and applied in TargetingMath instead.
 		this.aprilTag = new AprilTagProcessor.Builder().setCameraPose(cameraPose.getPosition(), cameraPose.getAngles())
 				.setTagLibrary(AprilTagGameDatabase.getBioBuzzTagLibrary())
 				.setOutputUnits(DistanceUnit.INCH, AngleUnit.DEGREES)
@@ -239,8 +130,7 @@ public class AprilTagVision extends Node {
 		portalBuilder.addProcessor(aprilTag);
 		this.visionPortal = portalBuilder.build();
 
-		// Must be applied explicitly: the Builder has no decimation setter, and the processor's own
-		// default is 3 regardless of stream resolution.
+		// The Builder has no decimation setter, and the processor's own default is 3.
 		aprilTag.setDecimation(DEFAULT_DECIMATION);
 
 		lockCameraControls();
@@ -253,12 +143,8 @@ public class AprilTagVision extends Node {
 		orchestrator.publish("vision/usableCount", 0);
 	}
 
-	/**
-	 * Read detections, resolve geometry, publish results.
-	 *
-	 * <p>Runs on the scheduler pool rather than the hardware thread: the AprilTag processor does its
-	 * own work asynchronously and this method only reads results, so it never blocks the bus.
-	 */
+	/** Reads detections, resolves geometry and publishes them. Runs on the scheduler pool, not the
+	 * hardware thread, so it never blocks the bus. */
 	@RunPeriodically(hz = POLL_HZ)
 	public void poll() {
 		double heading =
@@ -276,7 +162,7 @@ public class AprilTagVision extends Node {
 			}
 		}
 
-		// Nearest usable cluster wins, scored on resolved range so height is accounted for.
+		// Best is scored on resolved range, so height is accounted for.
 		ClusterTarget best = null;
 		int usable = 0;
 		for (ClusterTarget target : resolved) {
@@ -296,12 +182,12 @@ public class AprilTagVision extends Node {
 		orchestrator.publish("vision/usableCount", usable);
 		orchestrator.publish("vision/hasTarget", best != null);
 		if (best != null) {
-			// publish() rejects null, so only announce a target while we actually have one.
+			// publish() rejects null.
 			orchestrator.publish("vision/best", best);
 		}
 	}
 
-	/** Convert one SDK detection, or return null if we cannot make sense of it. */
+	// Null when the detection cannot be resolved.
 	private ClusterTarget toClusterTarget(AprilTagDetection detection, double headingDeg, long nowNanos) {
 		String name;
 		String shortName;
@@ -309,17 +195,14 @@ public class AprilTagVision extends Node {
 		int tagsTotal = 0;
 
 		if (detection instanceof AprilTagClusterDetection) {
-			// A cluster detection is guaranteed to have metadata: the SDK could not have matched
-			// those tags to a cluster without it, so unlike a single detection there is no null
-			// check to do here.
+			// Cluster detections always carry metadata: the SDK could not have matched tags to a
+			// cluster without it, so there is no null check to do here.
 			AprilTagClusterDetection cluster = (AprilTagClusterDetection) detection;
 			name = cluster.metadata.name;
 			shortName = cluster.metadata.shortName;
 			percentFound = cluster.percentClusterFound;
 			tagsTotal = TAGS_PER_CLUSTER;
 		} else if (detection instanceof AprilTagSingleDetection) {
-			// BIOBUZZ defines clusters only, but handling singles keeps this node reusable on a
-			// field that mixes both kinds.
 			AprilTagSingleDetection single = (AprilTagSingleDetection) detection;
 			if (single.metadata == null) {
 				return null;
@@ -341,7 +224,7 @@ public class AprilTagVision extends Node {
 
 		boolean allianceMatch = name.startsWith(String.valueOf(allianceLetter));
 
-		// Turret yaw is folded in here, not in the SDK's pose.
+		// Turret yaw is folded in here, not in the SDK pose: resolved includes it, rawX/Y/Z do not.
 		TargetingMath.ResolvedPoint resolvedPoint = TargetingMath.resolve(
 				rawX, rawY, rawZ, rawYaw, cameraPose.getYaw(), cameraPose.getElevation(), headingDeg, poi);
 
@@ -369,27 +252,18 @@ public class AprilTagVision extends Node {
 				stale);
 	}
 
-	/**
-	 * Minimal telemetry: the target worth acting on, then one line for anything else. Everything
-	 * constant during a match ΓÇö camera name, stream format, mount angles ΓÇö is deliberately hidden,
-	 * because reading it every loop trains you to stop reading it.
-	 *
-	 * <p>Turn on {@link #setVerbose(boolean)} for bench work to get the configuration block and the
-	 * SDK's raw numbers back.
-	 */
+	/** Puts the target worth acting on first, then a line for anything else. Verbose adds the
+	 * configuration block and the SDK's raw numbers back. */
 	public void publishTelemetry(Telemetry telemetry) {
 		ClusterTarget best = lastBest;
 
-		// The measurement you act on goes first and stays at the top. Everything else is below it, so
-		// toggling verbose can never push the numbers you are driving by off the screen.
+		// The number you are driving by stays on top, so toggling verbose can never push it off screen.
 		if (best == null) {
 			telemetry.addLine("no usable cluster");
 			for (ClusterTarget target : lastTargets) {
 				telemetry.addLine("  " + target.compactLine());
 			}
 		} else {
-			// Marker rather than a label, so it is obvious at a glance which mode is active without
-			// costing a whole line.
 			telemetry.addLine((verbose ? "** VERBOSE **  " : "") + best.headerLine());
 			telemetry.addLine(best.actionLines());
 
@@ -408,7 +282,6 @@ public class AprilTagVision extends Node {
 		}
 
 		if (verbose) {
-			// Compact, and last, so it reads as an appendix rather than competing with the above.
 			telemetry.addLine(String.format(
 					Locale.US,
 					"cfg %s %dx%d @%.0ffps decim %d  poi %s",
@@ -454,16 +327,8 @@ public class AprilTagVision extends Node {
 	}
 
 	/**
-	 * Stop the camera from retuning itself while the robot moves.
-	 *
-	 * <p>Autofocus is the important one. A focus change alters the lens-to-sensor distance, which
-	 * changes the effective focal length, and range is directly proportional to focal length. So a
-	 * camera refocusing as the target moves reports a scale that drifts frame to frame, which matches
-	 * the symptom of readings that are sometimes nearly perfect and sometimes a few inches out.
-	 * Pinning focus to fixed holds the scale steady.
-	 *
-	 * <p>Every control is optional hardware, so each is attempted independently and failures are
-	 * recorded rather than thrown: a camera without autofocus should not stop the robot from running.
+	 * Autofocus is pinned because it changes the focal length, and range scales with focal length.
+	 * Every control is optional: each is tried independently and failures are recorded, not thrown.
 	 */
 	private void lockCameraControls() {
 		// ---- focus: the one that matters for range ----
@@ -483,9 +348,8 @@ public class AprilTagVision extends Node {
 		}
 
 		// ---- exposure and white balance: stop them hunting as the robot moves ----
-		// Done inline rather than on the hardware thread: these are camera-control calls, not Lynx
-		// bus traffic, and SafeOpMode's hardware thread only starts ticking once the OpMode loop
-		// begins, which is after this constructor has already returned.
+		// Called inline, not on the hardware thread: these are camera-control calls, not Lynx bus
+		// traffic, and SafeOpMode's hardware thread does not tick until after this constructor.
 		try {
 			ExposureControl exposure = visionPortal.getCameraControl(ExposureControl.class);
 			if (exposure != null && exposure.isModeSupported(ExposureControl.Mode.Manual)) {
@@ -498,9 +362,8 @@ public class AprilTagVision extends Node {
 
 		try {
 			WhiteBalanceControl balance = visionPortal.getCameraControl(WhiteBalanceControl.class);
-			// Note the upper case: WhiteBalanceControl.Mode uses MANUAL where ExposureControl and
-			// FocusControl use Manual. Inconsistent across the SDK. This control also lacks the
-			// isModeSupported() the other two have, so setMode's return value is the only signal.
+			// MANUAL is upper case here, unlike ExposureControl and FocusControl, and this control
+			// has no isModeSupported(), so setMode's return value is the only signal.
 			if (balance != null && balance.setMode(WhiteBalanceControl.Mode.MANUAL)) {
 				this.whiteBalanceLocked = true;
 			}
@@ -509,17 +372,8 @@ public class AprilTagVision extends Node {
 		}
 	}
 
-	/**
-	 * Age past which a detection stops being trusted, in milliseconds.
-	 *
-	 * <p>Scaled to the camera's actual frame rate. At decimation 1 over a 1280x800 stream the frame
-	 * interval can be several hundred milliseconds, and a fixed limit would then flag every detection
-	 * as stale, which would make every target unusable and leave the driver station reporting "no
-	 * usable cluster" forever while the vision was in fact working fine.
-	 *
-	 * <p>Falls back to {@link #STALE_AFTER_MS} when the frame rate is not known yet, which is the
-	 * case briefly at startup.
-	 */
+	/** Scaled to the actual frame interval: a fixed limit would flag every detection stale while the
+	 * camera runs slowly, stranding the driver station on "no usable cluster". */
 	private double staleThresholdMs() {
 		float fps = getActualFps();
 		if (fps <= 0.0f) {
@@ -529,10 +383,7 @@ public class AprilTagVision extends Node {
 		return Math.max(STALE_AFTER_MS, STALE_FRAME_INTERVALS * frameIntervalMs);
 	}
 
-	/**
-	 * Frame rate the camera actually achieved. SDK 12.0 exposes no way to request a frame rate, so
-	 * this negotiated number is the only honest measure of whether the stream is healthy.
-	 */
+	/** Frame rate the camera actually achieved; SDK 12.0 exposes no way to request one. */
 	public float getActualFps() {
 		return visionPortal.getFps();
 	}
@@ -555,7 +406,7 @@ public class AprilTagVision extends Node {
 		return poi;
 	}
 
-	/** Change decimation live: higher sees farther but updates slower. */
+	/** Change decimation live; higher decimation raises the frame rate but shortens detection range. */
 	@SubscribedTo(topic = "vision/setDecimation")
 	public void onSetDecimation(Integer decimation) {
 		if (decimation == null) {
@@ -567,7 +418,7 @@ public class AprilTagVision extends Node {
 		orchestrator.publish("vision/decimation", clamped);
 	}
 
-	/** Add to the turret yaw without a redeploy. */
+	/** Adds to the turret yaw, in degrees, without a redeploy. */
 	@SubscribedTo(topic = "vision/nudgeCameraYaw")
 	public void onNudgeCameraYaw(Double degrees) {
 		if (degrees == null || degrees == 0.0) {
@@ -585,7 +436,7 @@ public class AprilTagVision extends Node {
 		cameraPose.setYaw(degrees);
 	}
 
-	/** Restore the default extrinsics. Yaw takes effect immediately; the rest needs a restart. */
+	/** Restore default extrinsics; yaw takes effect immediately, the rest needs a restart. */
 	@SubscribedTo(topic = "vision/resetCameraPose")
 	public void onResetCameraPose(Boolean trigger) {
 		if (Boolean.TRUE.equals(trigger)) {
@@ -593,7 +444,6 @@ public class AprilTagVision extends Node {
 		}
 	}
 
-	/** Release the camera when the node is unregistered. */
 	@Override
 	public void close() {
 		visionPortal.close();

@@ -22,15 +22,8 @@ import org.firstinspires.ftc.teamcode.Subsystems.Vision.AprilTagVision;
 import org.firstinspires.ftc.teamcode.Subsystems.Vision.ClusterTarget;
 
 /**
- * Turns the turret so the shooter stays aimed at our alliance's HIVE cell.
- *
- * <p>Angles are degrees from straight ahead, growing clockwise, so +15 is 15 degrees to the right.
- * The turret stops at the ends of its travel instead of pushing into them.
- *
- * <p>Where to aim comes from vision when a fresh cluster of ours is in view, otherwise from the
- * cell's fixed position on the field plus the robot's pose; {@link #setManualGoal(Double)} overrides
- * both for bench tuning. Movement is feedforward plus PID in volts (the WPILib pattern), and servo
- * power is a duty cycle rather than volts, so the volts get divided by the battery voltage.
+ * Aims the turret at our alliance's HIVE cell: a fresh cluster of ours from vision, else the cell's
+ * field position plus pose; a manual goal overrides both. Angles grow clockwise from straight ahead.
  */
 public class Turret extends Node {
 
@@ -41,21 +34,21 @@ public class Turret extends Node {
 
 	private static final double LOOP_PERIOD_SEC = 0.02;
 	private static final double MIN_PROFILE_CONSTRAINT = 1e-3;
-	/** Stop pushing once the turret is this close to a limit. */
+	// Stop pushing once this close to a limit.
 	private static final double LIMIT_EPS_DEG = 0.5;
-	/** Re-read the battery every 25 ticks (half a second) because the read is the slow part. */
+	// 25 ticks = 0.5 s at 50 Hz; the voltage read is the slow part.
 	private static final int BATTERY_REFRESH_TICKS = 25;
-	/** |error| samples behind the settle reading on the tuning screen. */
+	// |error| samples behind the settle reading on the tuning screen.
 	private static final int SETTLE_WINDOW_SAMPLES = 25;
 
 	private final SafeDevice<CRServo> turretServo;
 	private final SafeDevice<DcMotorEx> encoderMotor;
 	private final SafeHardwareMap safeMap;
-	/** Null on the bench, where the tuning OpMode has no camera and no odometry. */
+	// Null on the bench (the tuning OpMode has no camera and no odometry).
 	private final Follower follower;
-	/** Null on the bench, where the tuning OpMode has no camera and no odometry. */
+	// Null on the bench (the tuning OpMode has no camera and no odometry).
 	private final AprilTagVision vision;
-	/** Gamepad that owns the offsets and the always-face toggle, "g1" or "g2". */
+	// Gamepad that owns the offsets and the enabled toggle: "g1" or "g2".
 	private final String inputPrefix;
 
 	private final ProfiledPIDController profiledPid;
@@ -64,26 +57,25 @@ public class Turret extends Node {
 	private double constraintsA = -1.0;
 	private double prevSetpointVel;
 
-	// Driver-set during a run, so instance state and not Panels statics, which outlive a match.
+	// Driver-set during a run: instance state, not Panels statics which outlive a match.
 	private volatile double aimOffsetDeg;
 	private volatile double lateralOffsetCm;
 	private volatile boolean enabled = true;
 
-	/** Bench override: an absolute angle to face instead of a cell. */
+	// Bench override: an absolute angle to face instead of a cell.
 	private volatile Double manualGoal;
 
-	// Encoder zero, taken on the first tick, which is the turret facing straight ahead at init.
+	// Zero captured on the first tick, which is the turret facing straight ahead at init.
 	private boolean zeroCaptured;
 	private int zeroTicks;
 
-	// Whether the previous tick had something to aim at. Re-acquiring a target re-seeds the profile.
+	// Whether the previous tick had a target; re-acquiring one re-seeds the profile.
 	private boolean hadTarget;
 
 	private int batteryTick;
 	private double batteryVoltage = TurretConfig.nominalVoltage;
 
-	// Peak and settle error per step cycle, latched when the goal changes so the tuning screen
-	// reports the numbers of the cycle that has just finished.
+	// Latched when the goal changes, so the tuning screen reports the cycle that just finished.
 	private final SettleWindow settleWindow = new SettleWindow();
 	private boolean goalInitialized;
 	private double lastGoal;
@@ -150,13 +142,10 @@ public class Turret extends Node {
 		double commandedVolts = ffVolts + pidVolts;
 		double power = enabled && hasTarget ? toPower(commandedVolts) : 0.0;
 
-		// Test the commanded volts, never the servo power. toPower() multiplies by
-		// TurretConfig.powerSign, which records the physical direction of this servo, so positive
-		// volts raise the angle under either sign: on a powerSign -1 mounting positive volts
-		// become negative power, and negative power is clockwise there. Testing power's sign only
-		// agrees when powerSign is +1, and inverted it cuts precisely the power that would back
-		// the turret off a limit it is resting against, so the turret latches at the end of its
-		// travel and the profile setpoint walks away from it.
+		// Test the commanded volts, not the servo power. toPower() applies TurretConfig.powerSign,
+		// so positive volts raise the angle under either sign, but power's sign only agrees when
+		// powerSign is +1: inverted, it cuts the volts that would back the turret off a limit and
+		// the turret latches at the travel end while the profile setpoint walks away.
 		atLimit = false;
 		if (angle >= TurretConfig.maxAngleDeg - LIMIT_EPS_DEG && commandedVolts > 0.0) {
 			power = 0.0;
@@ -170,10 +159,7 @@ public class Turret extends Node {
 		publish(angle, goal, aim, power);
 	}
 
-	/**
-	 * Encoder ticks since the zero captured on the first tick, as degrees. The turret points
-	 * straight ahead at init, so that zero is forward.
-	 */
+	// Encoder ticks since the zero taken on the first tick, as degrees; that zero is straight ahead.
 	private double measureAngle() {
 		int ticks = encoderMotor.raw().getCurrentPosition();
 		if (!zeroCaptured) {
@@ -185,10 +171,8 @@ public class Turret extends Node {
 		return encoderTicks * sign / TurretConfig.countsPerTurretDegree();
 	}
 
-	/**
-	 * Nothing to aim at, so hold still and re-seed the profile from the measurement. Without this
-	 * the next target would start its move from a stale setpoint.
-	 */
+	// Nothing to aim at: hold still and re-seed the profile. Without this the next target would
+	// start its move from a stale setpoint.
 	private double holdPosition(double angle) {
 		profiledPid.reset(angle);
 		prevSetpointVel = 0.0;
@@ -200,10 +184,8 @@ public class Turret extends Node {
 		return angle;
 	}
 
-	/**
-	 * Pick the goal inside the travel range, then advance the trapezoid profile and the PID by one
-	 * tick. Re-seed from the measurement on the first tick and whenever a target is re-acquired.
-	 */
+	// Pick the goal inside the travel range, then advance the trapezoid profile and the PID by one
+	// tick; re-seed from the measurement on the first tick and whenever a target is re-acquired.
 	private double track(double angle, Aim aim) {
 		double goal = selectGoal(aim.angleDeg, angle);
 		if (!goalInitialized || !hadTarget) {
@@ -222,7 +204,6 @@ public class Turret extends Node {
 		return goal;
 	}
 
-	/** Controller volts to servo duty cycle. */
 	private double toPower(double volts) {
 		double power = TurretConfig.powerSign * volts / Math.max(batteryVoltage, 1e-6);
 		return clamp(power, -1.0, 1.0);
@@ -236,7 +217,7 @@ public class Turret extends Node {
 		}
 	}
 
-	/** Keep the peak and settle error of the current cycle until the goal moves on. */
+	// Keep the peak and settle error of this cycle until the goal moves on.
 	private void recordCycle(double goal) {
 		double absError = Math.abs(errorDeg);
 		if (absError > cyclePeakErrorDeg) {
@@ -279,8 +260,8 @@ public class Turret extends Node {
 		orchestrator.publish("turret/atLimit", atLimit);
 		orchestrator.publish("turret/enabled", enabled);
 
-		// The camera rides the turret, so the vision node cannot resolve geometry without our yaw.
-		// Its convention grows counter-clockwise and ours grows clockwise, hence the minus sign.
+		// The camera rides the turret, so the vision node cannot resolve geometry without our yaw;
+		// its convention grows counter-clockwise and ours clockwise, hence the minus sign.
 		orchestrator.publish("vision/setCameraYaw", -(angle + TurretConfig.cameraMountYawDeg));
 	}
 
@@ -288,18 +269,12 @@ public class Turret extends Node {
 
 	/** What the turret should be facing this tick. */
 	private static final class Aim {
-		/**
-		 * Absolute turret angle to point at, clockwise from the robot's forward — the same frame
-		 * the measured turret angle lives in, so the two can be compared directly.
-		 *
-		 * <p>Absolute is the whole point. Adding the turret's current angle here would make the goal
-		 * a function of where the turret already is, so the error would never shrink and the loop
-		 * would creep at a constant rate with the goal climbing along behind it.
-		 */
+		// Absolute turret angle in degrees clockwise from the robot's forward, the same frame as
+		// the measured angle. Adding the current angle here would make the goal chase the turret.
 		final double angleDeg;
 		final String source;
 		final String targetName;
-		/** Horizontal distance to the aim point in cm, or −1 when there is nothing to scale with. */
+		// Horizontal distance to the aim point in cm, or −1 when there is nothing to scale with.
 		final double horizontalRangeCm;
 		final boolean stale;
 
@@ -312,20 +287,13 @@ public class Turret extends Node {
 		}
 	}
 
-	/**
-	 * Where the turret should point now, or null when there is nothing to aim at.
-	 *
-	 * <p>Every branch returns an absolute turret angle, which is the frame the measured angle lives
-	 * in, so the result goes straight to the profiler without adding the current angle again.
-	 *
-	 * <p>Only the vision branch needs {@code currentAngle}, and only because the SDK's bearing is a
-	 * camera-frame error rather than a robot-frame one. See that branch.
-	 */
+	// Absolute turret angle to aim at, or null when there is nothing to aim at. Only the vision
+	// branch needs the current angle, because the SDK's bearing is a camera-frame error.
 	private Aim computeAim(double currentAngle) {
 		Double manual = manualGoal;
 		if (manual != null) {
-			// Bench override: an absolute angle, so there is no range for the lateral offset to
-			// scale against and only the aim offset applies.
+			// Bench override is an absolute angle, so the lateral offset has no range to scale
+			// against and only the aim offset applies.
 			return new Aim(
 					manual + aimOffsetDeg,
 					SOURCE_MANUAL,
@@ -336,24 +304,10 @@ public class Turret extends Node {
 
 		ClusterTarget cluster = bestCluster();
 		if (cluster != null) {
-			// rawBearing is a camera-frame error: the angle from the camera's optical axis to the
-			// cluster, positive left. It is a live per-frame measurement, so unlike the raw xyz it
-			// already contains the turret's current rotation. Subtracting it from the angle we are
-			// at now converts that error into the absolute turret angle that centres the cluster:
-			//
-			//     goal = θ − (θ + mountYaw − C) = C − mountYaw
-			//
-			// θ cancels, so the goal is the same constant wherever the turret happens to be, and the
-			// fixed point is rawBearing == 0 — the cluster centred in frame, which is what the
-			// profiler then servos to at full authority.
-			//
-			// cameraMountYawDeg cancels against the mount term already inside rawBearing, so it is
-			// deliberately not added here; adding it would count the mount offset twice.
-			//
-			// Negating rawBearing on its own would give goal = C − θ instead, so the error the
-			// controller sees is C − 2θ. That shrinks as fast as it is corrected and overshoots,
-			// which is unstable: the turret hunts, and once the goal lands outside the travel
-			// range selectGoal wraps it to the far end and the turret runs all the way around.
+			// rawBearing is a camera-frame error, positive left, that already contains the turret's
+			// current rotation, so currentAngle − rawBearing is the absolute angle that centres the
+			// cluster (θ cancels); cameraMountYawDeg is inside it and must not be added again.
+			// Negating the bearing alone gives error C − 2θ, which overshoots and hunts.
 			double bearing = currentAngle - cluster.rawBearing;
 			double rangeCm = cluster.resolved.horizontalDistance * 2.54;
 			return new Aim(
@@ -369,10 +323,8 @@ public class Turret extends Node {
 		if (cell != null && pose != null) {
 			double dx = cell[0] - pose.x();
 			double dy = cell[1] - pose.y();
-			// Pedro's heading grows counter-clockwise and ours grows clockwise, so subtracting the
-			// cell's field azimuth from the robot's heading gives the angle, clockwise from the
-			// robot's forward, at which the turret must sit. That is already an absolute turret
-			// angle: the current one must not be added.
+			// Pedro's heading grows counter-clockwise and ours clockwise, so heading − cell azimuth
+			// gives the absolute turret angle; the current angle must not be added.
 			double bearing = wrapDeg(Math.toDegrees(pose.heading() - Math.atan2(dy, dx)));
 			double rangeCm = Math.hypot(dx, dy) * 2.54;
 			return new Aim(
@@ -385,10 +337,8 @@ public class Turret extends Node {
 		return null;
 	}
 
-	/**
-	 * Extra angle for a shooter that sits off the turret axis: the lateral offset seen from the
-	 * target's range. Positive moves the aim right of the target.
-	 */
+	// Extra angle for a shooter that sits off the turret axis: the lateral offset seen from the
+	// target's range; positive moves the aim right of the target.
 	private double lateralShift(double rangeCm) {
 		if (rangeCm <= 1e-6) {
 			return 0.0;
@@ -396,10 +346,9 @@ public class Turret extends Node {
 		return Math.toDegrees(Math.atan2(lateralOffsetCm, rangeCm));
 	}
 
-	/** Nearest fresh cluster that is ours and on our half of the field. */
+	// Nearest fresh cluster that is ours and on our half of the field.
 	private ClusterTarget bestCluster() {
-		// TurretConfig.aimFromVision off means odometry only: no cluster, so computeAim falls
-		// through to the cell position and the pose. The camera keeps streaming either way.
+		// aimFromVision off means odometry only; the camera keeps streaming either way.
 		if (vision == null || !TurretConfig.aimFromVision) {
 			return null;
 		}
@@ -427,7 +376,7 @@ public class Turret extends Node {
 		return best;
 	}
 
-	/** "SCORING" or "AUDIENCE" for the half of the field the robot is on, or null if unknown. */
+	// "SCORING" or "AUDIENCE" for the half of the field the robot is on, or null if unknown.
 	private String fieldHalf() {
 		if (follower == null) {
 			return null;
@@ -439,7 +388,7 @@ public class Turret extends Node {
 		return pose.y() > TurretConfig.halfSplitY ? "SCORING" : "AUDIENCE";
 	}
 
-	/** Fixed field position of our HIVE cell, in PedroPathing inches, or null if unknown. */
+	// Fixed field position of our HIVE cell, in PedroPathing inches, or null if unknown.
 	private double[] cellPosition() {
 		String half = fieldHalf();
 		if (half == null) {
@@ -459,22 +408,10 @@ public class Turret extends Node {
 		return new double[] {TurretConfig.cellBlueScoringX, TurretConfig.cellBlueScoringY};
 	}
 
-	/**
-	 * Of the wanted angle and the same angle plus or minus a whole turn, pick the one that lands
-	 * inside the travel range and is closest to where the turret is now. This is what stops a
-	 * "turn 20 degrees left" command from being sent the long way round.
-	 *
-	 * <p>The travel range is narrower than a full turn, so there is a dead band of
-	 * {@code 360 − (max − min)} degrees — 69° of it at the current limits — where the target sits
-	 * past the near end and the wrapped copy lands past the far end, and the turret cannot face it
-	 * in either direction. No candidate fits, so this falls back to clamping to the nearest end of
-	 * the travel, which leaves the turret as close to the target as the mechanics allow.
-	 *
-	 * <p>Committing to the long way round inside that band was tried and reverted: driving all the
-	 * way to {@link TurretConfig#maxAngleDeg} parks the turret against the far stop, so the goal
-	 * flips between that stop and the direct angle every time the aim crosses the band edge, and
-	 * the turret answers with a full sweep each time.
-	 */
+	// Of the wanted angle and ± a whole turn, pick the copy inside the travel range closest to the
+	// current angle, so a small correction is not sent the long way round. In the dead band of
+	// 360 − (max − min) degrees (69° at the current limits) no copy fits, so this clamps to the
+	// nearest end and the turret gets as close to the target as the mechanics allow.
 	private static double selectGoal(double angleWanted, double currentAngle) {
 		double min = TurretConfig.minAngleDeg;
 		double max = TurretConfig.maxAngleDeg;
@@ -495,9 +432,8 @@ public class Turret extends Node {
 	}
 
 	// ── gamepad ───────────────────────────────────────────────────────────────────
-	// Dpad left/right trims the aim angle and up/down trims the lateral offset, y zeroes both and
-	// x toggles the turret. There are two handlers per button only because each gamepad publishes
-	// on its own topic prefix; the guard keeps the turret on the one it was built with.
+	// Dpad trims the aim angle and the lateral offset, y zeroes both and x toggles the turret. Two
+	// handlers per button only because each gamepad has its own topic prefix; the guard picks ours.
 
 	@SubscribedTo(topic = "g1/dpad_left/rising")
 	public void g1DpadLeft() {
@@ -527,7 +463,7 @@ public class Turret extends Node {
 		}
 	}
 
-	/** One degree per press, or a tenth of a degree while the left bumper is held. */
+	// One degree per press, or a tenth of a degree while the left bumper is held.
 	private double stepSize() {
 		boolean bumper = orchestrator
 				.getLatestValue(inputPrefix + "/left_bumper", Boolean.class)
@@ -603,7 +539,7 @@ public class Turret extends Node {
 
 	// ── helpers ───────────────────────────────────────────────────────────────────
 
-	/** Push the live Panels gains and limits into the controller so edits land immediately. */
+	// Push the live Panels gains and limits into the controller so edits land immediately.
 	private void refreshController() {
 		profiledPid.setPID(nonNegative(TurretConfig.kp), nonNegative(TurretConfig.ki), nonNegative(TurretConfig.kd));
 		profiledPid.setIZone(Math.max(TurretConfig.iZone, 0.0));
@@ -623,7 +559,7 @@ public class Turret extends Node {
 		feedforward.setKa(nonNegative(TurretConfig.ka));
 	}
 
-	/** First positive reading on the bus, or the configured nominal voltage if none are. */
+	// First positive reading on the bus, or the configured nominal voltage if none are.
 	private double readBatteryVoltage() {
 		try {
 			for (VoltageSensor sensor : safeMap.raw().getAll(VoltageSensor.class)) {
@@ -658,7 +594,7 @@ public class Turret extends Node {
 
 	// ── tuning API & telemetry ────────────────────────────────────────────────────
 
-	/** Bench override: face this absolute angle instead of a cell. Null returns to the cells. */
+	/** Bench override: face this absolute angle instead of a cell; null returns to the cells. */
 	public void setManualGoal(Double goal) {
 		manualGoal = goal;
 	}
@@ -727,7 +663,7 @@ public class Turret extends Node {
 		return enabled;
 	}
 
-	/** Primary driver-station line. The extra detail goes below it via {@link #publishVerboseTelemetry}. */
+	/** Primary driver-station line; the extra detail goes in publishVerboseTelemetry. */
 	public void publishTelemetry(Telemetry telemetry) {
 		telemetry.addData(
 				"Turret",
@@ -745,7 +681,7 @@ public class Turret extends Node {
 						: "OFF");
 	}
 
-	/** Extra detail, only shown when {@link TurretConfig#verboseTelemetry} is on. */
+	/** Extra detail, only shown when TurretConfig.verboseTelemetry is on. */
 	public void publishVerboseTelemetry(Telemetry telemetry) {
 		telemetry.addData(
 				"Turret ctrl",

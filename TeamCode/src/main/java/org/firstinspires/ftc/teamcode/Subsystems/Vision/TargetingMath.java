@@ -1,34 +1,15 @@
 package org.firstinspires.ftc.teamcode.Subsystems.Vision;
 
 /**
- * Pure geometry for turning a reported AprilTag cluster pose into the numbers a robot actually
- * wants: how far to drive, how far to throw, and where to aim.
- *
- * <p>No hardware, no state, no allocation-heavy behaviour ΓÇö everything here is static and cheap
- * enough to run per detection per frame.
- *
- * <h2>Frames and conventions</h2>
- *
- * The SDK hands us {@code ftcPose.x/y/z} using the FTC-facing axes
- * <b>{@code +X} right, {@code +Y} forward, {@code +Z} up</b>, measured from the camera lens. That
- * is the same labelling {@link VisionCameraPose} uses for the camera's translation.
- *
- * <ul>
- *   <li><b>Camera axes</b> ΓÇö {@code +X} right, {@code +Y} down, {@code +Z} forward, origin at the
- *       lens. What the SDK actually measures in; never needed directly here.</li>
- *   <li><b>Robot axes</b> ΓÇö {@code +X} forward, {@code +Y} left, {@code +Z} up.</li>
- *   <li><b>Field axes</b> ΓÇö horizontal {@code +X}/{@code +Y} with {@code +Z} up, where robot
- *       heading {@code 0} means facing {@code +X} and heading increases counter-clockwise viewed
- *       from above. This matches the usual FTC odometry convention.</li>
- * </ul>
+ * Pure geometry from a reported cluster pose to drive/throw/aim numbers.
+ * Robot axes +X forward/+Y left/+Z up; field +Z up with heading 0 at +X, CCW-positive.
  */
 public final class TargetingMath {
 
 	private TargetingMath() {}
 
 	/**
-	 * A resolved measurement: the vector from the camera to the point of interest, expressed in the
-	 * field frame, plus the derived shooting/driving quantities.
+	 * Camera-to-POI offset in the field frame, plus derived shooting/driving quantities.
 	 */
 	public static final class ResolvedPoint {
 
@@ -37,55 +18,24 @@ public final class TargetingMath {
 		public final double y;
 		public final double z;
 
-		/**
-		 * Straight-line 3D distance from the camera to the POI, inches. This is the launch
-		 * distance: how far the scoring element has to travel. Note it is measured from the
-		 * camera lens, so add your launcher's offset to it if the shooter sits well ahead of or
-		 * behind the camera.
-		 */
+		/** Straight-line distance camera lens -> POI, inches; measured from the lens, not the launcher. */
 		public final double range;
 
-		/**
-		 * Horizontal angle from the camera to the POI, in degrees, relative to the direction the
-		 * robot is facing. Positive is to the left, negative to the right, {@code 0} dead ahead.
-		 * This is the number to feed a heading controller.
-		 */
+		/** Horizontal angle from the robot's facing to the POI, degrees: positive left, 0 dead ahead. */
 		public final double bearing;
 
-		/**
-		 * Vertical angle to the POI, in degrees. Positive means the POI is above the camera, so a
-		 * launcher must tilt up by this much. Always in {@code [-90, 90]}.
-		 */
+		/** Vertical angle to the POI, degrees: positive above the camera, always in [-90, 90]. */
 		public final double elevation;
 
-		/**
-		 * Horizontal distance from the camera to the POI in inches, ignoring height entirely.
-		 * This is the "drive distance" a robot would travel to be directly under the cluster.
-		 */
+		/** Horizontal distance from the camera to the POI, inches, ignoring height. */
 		public final double horizontalDistance;
 
-		/**
-		 * Compass angle of the POI in the field frame, degrees CCW from field +X, matching robot
-		 * heading. Distinct from {@link #bearing}, which is measured from the robot's facing.
-		 */
+		/** Compass angle of the POI in the field frame, degrees CCW from +X; distinct from bearing. */
 		public final double azimuth;
 
-		/**
-		 * Angle between the camera's optical axis and the direction to the POI, degrees. Zero means
-		 * the target sits dead centre in the image.
-		 *
-		 * <p>The single most useful number for judging aim: a large value means the camera is
-		 * pointed well away from the target, so either the mount pitch is wrong or the robot is not
-		 * pointed at the cluster. It also shows how much headroom is left before the target leaves
-		 * the frame.
-		 */
+		/** Angle between the camera's optical axis and the POI, degrees; 0 means dead centre in the image. */
 		public final double offAxis;
 
-		/**
-		 * @param bearingDeg robot-relative horizontal angle, degrees, positive left
-		 * @param azimuthDeg field-frame compass angle, degrees CCW from +X
-		 * @param offAxisDeg angle from the camera's optical axis, degrees
-		 */
 		ResolvedPoint(double x, double y, double z, double bearingDeg, double azimuthDeg, double offAxisDeg) {
 			this.x = x;
 			this.y = y;
@@ -117,23 +67,8 @@ public final class TargetingMath {
 	}
 
 	/**
-	 * Resolve a cluster's reported pose into field-frame geometry relative to the robot's facing.
-	 *
-	 * <p>The chain is: SDK camera-facing axes -> robot axes -> field axes, applying the camera's
-	 * mount yaw and the robot's heading, then adding the POI offset if one is enabled.
-	 *
-	 * @param cameraX      {@code ftcPose.x}, inches, right-positive
-	 * @param cameraY      {@code ftcPose.y}, inches, forward-positive
-	 * @param cameraZ      {@code ftcPose.z}, inches, up-positive
-	 * @param clusterYaw   {@code ftcPose.yaw}, degrees, only used by the cluster-relative POI frame
-	 * @param cameraYawDeg camera mount yaw, degrees ({@link VisionCameraPose#getYaw()})
-	 * @param cameraElevationDeg camera tilt above horizontal, degrees
-	 *        ({@link VisionCameraPose#getElevation()}). Only used to report the off-axis angle;
-	 *        the rotation below deliberately ignores pitch, because {@code ftcPose} has already had
-	 *        the camera's full orientation applied by the SDK.
-	 * @param robotHeadingDeg robot heading on the field, degrees CCW from {@code +X}
-	 * @param poi          point of interest, or {@code null} for the cluster's own pose
-	 * @return resolved geometry, never {@code null}
+	 * Resolve a cluster pose into field-frame geometry relative to the robot's facing; camera x/y/z in inches.
+	 * Mount pitch is deliberately not rotated (the SDK applied the camera's orientation); it only feeds offAxis.
 	 */
 	public static ResolvedPoint resolve(
 			double cameraX,
@@ -171,10 +106,8 @@ public final class TargetingMath {
 			double offsetZ = poi.effectiveOffsetZ();
 
 			if (poi.getFrame() == PointOfInterest.Frame.TARGET_FRAME_CLUSTER) {
-				// Rotate the offset so it stays fixed relative to the cluster. Only the yaw
-				// component is honoured here: a cluster's opening faces horizontally, so rotation
-				// about the up axis is the part that matters. Pitch and roll are deliberately not
-				// applied, so do not read this as full orientation alignment.
+				// Rotate with the cluster's yaw so the offset stays fixed to the cluster's opening;
+				// pitch and roll are deliberately not applied, so this is not full orientation alignment.
 				double totalYaw = VisionCameraPose.wrapDegrees(clusterYaw + cameraYawDeg + robotHeadingDeg);
 				double totalYawRad = Math.toRadians(totalYaw);
 				double cosTotal = Math.cos(totalYawRad);
@@ -190,8 +123,7 @@ public final class TargetingMath {
 			fieldZ += offsetZ;
 		}
 
-		// Rotate the field-frame vector back into the robot's frame so bearing reads as an
-		// aim error: positive left, negative right, zero straight ahead.
+		// Back into the robot frame; bearing is an aim error: positive left, negative right, zero ahead.
 		double bearingForward = fieldX * cosHeading + fieldY * sinHeading;
 		double bearingLeft = -fieldX * sinHeading + fieldY * cosHeading;
 
@@ -202,9 +134,8 @@ public final class TargetingMath {
 		// Compass angle of the target in the field frame.
 		double azimuthDeg = Math.hypot(fieldX, fieldY) > 1e-9 ? Math.toDegrees(Math.atan2(fieldY, fieldX)) : 0.0;
 
-		// Angle between the camera's optical axis and the target, via the spherical law of cosines.
-		// Both directions are described by (azimuth, elevation): the camera's by its mount yaw and
-		// tilt, the target's by where we just computed it to be.
+		// Off-axis angle via the spherical law of cosines between the camera axis (mount yaw, tilt)
+		// and the target direction (its azimuth and elevation).
 		double distance = Math.sqrt(fieldX * fieldX + fieldY * fieldY + fieldZ * fieldZ);
 		double targetElevation = distance > 1e-9 ? Math.asin(clamp(fieldZ / distance, -1.0, 1.0)) : 0.0;
 		double cameraElevation = Math.toRadians(cameraElevationDeg);
@@ -215,7 +146,6 @@ public final class TargetingMath {
 		return new ResolvedPoint(fieldX, fieldY, fieldZ, bearingDeg, azimuthDeg, offAxisDeg);
 	}
 
-	/** Clamp {@code value} into {@code [min, max]}. */
 	private static double clamp(double value, double min, double max) {
 		return Math.max(min, Math.min(max, value));
 	}

@@ -3,16 +3,15 @@ package org.firstinspires.ftc.teamcode.Subsystems.Vision;
 import java.util.Locale;
 
 /**
- * An immutable snapshot of one detected AprilTag cluster, with its resolved geometry already
- * computed. Produced by {@link AprilTagVision} each polling cycle and safe to hold onto afterwards,
- * so telemetry and any consumer of the vision data see the same numbers for a given frame.
+ * Immutable snapshot of one detected AprilTag cluster, with geometry already resolved for the frame
+ * it came from, so a held reference keeps reporting that frame's numbers.
  */
 public final class ClusterTarget {
 
-	/** Cluster name from the SDK tag library, e.g. {@code "RED SCORING"}. */
+	/** Cluster name from the SDK tag library, e.g. "RED SCORING". */
 	public final String name;
 
-	/** Abbreviated cluster name, e.g. {@code "RED"}. */
+	/** Abbreviated cluster name, e.g. "RED". */
 	public final String shortName;
 
 	/** Fraction of the cluster's tags currently visible, 0-100. */
@@ -21,7 +20,7 @@ public final class ClusterTarget {
 	/** How many tags the cluster has in total, or 0 if the SDK did not say. */
 	public final int tagsTotal;
 
-	/** How many of those tags are visible right now, derived from {@link #percentClusterFound}. */
+	/** How many tags are visible right now, derived from percentClusterFound. */
 	public final int tagsVisible;
 
 	// ---- raw camera-facing pose, exactly as the SDK reported it ----------------
@@ -51,16 +50,13 @@ public final class ClusterTarget {
 
 	// ---- frame freshness ------------------------------------------------------
 
-	/** {@code frameAcquisitionNanoTime} reported by the SDK for this detection. */
+	/** The SDK's frameAcquisitionNanoTime for this detection. */
 	public final long acquisitionNanos;
 
 	/** How long ago that frame was captured, in milliseconds, at the time of the snapshot. */
 	public final double ageMs;
 
-	/**
-	 * True when this detection is older than the staleness budget, meaning the camera is not
-	 * keeping up and the numbers should not be trusted for closed-loop control.
-	 */
+	/** True when this detection is older than the staleness budget, so control should not trust it. */
 	public final boolean stale;
 
 	ClusterTarget(
@@ -115,19 +111,14 @@ public final class ClusterTarget {
 		}
 	}
 
-	// Thresholds for the confidence grade. A cluster pose is a multi-tag solve, so it sharpens as
-	// more tags come into view. Range matters because a distant cluster covers fewer pixels, which
-	// costs angular precision.
+	// Confidence grade thresholds: a multi-tag solve sharpens as more tags come into view, and a
+	// distant cluster covers fewer pixels, costing angular precision.
 	private static final int VISIBILITY_GOOD = 75;
 	private static final int VISIBILITY_FAIR = 40;
 	private static final double RANGE_GOOD_IN = 60.0;
 	private static final double RANGE_FAIR_IN = 120.0;
 
-	/**
-	 * Grade the reading by its weakest aspect rather than averaging, because one bad factor spoils
-	 * the whole pose: a clean angle solve from two visible tags still beats nothing, and a
-	 * square-on single tag still misses the range by more than a distant four-tag fix.
-	 */
+	/** Grades by the weakest aspect, because one bad factor spoils the whole pose. */
 	public Confidence confidence() {
 		if (percentClusterFound < VISIBILITY_FAIR || resolved.range > RANGE_FAIR_IN) {
 			return Confidence.POOR;
@@ -138,10 +129,7 @@ public final class ClusterTarget {
 		return Confidence.GOOD;
 	}
 
-	/**
-	 * Why the grade came out the way it did, in the terms that produced it: how many tags are
-	 * visible.
-	 */
+	/** Why the grade came out the way it did: how many tags are visible. */
 	public String qualityNote() {
 		StringBuilder note = new StringBuilder();
 		if (tagsTotal > 1) {
@@ -155,9 +143,8 @@ public final class ClusterTarget {
 	}
 
 	/**
-	 * The single most useful thing to change, or an empty string when there is nothing worth
-	 * chasing. Ordered so the biggest lever wins: a stale frame makes every other number
-	 * meaningless, and clearing an occlusion beats squaring up.
+	 * The single most useful thing to change, or "" when nothing is worth chasing; biggest lever
+	 * first, since a stale frame makes every other number meaningless.
 	 */
 	public String advice() {
 		if (stale) {
@@ -180,10 +167,7 @@ public final class ClusterTarget {
 		return scorable && !stale;
 	}
 
-	/**
-	 * Short verdict on whether this cluster can be scored, and if not, why. Ordered so the most
-	 * fundamental disqualifier comes first.
-	 */
+	/** Short verdict on whether this cluster can be scored, and if not, why; most fundamental cause first. */
 	public String status() {
 		if (!allianceMatch) {
 			return "other alliance";
@@ -194,10 +178,7 @@ public final class ClusterTarget {
 		return "usable";
 	}
 
-	/**
-	 * Every measurement worth reading, spelled out rather than abbreviated. Two per line to keep it
-	 * compact, since the Driver Station wraps anything long.
-	 */
+	/** Every measurement spelled out, two per line since the Driver Station wraps long lines. */
 	public String actionLines() {
 		return String.format(
 				Locale.US,
@@ -212,7 +193,7 @@ public final class ClusterTarget {
 				resolved.offAxis) + String.format(Locale.US, "%n  Quality: %s", qualityNote()) + adviceLine();
 	}
 
-	/** The suggested fix, or nothing when there is nothing worth chasing. */
+	// The suggested fix, or "" when there is nothing worth chasing.
 	private String adviceLine() {
 		String advice = advice();
 		return advice.isEmpty() ? "" : String.format(Locale.US, "%n  Try: %s", advice);
@@ -257,7 +238,6 @@ public final class ClusterTarget {
 				resolved.elevation);
 	}
 
-	/** Single-line summary, handy for logging. */
 	@Override
 	public String toString() {
 		return String.format(
