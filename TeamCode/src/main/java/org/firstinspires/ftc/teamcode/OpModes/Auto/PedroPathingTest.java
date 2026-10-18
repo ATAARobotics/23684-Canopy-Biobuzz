@@ -15,7 +15,7 @@ public class PedroPathingTest extends MainPedroAuto {
 
     @Override
     protected Pose getStartingPose() {
-        return new Pose(55, 9, Math.toRadians(90));
+        return new Pose(56, 10, Math.toRadians(90));
     }
 
     public void SetRoute(){
