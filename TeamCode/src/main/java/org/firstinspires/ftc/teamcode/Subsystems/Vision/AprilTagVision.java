@@ -339,8 +339,6 @@ public class AprilTagVision extends Node {
 		double rawPitch = detection.ftcPose.pitch;
 		double rawRoll = detection.ftcPose.roll;
 
-		double absRoll = Math.abs(rawRoll);
-		boolean upright = absRoll < 90.0;
 		boolean allianceMatch = name.startsWith(String.valueOf(allianceLetter));
 
 		// Turret yaw is folded in here, not in the SDK's pose.
@@ -365,8 +363,6 @@ public class AprilTagVision extends Node {
 				detection.ftcPose.bearing,
 				detection.ftcPose.elevation,
 				allianceMatch,
-				upright,
-				absRoll,
 				resolvedPoint,
 				detection.frameAcquisitionNanoTime,
 				ageMs,

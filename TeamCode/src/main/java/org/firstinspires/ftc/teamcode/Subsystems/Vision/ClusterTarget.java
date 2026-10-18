@@ -41,14 +41,8 @@ public final class ClusterTarget {
 	/** True when the cluster's name starts with the letter for our alliance colour. */
 	public final boolean allianceMatch;
 
-	/** True when the cluster is right-side up, per the roll test. */
-	public final boolean upright;
-
-	/** True when this cluster is both ours and right-side up, so a scoring element can enter it. */
+	/** True when this cluster is ours, so a scoring element can enter it. */
 	public final boolean scorable;
-
-	/** Absolute roll, in degrees. Exposed because the upright dead-band is tunable. */
-	public final double absRoll;
 
 	// ---- resolved geometry ---------------------------------------------------
 
@@ -84,8 +78,6 @@ public final class ClusterTarget {
 			double rawBearing,
 			double rawElevation,
 			boolean allianceMatch,
-			boolean upright,
-			double absRoll,
 			TargetingMath.ResolvedPoint resolved,
 			long acquisitionNanos,
 			double ageMs,
@@ -105,9 +97,7 @@ public final class ClusterTarget {
 		this.rawBearing = rawBearing;
 		this.rawElevation = rawElevation;
 		this.allianceMatch = allianceMatch;
-		this.upright = upright;
-		this.absRoll = absRoll;
-		this.scorable = allianceMatch && upright;
+		this.scorable = allianceMatch;
 		this.resolved = resolved;
 		this.acquisitionNanos = acquisitionNanos;
 		this.ageMs = ageMs;
@@ -126,12 +116,10 @@ public final class ClusterTarget {
 	}
 
 	// Thresholds for the confidence grade. A cluster pose is a multi-tag solve, so it sharpens as
-	// more tags come into view and as the viewing angle squares up. Range matters because a distant
-	// cluster covers fewer pixels, which costs angular precision.
+	// more tags come into view. Range matters because a distant cluster covers fewer pixels, which
+	// costs angular precision.
 	private static final int VISIBILITY_GOOD = 75;
 	private static final int VISIBILITY_FAIR = 40;
-	private static final double ANGLE_GOOD_DEG = 30.0;
-	private static final double ANGLE_FAIR_DEG = 65.0;
 	private static final double RANGE_GOOD_IN = 60.0;
 	private static final double RANGE_FAIR_IN = 120.0;
 
@@ -141,10 +129,10 @@ public final class ClusterTarget {
 	 * square-on single tag still misses the range by more than a distant four-tag fix.
 	 */
 	public Confidence confidence() {
-		if (percentClusterFound < VISIBILITY_FAIR || absRoll > ANGLE_FAIR_DEG || resolved.range > RANGE_FAIR_IN) {
+		if (percentClusterFound < VISIBILITY_FAIR || resolved.range > RANGE_FAIR_IN) {
 			return Confidence.POOR;
 		}
-		if (percentClusterFound < VISIBILITY_GOOD || absRoll > ANGLE_GOOD_DEG || resolved.range > RANGE_GOOD_IN) {
+		if (percentClusterFound < VISIBILITY_GOOD || resolved.range > RANGE_GOOD_IN) {
 			return Confidence.FAIR;
 		}
 		return Confidence.GOOD;
@@ -152,7 +140,7 @@ public final class ClusterTarget {
 
 	/**
 	 * Why the grade came out the way it did, in the terms that produced it: how many tags are
-	 * visible and how far off-axis the cluster is being viewed.
+	 * visible.
 	 */
 	public String qualityNote() {
 		StringBuilder note = new StringBuilder();
@@ -163,7 +151,6 @@ public final class ClusterTarget {
 		} else {
 			note.append(percentClusterFound).append("% of tags");
 		}
-		note.append(", ").append(Math.round(absRoll)).append(" deg off-axis");
 		return note.toString();
 	}
 
@@ -179,14 +166,8 @@ public final class ClusterTarget {
 		if (tagsTotal > 1 && tagsVisible < tagsTotal) {
 			return "reposition to expose the hidden tags";
 		}
-		if (absRoll > ANGLE_FAIR_DEG) {
-			return "badly off-axis, square up to the cell";
-		}
 		if (percentClusterFound < VISIBILITY_GOOD) {
 			return "some tags occluded, try a different angle";
-		}
-		if (absRoll > ANGLE_GOOD_DEG) {
-			return "angled, squaring up would sharpen this";
 		}
 		if (resolved.range > RANGE_GOOD_IN) {
 			return String.format(Locale.US, "%.0f in out, closer is more accurate", resolved.range);
@@ -194,7 +175,7 @@ public final class ClusterTarget {
 		return "";
 	}
 
-	/** True when this target is safe to act on: ours, upright, and not a stale frame. */
+	/** True when this target is safe to act on: ours, and not a stale frame. */
 	public boolean usable() {
 		return scorable && !stale;
 	}
@@ -206,9 +187,6 @@ public final class ClusterTarget {
 	public String status() {
 		if (!allianceMatch) {
 			return "other alliance";
-		}
-		if (!upright) {
-			return "upside down";
 		}
 		if (stale) {
 			return "stale frame";

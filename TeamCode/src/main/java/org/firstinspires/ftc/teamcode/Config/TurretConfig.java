@@ -29,7 +29,7 @@ public class TurretConfig {
 	 * and reporting so the two can still be compared. Separate from the turret's own on/off,
 	 * which is the x button on the gamepad.
 	 */
-	public static boolean aimFromVision = false;
+	public static boolean aimFromVision = true;
 
 	/** Alliance to aim for: "RED" or "BLUE". */
 	public static String alliance = "RED";
@@ -115,7 +115,7 @@ public class TurretConfig {
 
 	// ── Telemetry ─────────────────────────────────────────────────────────────────
 
-	public static boolean verboseTelemetry = false;
+	public static boolean verboseTelemetry = true;
 
 	// ── Tuning OpMode step cycle ──────────────────────────────────────────────────
 

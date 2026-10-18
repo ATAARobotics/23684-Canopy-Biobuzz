@@ -138,7 +138,7 @@ public class Turret extends Node {
 	public void controlLoop() {
 		double angle = measureAngle();
 
-		Aim aim = computeAim();
+		Aim aim = computeAim(angle);
 		boolean hasTarget = aim != null;
 		double goal = hasTarget ? track(angle, aim) : holdPosition(angle);
 		hadTarget = hasTarget;
@@ -315,10 +315,13 @@ public class Turret extends Node {
 	/**
 	 * Where the turret should point now, or null when there is nothing to aim at.
 	 *
-	 * <p>Both branches return a bearing from the robot's forward, which is already the frame the
-	 * turret angle is measured in, so neither adds the current angle.
+	 * <p>Every branch returns an absolute turret angle, which is the frame the measured angle lives
+	 * in, so the result goes straight to the profiler without adding the current angle again.
+	 *
+	 * <p>Only the vision branch needs {@code currentAngle}, and only because the SDK's bearing is a
+	 * camera-frame error rather than a robot-frame one. See that branch.
 	 */
-	private Aim computeAim() {
+	private Aim computeAim(double currentAngle) {
 		Double manual = manualGoal;
 		if (manual != null) {
 			// Bench override: an absolute angle, so there is no range for the lateral offset to
@@ -333,11 +336,25 @@ public class Turret extends Node {
 
 		ClusterTarget cluster = bestCluster();
 		if (cluster != null) {
-			// The camera rides the turret and its zero is the turret's zero, so the angle that
-			// centres the cluster is just the negated bearing it reports — the SDK counts positive
-			// left, we count positive right. The mount yaw shifts where the camera points relative
-			// to the turret, and it is the only term added.
-			double bearing = TurretConfig.cameraMountYawDeg - cluster.rawBearing;
+			// rawBearing is a camera-frame error: the angle from the camera's optical axis to the
+			// cluster, positive left. It is a live per-frame measurement, so unlike the raw xyz it
+			// already contains the turret's current rotation. Subtracting it from the angle we are
+			// at now converts that error into the absolute turret angle that centres the cluster:
+			//
+			//     goal = θ − (θ + mountYaw − C) = C − mountYaw
+			//
+			// θ cancels, so the goal is the same constant wherever the turret happens to be, and the
+			// fixed point is rawBearing == 0 — the cluster centred in frame, which is what the
+			// profiler then servos to at full authority.
+			//
+			// cameraMountYawDeg cancels against the mount term already inside rawBearing, so it is
+			// deliberately not added here; adding it would count the mount offset twice.
+			//
+			// Negating rawBearing on its own would give goal = C − θ instead, so the error the
+			// controller sees is C − 2θ. That shrinks as fast as it is corrected and overshoots,
+			// which is unstable: the turret hunts, and once the goal lands outside the travel
+			// range selectGoal wraps it to the far end and the turret runs all the way around.
+			double bearing = currentAngle - cluster.rawBearing;
 			double rangeCm = cluster.resolved.horizontalDistance * 2.54;
 			return new Aim(
 					bearing + aimOffsetDeg + lateralShift(rangeCm),
