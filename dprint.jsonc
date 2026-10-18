@@ -5,7 +5,6 @@
   "includes": [
     "TeamCode/**/*.java"
   ],
-  "excludes": [],
   "java": {
     "lineWidth": 120,
     "indentWidth": 4,

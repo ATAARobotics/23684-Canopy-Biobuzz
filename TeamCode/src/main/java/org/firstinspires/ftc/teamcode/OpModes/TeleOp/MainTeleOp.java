@@ -6,6 +6,7 @@ import com.aaravlabs.synapse.ftc.SafeOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+
 import org.firstinspires.ftc.teamcode.Config.TurretConfig;
 import org.firstinspires.ftc.teamcode.Subsystems.Drive;
 import org.firstinspires.ftc.teamcode.Subsystems.Intake;
@@ -40,14 +41,12 @@ public class MainTeleOp extends SafeOpMode {
 		GamepadAdaptor.attach(orchestrator, gamepad1, "g1");
 		GamepadAdaptor.attach(orchestrator, gamepad2, "g2");
 
-		// Pedro (full Follower: Pinpoint + Mecanum + Foresight).
 		pedro = new Pedro(orchestrator, safeMap);
 		pedro.setStartPose(Constants.startPose);
 		orchestrator.registerNode("pedro", pedro);
 
-		// AprilTag cluster vision (camera "gobilda_camera", alliance from TurretConfig at init).
 		VisionCameraPose cameraPose = new VisionCameraPose();
-		PointOfInterest poi = new PointOfInterest("AIM"); // disabled by default
+		PointOfInterest poi = new PointOfInterest("AIM");
 		vision = new AprilTagVision(orchestrator, safeMap.raw(), cameraPose, poi, TurretConfig.allianceLetter());
 		orchestrator.registerNode("vision", vision);
 

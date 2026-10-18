@@ -10,36 +10,36 @@ import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 
 @TeleOp(name = "Line Test", group = "Tests")
 public class LineTest extends SafeOpMode {
-	private static final double DISTANCE = 48.0;
+    private static final double DISTANCE = 48.0;
 
-	private Follower follower;
-	private Path forwardPath;
-	private Path returnPath;
-	private boolean forward = true;
+    private Follower follower;
+    private Path forwardPath;
+    private Path returnPath;
+    private boolean forward = true;
 
-	@Override
-	protected void onSafeInit() {
-		follower = Constants.create(safeMap);
-		follower.setPose(Pose.zero());
-		forwardPath = Paths.line(Pose.zero(), new Pose(DISTANCE, 0, 0)).constant(0);
-		returnPath = Paths.line(new Pose(DISTANCE, 0, 0), Pose.zero()).constant(0);
-	}
+    @Override
+    protected void onSafeInit() {
+        follower = Constants.create(safeMap);
+        follower.setPose(Pose.zero());
+        forwardPath = Paths.line(Pose.zero(), new Pose(DISTANCE, 0, 0)).constant(0);
+        returnPath = Paths.line(new Pose(DISTANCE, 0, 0), Pose.zero()).constant(0);
+    }
 
-	@Override
-	protected void onSafeStart() {
-		follower.follow(forwardPath);
-	}
+    @Override
+    protected void onSafeStart() {
+        follower.follow(forwardPath);
+    }
 
-	@Override
-	protected void onSafeLoop() {
-		follower.update();
-		if (follower.atParametricEnd()) {
-			if (forward) {
-				follower.follow(returnPath);
-			} else {
-				follower.follow(forwardPath);
-			}
-			forward = !forward;
-		}
-	}
+    @Override
+    protected void onSafeLoop() {
+        follower.update();
+        if (follower.atParametricEnd()) {
+            if (forward) {
+                follower.follow(returnPath);
+            } else {
+                follower.follow(forwardPath);
+            }
+            forward = !forward;
+        }
+    }
 }

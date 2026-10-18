@@ -32,9 +32,6 @@ public class Drive extends Node {
 		fr.run(m -> m.setDirection(DcMotor.Direction.REVERSE));
 		br.run(m -> m.setDirection(DcMotor.Direction.REVERSE));
 
-		// Explicit because it is no longer left to the SDK default: Pedro's Mecanum sets FLOAT on
-		// all four motors in its constructor, and the SDK does not promise what the default is.
-		// Drive is the only thing writing power in teleop, so this is the value that counts.
 		fl.run(m -> m.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE));
 		bl.run(m -> m.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE));
 		fr.run(m -> m.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE));
@@ -43,18 +40,9 @@ public class Drive extends Node {
 
 	@RunPeriodically(hz = 50, hardware = true)
 	public void drive() {
-		double y = -orchestrator
-				.getLatestValue("g1/left_stick_y", Float.class)
-				.map(Float::doubleValue)
-				.orElse(0.0);
-		double x = orchestrator
-				.getLatestValue("g1/left_stick_x", Float.class)
-				.map(Float::doubleValue)
-				.orElse(0.0) * 1.1;
-		double r = -orchestrator
-				.getLatestValue("g1/right_stick_x", Float.class)
-				.map(Float::doubleValue)
-				.orElse(0.0);
+		double y = -orchestrator.getLatestValue("g1/left_stick_y", Float.class).map(Float::doubleValue).orElse(0.0);
+		double x = orchestrator.getLatestValue("g1/left_stick_x", Float.class).map(Float::doubleValue).orElse(0.0) * 1.1;
+		double r = -orchestrator.getLatestValue("g1/right_stick_x", Float.class).map(Float::doubleValue).orElse(0.0);
 
 		double pFL = y + x + r;
 		double pFR = y - x - r;
