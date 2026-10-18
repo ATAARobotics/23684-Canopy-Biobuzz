@@ -85,6 +85,7 @@ public abstract class MainPedroAuto extends StateMachineOpMode {
 
         @Override
         public void init() {
+            telemetry.addData("start pose", lastPath);
             leavepath = Paths.line(lastPath, poses.point1).constant(poses.point1);
             setEndCondition(()-> Math.abs(follower.tangentialVelocity()) < Constants.foresightConfig.velocityConstraint.get() && follower.distanceToEndpoint() < 4);
             follower.follow(leavepath);
@@ -101,6 +102,8 @@ public abstract class MainPedroAuto extends StateMachineOpMode {
         @Override
         public void stop(){
             lastPath = poses.point1;
+            telemetry.addData("last path", lastPath);
+            telemetry.addData("get current pose", follower.pose());
         }
     }
 
@@ -141,6 +144,8 @@ public abstract class MainPedroAuto extends StateMachineOpMode {
         @Override
         public void stop(){
             lastPath = poses.flowerLeave;
+            telemetry.addData("last path", lastPath);
+            telemetry.addData("get current pose", follower.pose());
         }
 
 
@@ -179,6 +184,8 @@ public abstract class MainPedroAuto extends StateMachineOpMode {
         @Override
         public void stop(){
             lastPath = poses.park;
+            telemetry.addData("last path", lastPath);
+            telemetry.addData("get current pose", follower.pose());
         }
     }
     private final class GardenState extends AbstractState {
@@ -226,6 +233,8 @@ public abstract class MainPedroAuto extends StateMachineOpMode {
         @Override
         public void stop(){
             lastPath = poses.leaveStart;
+            telemetry.addData("last path", lastPath);
+            telemetry.addData("get current pose", follower.pose());
         }
     }
 
