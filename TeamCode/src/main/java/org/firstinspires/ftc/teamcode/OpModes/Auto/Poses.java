@@ -12,9 +12,9 @@ public class Poses {
     public final PoseFactory poseFactory = PoseFactory.degrees();
 
     public final Pose startAudience = poseFactory.of(55, 9, 90);
-    public final Pose point1 = poseFactory.of(55, 9.5, 90);
+    public final Pose point1 = poseFactory.of(55, 18, 90);
     public final Pose flowerIntake = poseFactory.of(12.7, 47.5, 180);
-    public final Pose flowerLeave = poseFactory.of(15.7, 47.5, 180);
+    public final Pose flowerLeave = poseFactory.of(29.5, 30, 180);
     public final Pose point3 = poseFactory.of(23.5, 9.5, 180);
     public final Pose pickupGarden = poseFactory.of(7.5, 9.8, 180);
     public final Pose thenShoot = poseFactory.of(30, 30, 41.9168);
