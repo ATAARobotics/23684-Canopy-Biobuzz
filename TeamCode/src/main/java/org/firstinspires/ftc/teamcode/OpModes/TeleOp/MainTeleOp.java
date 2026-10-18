@@ -66,19 +66,13 @@ public class MainTeleOp extends SafeOpMode {
 
 	@Override
 	protected void onSafeLoop() {
-		turret.publishTelemetry(telemetry);
-		telemetry.addData(
-				"Drive",
-				"FL %+.2f  FR %+.2f  BL %+.2f  BR %+.2f",
-				orchestrator.getLatestValue("drive/power/fl", Double.class).orElse(0.0),
-				orchestrator.getLatestValue("drive/power/fr", Double.class).orElse(0.0),
-				orchestrator.getLatestValue("drive/power/bl", Double.class).orElse(0.0),
-				orchestrator.getLatestValue("drive/power/br", Double.class).orElse(0.0));
-		telemetry.addData(
-				"Intake",
-				"%+.2f",
-				orchestrator.getLatestValue("intake/power", Double.class).orElse(0.0));
+		telemetry.addData("FL", "%.2f", orchestrator.getLatestValue("drive/power/fl", Double.class).orElse(0.0));
+		telemetry.addData("FR", "%.2f", orchestrator.getLatestValue("drive/power/fr", Double.class).orElse(0.0));
+		telemetry.addData("BL", "%.2f", orchestrator.getLatestValue("drive/power/bl", Double.class).orElse(0.0));
+		telemetry.addData("BR", "%.2f", orchestrator.getLatestValue("drive/power/br", Double.class).orElse(0.0));
+		telemetry.addData("Intake", "%.2f", orchestrator.getLatestValue("intake/power", Double.class).orElse(0.0));
 
+		turret.publishTelemetry(telemetry);
 		if (TurretConfig.verboseTelemetry) {
 			turret.publishVerboseTelemetry(telemetry);
 			vision.publishTelemetry(telemetry);
