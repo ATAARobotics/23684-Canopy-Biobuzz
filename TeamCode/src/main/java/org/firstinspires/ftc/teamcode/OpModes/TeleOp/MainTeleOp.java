@@ -6,9 +6,12 @@ import com.aaravlabs.synapse.ftc.SafeDevice;
 import com.aaravlabs.synapse.ftc.SafeOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
-
+import org.firstinspires.ftc.teamcode.Config.TurretConfig;
 import org.firstinspires.ftc.teamcode.Subsystems.Drive;
 import org.firstinspires.ftc.teamcode.Subsystems.Intake;
+import org.firstinspires.ftc.teamcode.Subsystems.Vision.AprilTagVision;
+import org.firstinspires.ftc.teamcode.Subsystems.Vision.PointOfInterest;
+import org.firstinspires.ftc.teamcode.Subsystems.Vision.VisionCameraPose;
 
 @TeleOp(name = "Main TeleOp", group = "TeleOp")
 public class MainTeleOp extends SafeOpMode {
@@ -18,6 +21,8 @@ public class MainTeleOp extends SafeOpMode {
 	private SafeDevice<DcMotorEx> backLeft;
 	private SafeDevice<DcMotorEx> backRight;
 	private SafeDevice<DcMotorEx> intake;
+
+	private AprilTagVision vision;
 
 	@Override
 	protected void onSafeInit() {
@@ -30,6 +35,11 @@ public class MainTeleOp extends SafeOpMode {
 		GamepadAdaptor.attach(orchestrator, gamepad1, "g1");
 		GamepadAdaptor.attach(orchestrator, gamepad2, "g2");
 
+		VisionCameraPose cameraPose = new VisionCameraPose();
+		PointOfInterest poi = new PointOfInterest("AIM");
+		vision = new AprilTagVision(orchestrator, safeMap.raw(), cameraPose, poi, TurretConfig.allianceLetter());
+		orchestrator.registerNode("vision", vision);
+
 		orchestrator.registerNode("drive", new Drive(orchestrator, frontLeft, frontRight, backLeft, backRight));
 		orchestrator.registerNode("intake", new Intake(orchestrator, intake));
 	}
@@ -41,6 +51,7 @@ public class MainTeleOp extends SafeOpMode {
 		telemetry.addData("BL", "%.2f", orchestrator.getLatestValue("drive/power/bl", Double.class).orElse(0.0));
 		telemetry.addData("BR", "%.2f", orchestrator.getLatestValue("drive/power/br", Double.class).orElse(0.0));
 		telemetry.addData("Intake", "%.2f", orchestrator.getLatestValue("intake/power", Double.class).orElse(0.0));
+		vision.publishTelemetry(telemetry);
 		telemetry.update();
 	}
 }
