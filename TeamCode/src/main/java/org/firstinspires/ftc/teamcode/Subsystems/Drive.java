@@ -35,9 +35,18 @@ public class Drive extends Node {
 
 	@RunPeriodically(hz = 50, hardware = true)
 	public void drive() {
-		double y = -orchestrator.getLatestValue("g1/left_stick_y", Float.class).map(Float::doubleValue).orElse(0.0);
-		double x = orchestrator.getLatestValue("g1/left_stick_x", Float.class).map(Float::doubleValue).orElse(0.0) * 1.1;
-		double r = orchestrator.getLatestValue("g1/right_stick_x", Float.class).map(Float::doubleValue).orElse(0.0);
+		double y = -orchestrator
+				.getLatestValue("g1/left_stick_y", Float.class)
+				.map(Float::doubleValue)
+				.orElse(0.0);
+		double x = orchestrator
+				.getLatestValue("g1/left_stick_x", Float.class)
+				.map(Float::doubleValue)
+				.orElse(0.0) * 1.1;
+		double r = orchestrator
+				.getLatestValue("g1/right_stick_x", Float.class)
+				.map(Float::doubleValue)
+				.orElse(0.0);
 
 		double pFL = y + x + r;
 		double pFR = y - x - r;
