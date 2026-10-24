@@ -9,9 +9,13 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
 
 import org.firstinspires.ftc.teamcode.Subsystems.BeamBreak;
+import org.firstinspires.ftc.teamcode.Config.TurretConfig;
 import org.firstinspires.ftc.teamcode.Subsystems.Drive;
 import org.firstinspires.ftc.teamcode.Subsystems.Intake;
-import org.firstinspires.ftc.teamcode.Subsystems.Shoot;
+import org.firstinspires.ftc.teamcode.Subsystems.Vision.AprilTagVision;
+import org.firstinspires.ftc.teamcode.Subsystems.Vision.PointOfInterest;
+import org.firstinspires.ftc.teamcode.Subsystems.Vision.VisionCameraPose;
+import org.firstinspires.ftc.teamcode.Subsystems.Shoot
 
 @TeleOp(name = "Main TeleOp", group = "TeleOp")
 public class MainTeleOp extends SafeOpMode {
@@ -23,6 +27,8 @@ public class MainTeleOp extends SafeOpMode {
 	private SafeDevice<DcMotorEx> intake;
 	private SafeDevice<DcMotorEx> shooter;
 	private SafeDevice<DigitalChannel> beambreak;
+
+	private AprilTagVision vision;
 
 	@Override
 	protected void onSafeInit() {
@@ -36,6 +42,11 @@ public class MainTeleOp extends SafeOpMode {
 
 		GamepadAdaptor.attach(orchestrator, gamepad1, "g1");
 		GamepadAdaptor.attach(orchestrator, gamepad2, "g2");
+
+		VisionCameraPose cameraPose = new VisionCameraPose();
+		PointOfInterest poi = new PointOfInterest("AIM");
+		vision = new AprilTagVision(orchestrator, safeMap.raw(), cameraPose, poi, TurretConfig.allianceLetter());
+		orchestrator.registerNode("vision", vision);
 
 		orchestrator.registerNode("drive", new Drive(orchestrator, frontLeft, frontRight, backLeft, backRight));
 		orchestrator.registerNode("intake", new Intake(orchestrator, intake));
