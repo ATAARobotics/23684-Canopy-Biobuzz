@@ -5,6 +5,7 @@ import com.aaravlabs.safepedropathing.algorithm.ForesightConfig;
 import com.aaravlabs.safepedropathing.controllers.Controller;
 import com.aaravlabs.safepedropathing.follower.Follower;
 import com.aaravlabs.safepedropathing.math.Matrix;
+import com.aaravlabs.safepedropathing.math.Pose;
 import com.aaravlabs.safepedropathing.math.Vector2D;
 import com.aaravlabs.safepedropathing.revhub.drivetrains.Mecanum;
 import com.aaravlabs.safepedropathing.revhub.drivetrains.MecanumConfig;
@@ -17,8 +18,10 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
 public class Constants {
+	public static final Pose startPose = new Pose(63.0, 9.0, Math.PI / 2.0);
+
 	public static MecanumConfig drivetrainConfig = new MecanumConfig(c -> {
-		c.frontLeftName.set(" frontLeft");
+		c.frontLeftName.set("frontLeft");
 		c.frontRightName.set("frontRight");
 		c.backLeftName.set("backLeft");
 		c.backRightName.set("backRight");

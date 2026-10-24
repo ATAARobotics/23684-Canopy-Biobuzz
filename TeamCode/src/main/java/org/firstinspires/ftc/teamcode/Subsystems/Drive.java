@@ -31,6 +31,11 @@ public class Drive extends Node {
 		bl.run(m -> m.setDirection(DcMotor.Direction.REVERSE));
 		fr.run(m -> m.setDirection(DcMotor.Direction.FORWARD));
 		br.run(m -> m.setDirection(DcMotor.Direction.FORWARD));
+
+		fl.run(m -> m.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE));
+		bl.run(m -> m.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE));
+		fr.run(m -> m.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE));
+		br.run(m -> m.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE));
 	}
 
 	@RunPeriodically(hz = 50, hardware = true)
