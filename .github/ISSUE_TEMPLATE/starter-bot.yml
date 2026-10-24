@@ -1,0 +1,105 @@
+name: Starter Bot
+description: Bug, feature, task, or chore affecting the Starter Bot. Auto-applies the `starter-bot` label.
+title: "[Starter Bot] "
+labels:
+  - starter-bot
+assignees: []
+
+body:
+  - type: dropdown
+    id: robot
+    attributes:
+      label: Robot
+      description: Which robot does this issue apply to?
+      options:
+        - Starter Bot
+    validations:
+      required: true
+
+  - type: dropdown
+    id: type
+    attributes:
+      label: Type of work
+      options:
+        - Bug
+        - Feature / enhancement
+        - Task / chore
+        - Refactor
+        - Documentation
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      description: Subsystem or component the change touches. Best-effort; skip if unsure.
+      options:
+        - TeleOp
+        - Autonomous
+        - Subsystem (Drive / Intake / mechanism)
+        - Vision (AprilTag, Limelight)
+        - FtcRobotController (hardfork)
+        - PedroPathing
+        - Tooling / build / CI
+        - Dependencies
+        - Other
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: breaking
+    attributes:
+      label: Breaking change?
+      description: Check if this requires downstream callers to update (renames, signature changes, behavior shifts).
+      options:
+        - label: "Yes — describe the migration in the **How to test / acceptance criteria** section."
+    validations:
+      required: false
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: One-line description that becomes the issue title (after the `[Starter Bot]` prefix).
+      placeholder: e.g. "Bump Synapse from v0.3.1 to v0.4.0"
+    validations:
+      required: true
+
+  - type: textarea
+    id: why
+    attributes:
+      label: Why
+      description: Problem statement and motivation. What is broken, missing, or needed, and why now?
+    validations:
+      required: true
+
+  - type: textarea
+    id: how
+    attributes:
+      label: Proposed implementation
+      description: Approach, tradeoffs, alternatives considered. Optional for plain bug reports.
+    validations:
+      required: false
+
+  - type: textarea
+    id: test
+    attributes:
+      label: How to test / acceptance criteria
+      description: Concrete steps to verify on the robot. See the PR checklist for the team's robot-side verification prompts.
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: pr_checklist
+    attributes:
+      label: Robot-side verification (mirrors the PR template)
+      options:
+        - label: Subsystem powered and wired correctly
+        - label: OpMode runs without errors on driver station
+        - label: Telemetry shows expected values
+        - label: Motors/servos respond as expected
+        - label: Autonomous path completes (if applicable)
+        - label: Teleop controls mapped correctly
+    validations:
+      required: false
