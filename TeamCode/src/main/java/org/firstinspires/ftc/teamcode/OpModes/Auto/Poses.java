@@ -27,10 +27,33 @@ public class Poses {
     public final Pose leaveFlower = poseFactory.of(51.357346875, 106.5348046875, 90);
     public final Pose park = poseFactory.of(8.016, 100.5, 90);
 
+    private final Pose startPoint = poseFactory.of(56, 10, 90);
+    private final Pose firstShoot = poseFactory.of(56, 10, 180);
+    private final Pose gardenCollect = poseFactory.of(10, 10, 180);
+    private final Pose secondShootStart = poseFactory.of(10, 10, 180);
+    private final Pose secondShoot = poseFactory.of(53, 124, 90);
+    private final Pose firstFlower = poseFactory.of(47, 130, 90);
+    private final Pose thirdShoot = poseFactory.of(53, 124, 90);
+    private final Pose secondFlowerStart = poseFactory.of(53, 124, 90);
+    private final Pose secondFlower = poseFactory.of(12, 47, 180);
+    private final Pose fourthShootStart = poseFactory.of(12, 47, 180);
+    private final Pose fourthShoot = poseFactory.of(56, 10, 90);
+    private final Pose parkAutoStart = poseFactory.of(56, 10, 90);
+    private final Pose parkAuto = poseFactory.of(11, 99, 270);
+
+    private final Pose secondShootControl1 = poseFactory.of(24, 54, 0);
+    private final Pose secondShootControl2 = poseFactory.of(20, 122, 0);
+    private final Pose firstFlowerControl1 = poseFactory.of(46, 119, 0);
+    private final Pose thirdShootControl1 = poseFactory.of(46, 119, 0);
+    private final Pose secondFlowerControl1 = poseFactory.of(16, 97, 0);
+    private final Pose secondFlowerControl2 = poseFactory.of(40, 47, 0);
+    private final Pose fourthShootControl1 = poseFactory.of(58, 36, 0);
+    private final Pose parkAutoControl1 = poseFactory.of(32, 40, 0);
+
 
     Follower follower;
 
-    public Poses(Follower follower){
+    public Poses(Follower follower) {
         this.follower = follower;
     }
 
@@ -48,5 +71,37 @@ public class Poses {
 
     public Path park() {
         return line(follower.pose(), park).constant(park);
+    }
+
+    public Path firstShoot() {
+        return line(follower.pose(), firstShoot).constant(firstShoot);
+    }
+
+    public Path gardenCollect() {
+        return line(follower.pose(), gardenCollect).tangent();
+    }
+
+    public Path secondShoot() {
+        return curve(follower.pose(),secondShootStart, secondShootControl1, secondShootControl2, secondShoot).linear(secondShootStart, secondShoot);
+    }
+
+    public Path firstFlower() {
+        return curve(follower.pose(),secondShoot, firstFlowerControl1, firstFlower).constant(firstFlower);
+    }
+
+    public Path thirdShoot() {
+        return curve(follower.pose(),firstFlower, thirdShootControl1, thirdShoot).constant(thirdShoot);
+    }
+
+    public Path secondFlower() {
+        return curve(follower.pose(),secondFlowerStart, secondFlowerControl1, secondFlowerControl2, secondFlower).linear(secondFlowerStart, secondFlower);
+    }
+
+    public Path fourthShoot() {
+        return curve(follower.pose(),fourthShootStart, fourthShootControl1, fourthShoot).linear(fourthShootStart, fourthShoot);
+    }
+
+    public Path parkAuto() {
+        return curve(follower.pose(),parkAutoStart, parkAutoControl1, parkAuto).linear(parkAutoStart, parkAuto);
     }
 }
