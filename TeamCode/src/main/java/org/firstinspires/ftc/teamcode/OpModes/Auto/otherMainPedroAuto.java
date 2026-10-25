@@ -1,7 +1,6 @@
 package org.firstinspires.ftc.teamcode.OpModes.Auto;
 
 import com.aaravlabs.autonomy.AbstractState;
-import com.aaravlabs.autonomy.HoldState;
 import com.aaravlabs.autonomy.State;
 import com.aaravlabs.autonomy.Submachine;
 import com.aaravlabs.autonomy.WaitState;
@@ -10,14 +9,8 @@ import com.aaravlabs.safepedropathing.api.Paths;
 import com.aaravlabs.safepedropathing.follower.Follower;
 import com.aaravlabs.safepedropathing.math.Pose;
 import com.aaravlabs.safepedropathing.paths.Path;
-import com.aaravlabs.synapse.ftc.SafeDevice;
-import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorEx;
 
-import org.firstinspires.ftc.robotcore.external.StateMachine;
-import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.OpModes.pedropathing.Constants;
-import org.firstinspires.ftc.teamcode.Subsystems.Intake;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -27,8 +20,13 @@ public abstract class otherMainPedroAuto extends StateMachineOpMode {
 
     public enum AutoStates{
         shootPreload,
-        leave,
-        pickFromFlower,
+        leaveScoring,
+        leavePushAlliance,
+        leaveAudince,
+        goToGarden,
+        goToGardenShooting,
+        pickFromFlowerAudience,
+        pickFromFlowerScoring,
         park,
         wait
     }
@@ -57,10 +55,16 @@ public abstract class otherMainPedroAuto extends StateMachineOpMode {
         switch (autoStates){
             case shootPreload:
                 return new ShootPreloadState();
-            case leave:
+            case leaveScoring:
                 return new LeaveState();
-            case pickFromFlower:
-                return FlowerSub();
+            case leavePushAlliance:
+                return new LeavePushAlliance();
+            case goToGarden:
+                return GardenSub(false);
+            case goToGardenShooting:
+                return GardenSub(true);
+            case pickFromFlowerScoring:
+                return FlowerScoringSub();
             case park:
                 return new ParkState();
         }
@@ -103,29 +107,54 @@ public abstract class otherMainPedroAuto extends StateMachineOpMode {
 
         @Override
         public void stop(){
+            lastPath = poses.finishPush;
+        }
+    }
+
+    private final class LeavePushAlliance extends AbstractState {
+        Path leavepath;
+
+        @Override
+        public void init() {
+            leavepath = Paths.line(lastPath, poses.finishPush).constant(lastPath);
+            setEndCondition(()-> Math.abs(follower.tangentialVelocity()) < Constants.foresightConfig.velocityConstraint.get() && follower.distanceToEndpoint() < 4);
+            follower.follow(leavepath);
+        }
+        @Override
+        public void loop() {
+            follower.update();
+            telemetry.addData("isdone?",Math.abs(follower.tangentialVelocity()) < Constants.foresightConfig.velocityConstraint.get() && follower.distanceToEndpoint() < 4);
+            telemetry.addData("Velocity",follower.tangentialVelocity());
+            telemetry.addData("Predicted Velocity",Constants.foresightConfig.velocityConstraint.get());
+            telemetry.addData("distance to end", follower.distanceToEndpoint());
+        }
+
+        @Override
+        public void stop(){
             lastPath = poses.leaveStart;
         }
     }
 
-    private Submachine FlowerSub(){
+    private Submachine FlowerScoringSub(){
 
         return new Submachine("Flower",
                 Arrays.asList(
-                        new ToFlowerState(),
+                        new ToScoringFlowerState(),
                         new WaitState(1),
-                        new LeaveFlowerState()
+                        new LeaveScoringFlowerState()
                 )
         );
     }
 
 
-    private final class ToFlowerState extends AbstractState {
+    private final class ToScoringFlowerState extends AbstractState {
 
         Path goToFlower;
         Path leaveFlower;
 
         public void init() {
-            goToFlower = Paths.line(lastPath, poses.pickupFlower).constant(Math.toRadians(90));
+            if(lastPath.y() > 72) goToFlower = Paths.line(lastPath, poses.pickupFlower).constant(Math.toRadians(90));
+            else goToFlower = Paths.curve(lastPath,poses.firstFlowerControl1,poses.pickupFlower).linear(lastPath,poses.pickupFlower);
             setEndCondition(()-> !follower.following());
             follower.follow(goToFlower);
         }
@@ -141,7 +170,7 @@ public abstract class otherMainPedroAuto extends StateMachineOpMode {
         }
     }
 
-    private final class LeaveFlowerState extends AbstractState {
+    private final class LeaveScoringFlowerState extends AbstractState {
 
         Path leaveFlower;
         public void init() {
@@ -161,58 +190,68 @@ public abstract class otherMainPedroAuto extends StateMachineOpMode {
         }
     }
 
-//    private final class FlowerState extends AbstractState {
-//
-//        int step = 0;
-//        Path flowerPath;
-//
-//        Path pickFlowerPath;
-//        Path leaveFlower;
-//        boolean isDone = false;
-//
-//        boolean ranpath1 = false;
-//        boolean ranpath2 = false;
-//        @Override
-//        public void init() {
-//            flowerPath = Paths.line(lastPath, poses.pickupFlower).constant(Math.toRadians(90));
-//            leaveFlower = Paths.line(poses.pickupFlower, poses.leaveFlower).constant(Math.toRadians(90));
-//            setEndCondition(()->isDone);
-//        }
-//        @Override
-//        public void loop() {
-//            follower.update();
-//            switch (step){
-//                case 0:
-//                    if(!ranpath1) {
-//                        follower.follow(flowerPath);
-//                        ranpath1 = true;
-//                    }
-//                    if(!follower.isBusy()) {
-//                        follower.hold(poses.pickupFlower,true);
-//                        step = 1;
-//                    }
-//                    break;
-//                case 1:
-//                    if(!ranpath2) {
-//                        follower.follow(leaveFlower);
-//                        ranpath2 = true;
-//                    }
-//                    if(!follower.isBusy()) {
-//                        follower.hold(poses.leaveFlower,true);
-//                        step = 2;
-//                    }
-//                case 2:
-//                    isDone = true;
-//            }
-//        }
-//
-//        @Override
-//        public void stop(){
-//            lastPath = poses.leaveFlower;
-//        }
-//
-//
-//    }
+    private Submachine GardenSub(boolean shooting){
+        double shooter;
+        if(shooting)shooter = 0.5;
+        else shooter = 0;
+        return new Submachine("Garden",
+                Arrays.asList(
+                        new GotoGarden(),
+                        new WaitState(shooter),
+                        new CollectGarden()
+                )
+        );
+    }
+
+    private final class GotoGarden extends AbstractState {
+        Path leavepath;
+
+        @Override
+        public void init() {
+            leavepath = Paths.line(lastPath, poses.goToGarden).constant(lastPath);
+            setEndCondition(() -> Math.abs(follower.tangentialVelocity()) < Constants.foresightConfig.velocityConstraint.get() && follower.distanceToEndpoint() < 4);
+            follower.follow(leavepath);
+        }
+
+        @Override
+        public void loop() {
+            follower.update();
+            telemetry.addData("isdone?", Math.abs(follower.tangentialVelocity()) < Constants.foresightConfig.velocityConstraint.get() && follower.distanceToEndpoint() < 4);
+            telemetry.addData("Velocity", follower.tangentialVelocity());
+            telemetry.addData("Predicted Velocity", Constants.foresightConfig.velocityConstraint.get());
+            telemetry.addData("distance to end", follower.distanceToEndpoint());
+        }
+
+        @Override
+        public void stop() {
+            lastPath = poses.goToGarden;
+        }
+    }
+
+    private final class CollectGarden extends AbstractState {
+        Path leavepath;
+
+        @Override
+        public void init() {
+            leavepath = Paths.line(lastPath, poses.gardenCollect).constant(lastPath);
+            setEndCondition(() -> Math.abs(follower.tangentialVelocity()) < Constants.foresightConfig.velocityConstraint.get() && follower.distanceToEndpoint() < 4);
+            follower.follow(leavepath);
+        }
+
+        @Override
+        public void loop() {
+            follower.update();
+            telemetry.addData("isdone?", Math.abs(follower.tangentialVelocity()) < Constants.foresightConfig.velocityConstraint.get() && follower.distanceToEndpoint() < 4);
+            telemetry.addData("Velocity", follower.tangentialVelocity());
+            telemetry.addData("Predicted Velocity", Constants.foresightConfig.velocityConstraint.get());
+            telemetry.addData("distance to end", follower.distanceToEndpoint());
+        }
+
+        @Override
+        public void stop() {
+            lastPath = poses.gardenCollect;
+        }
+    }
 
     private final class ParkState extends AbstractState {
         Path parkPath;
@@ -220,6 +259,27 @@ public abstract class otherMainPedroAuto extends StateMachineOpMode {
         @Override
         public void init() {
             parkPath = Paths.line(lastPath, poses.park).constant(lastPath);
+            setEndCondition(()-> Math.abs(follower.tangentialVelocity()) < Constants.foresightConfig.velocityConstraint.get() && follower.distanceToEndpoint() < 4);
+            follower.follow(parkPath);
+        }
+        @Override
+        public void loop() {
+            follower.update();
+        }
+
+        @Override
+        public void stop(){
+            lastPath = poses.park;
+            follower.stop();
+        }
+    }
+
+    private final class ParkScoringState extends AbstractState {
+        Path parkPath;
+
+        @Override
+        public void init() {
+            parkPath = Paths.line(lastPath, poses.parkScoringside).constant(lastPath);
             setEndCondition(()-> Math.abs(follower.tangentialVelocity()) < Constants.foresightConfig.velocityConstraint.get() && follower.distanceToEndpoint() < 4);
             follower.follow(parkPath);
         }

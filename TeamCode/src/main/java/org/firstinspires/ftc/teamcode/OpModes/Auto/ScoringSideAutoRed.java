@@ -5,7 +5,7 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
 
 @Autonomous
-public class ScoringSideAutoRed extends  otherMainPedroAuto{
+public class ScoringSideAutoRed extends otherMainPedroAuto{
     @Override
     protected Pose getStartingPose() {
         return new Pose(63,133,Math.toRadians(90));
@@ -13,10 +13,10 @@ public class ScoringSideAutoRed extends  otherMainPedroAuto{
 
     @Override
     public void SetRoute() {
-        addStep(AutoStates.leave);
+        addStep(AutoStates.leaveScoring);
         addStep(AutoStates.shootPreload);
         addStep(1);
-        addStep(AutoStates.pickFromFlower);
+        addStep(AutoStates.pickFromFlowerScoring);
         addStep(AutoStates.park);
     }
 }

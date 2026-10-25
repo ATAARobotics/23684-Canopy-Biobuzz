@@ -9,6 +9,9 @@ import com.aaravlabs.safepedropathing.paths.Path;
 
 public class Poses {
 
+
+    //TODO: Glean out repeating poses. we only need one per location.
+
     public final PoseFactory poseFactory = PoseFactory.degrees();
 
     public final Pose startAudience = poseFactory.of(55, 9, 90);
@@ -50,6 +53,17 @@ public class Poses {
     public final Pose secondFlowerControl2 = poseFactory.of(40, 47, 0);
     public final Pose fourthShootControl1 = poseFactory.of(58, 36, 0);
     public final Pose parkAutoControl1 = poseFactory.of(32, 40, 0);
+
+
+    public final Pose leavepushA = poseFactory.of(7.8945, 59.4873, 90);
+    public final Pose finishPush = poseFactory.of(7.8945, 82.0361, 270);
+    public final Pose goToGardenStart = poseFactory.of(7.8945, 82.0361, 270);
+    public final Pose goToGarden = poseFactory.of(45.3486, 9.1201, 180);
+    public final Pose pickUpGarden = poseFactory.of(11.3555, 9.1201, 180);
+    public final Pose toFlowerScoringStart = poseFactory.of(11.3555, 9.1201, 180);
+    public final Pose toFlowerScoring = poseFactory.of(46.7813, 121.6807, 90);
+    public final Pose toFlowerScoringControl1 = poseFactory.of(16.8906, 81.2109, 0);
+    public final Pose parkScoringside = poseFactory.of(9.8936, 121.1826, 90);
 
 
     Follower follower;
