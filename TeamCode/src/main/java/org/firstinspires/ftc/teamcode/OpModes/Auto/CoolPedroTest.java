@@ -1,28 +1,31 @@
 package org.firstinspires.ftc.teamcode.OpModes.Auto;
 
-import com.aaravlabs.autonomy.State;
-import com.aaravlabs.autonomy.ftc.StateMachineOpMode;
-import com.aaravlabs.safepedropathing.follower.Follower;
+
 import com.aaravlabs.safepedropathing.math.Pose;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
-import java.util.Collections;
-import java.util.List;
-
 
 @Autonomous
-public class CoolPedroTest extends MainPedroAuto {
+public abstract class CoolPedroTest extends CoolMainAuto {
 
     @Override
     protected Pose getStartingPose() {
-        return new Pose(56, 10, Math.toRadians(90));
+        return new Pose(9.7, 131, Math.toRadians(90));
     }
 
     public void SetRoute(){
-        addStep(AutoStates.depart);
-        addStep(AutoStates.shoot);
-        addStep(AutoStates.flower);
-        addStep(AutoStates.garden);
-        addStep(AutoStates.end);
+        addStep(AutoStates.Depart);
+        addStep(AutoStates.FirstShoot);
+        addStep(AutoStates.FirstGarden);
+        addStep(AutoStates.SecondShoot);
+        addStep(AutoStates.FirstFlower);
+        addStep(AutoStates.ThirdShoot);
+        addStep(AutoStates.SecondFlower);
+        addStep(AutoStates.FourthShoot);
+        addStep(AutoStates.End);
+        // depart -> shoot -> garden -> shoot -> flower -> shoot -> flower -> shoot -> park
+    }
+
+    private void addStep(AutoStates autoStates) {
     }
 }

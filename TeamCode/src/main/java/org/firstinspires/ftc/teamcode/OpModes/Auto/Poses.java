@@ -27,28 +27,29 @@ public class Poses {
     public final Pose leaveFlower = poseFactory.of(51.357346875, 106.5348046875, 90);
     public final Pose park = poseFactory.of(8.016, 100.5, 90);
 
-    private final Pose startPoint = poseFactory.of(56, 10, 90);
-    private final Pose firstShoot = poseFactory.of(56, 10, 180);
-    private final Pose gardenCollect = poseFactory.of(10, 10, 180);
-    private final Pose secondShootStart = poseFactory.of(10, 10, 180);
-    private final Pose secondShoot = poseFactory.of(53, 124, 90);
-    private final Pose firstFlower = poseFactory.of(47, 130, 90);
-    private final Pose thirdShoot = poseFactory.of(53, 124, 90);
-    private final Pose secondFlowerStart = poseFactory.of(53, 124, 90);
-    private final Pose secondFlower = poseFactory.of(12, 47, 180);
-    private final Pose fourthShootStart = poseFactory.of(12, 47, 180);
-    private final Pose fourthShoot = poseFactory.of(56, 10, 90);
-    private final Pose parkAutoStart = poseFactory.of(56, 10, 90);
-    private final Pose parkAuto = poseFactory.of(11, 99, 270);
+    public final Pose startPoint = poseFactory.of(56, 10, 90);
+    public final Pose firstShoot = poseFactory.of(56, 10, 180);
+    public final Pose gardenCollect = poseFactory.of(10, 10, 180);
+    public final Pose secondShootStart = poseFactory.of(10, 10, 180);
+    public final Pose secondShoot = poseFactory.of(53, 124, 90);
+    public final Pose firstFlower = poseFactory.of(47, 130, 90);
+    public final Pose thirdShoot = poseFactory.of(53, 124, 90);
+    public final Pose secondFlowerStart = poseFactory.of(53, 124, 90);
+    public final Pose secondFlower = poseFactory.of(12, 47, 180);
+    public final Pose fourthShootStart = poseFactory.of(12, 47, 180);
+    public final Pose fourthShoot = poseFactory.of(56, 10, 90);
+    public final Pose parkAutoStart = poseFactory.of(56, 10, 90);
+    public final Pose parkAuto = poseFactory.of(11, 99, 270);
+    // depart -> shoot -> garden -> shoot -> flower -> shoot -> flower -> shoot -> park
 
-    private final Pose secondShootControl1 = poseFactory.of(24, 54, 0);
-    private final Pose secondShootControl2 = poseFactory.of(20, 122, 0);
-    private final Pose firstFlowerControl1 = poseFactory.of(46, 119, 0);
-    private final Pose thirdShootControl1 = poseFactory.of(46, 119, 0);
-    private final Pose secondFlowerControl1 = poseFactory.of(16, 97, 0);
-    private final Pose secondFlowerControl2 = poseFactory.of(40, 47, 0);
-    private final Pose fourthShootControl1 = poseFactory.of(58, 36, 0);
-    private final Pose parkAutoControl1 = poseFactory.of(32, 40, 0);
+    public final Pose secondShootControl1 = poseFactory.of(24, 54, 0);
+    public final Pose secondShootControl2 = poseFactory.of(20, 122, 0);
+    public final Pose firstFlowerControl1 = poseFactory.of(46, 119, 0);
+    public final Pose thirdShootControl1 = poseFactory.of(46, 119, 0);
+    public final Pose secondFlowerControl1 = poseFactory.of(16, 97, 0);
+    public final Pose secondFlowerControl2 = poseFactory.of(40, 47, 0);
+    public final Pose fourthShootControl1 = poseFactory.of(58, 36, 0);
+    public final Pose parkAutoControl1 = poseFactory.of(32, 40, 0);
 
 
     Follower follower;
@@ -82,26 +83,30 @@ public class Poses {
     }
 
     public Path secondShoot() {
-        return curve(follower.pose(),secondShootStart, secondShootControl1, secondShootControl2, secondShoot).linear(secondShootStart, secondShoot);
+        return curve(follower.pose(), secondShootStart, secondShootControl1, secondShootControl2, secondShoot).linear(secondShootStart, secondShoot);
     }
 
     public Path firstFlower() {
-        return curve(follower.pose(),secondShoot, firstFlowerControl1, firstFlower).constant(firstFlower);
+        return curve(follower.pose(), secondShoot, firstFlowerControl1, firstFlower).constant(firstFlower);
     }
 
     public Path thirdShoot() {
-        return curve(follower.pose(),firstFlower, thirdShootControl1, thirdShoot).constant(thirdShoot);
+        return curve(follower.pose(), firstFlower, thirdShootControl1, thirdShoot).constant(thirdShoot);
     }
 
     public Path secondFlower() {
-        return curve(follower.pose(),secondFlowerStart, secondFlowerControl1, secondFlowerControl2, secondFlower).linear(secondFlowerStart, secondFlower);
+        return curve(follower.pose(), secondFlowerStart, secondFlowerControl1, secondFlowerControl2, secondFlower).linear(secondFlowerStart, secondFlower);
     }
 
     public Path fourthShoot() {
-        return curve(follower.pose(),fourthShootStart, fourthShootControl1, fourthShoot).linear(fourthShootStart, fourthShoot);
+        return curve(follower.pose(), fourthShootStart, fourthShootControl1, fourthShoot).linear(fourthShootStart, fourthShoot);
     }
 
     public Path parkAuto() {
-        return curve(follower.pose(),parkAutoStart, parkAutoControl1, parkAuto).linear(parkAutoStart, parkAuto);
+        return curve(follower.pose(), parkAutoStart, parkAutoControl1, parkAuto).linear(parkAutoStart, parkAuto);
     }
+
+    private final Pose START = poseFactory.of(9.7, 131, -90);
+    private final Pose path1 = poseFactory.of(10, 112, -90);
+
 }
