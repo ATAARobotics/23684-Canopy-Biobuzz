@@ -26,7 +26,7 @@ import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 import org.firstinspires.ftc.vision.apriltag.AprilTagSingleDetection;
 
 /**
- * AprilTag cluster detection as a Synapse Node that publishes ClusterTarget. Aim from {@code resolved}: it has turret
+ * AprilTag cluster detection as a Synapse Node that publishes ClusterTarget. Aim from {@code resolved}: it has camera
  * yaw folded in, the raw SDK pose does not.
  */
 public class AprilTagVision extends Node {
@@ -108,7 +108,7 @@ public class AprilTagVision extends Node {
 		this.allianceLetter = Character.toUpperCase(allianceLetter);
 		this.cameraName = cameraName;
 
-		// Fixed mounting pose: the processor cannot be re-aimed after build, so turret yaw is
+		// Fixed mounting pose: the processor cannot be re-aimed after build, so camera yaw is
 		// applied in TargetingMath instead.
 		this.aprilTag = new AprilTagProcessor.Builder().setCameraPose(cameraPose.getPosition(), cameraPose.getAngles())
 				.setTagLibrary(AprilTagGameDatabase.getBioBuzzTagLibrary())
@@ -221,7 +221,7 @@ public class AprilTagVision extends Node {
 
 		boolean allianceMatch = name.startsWith(String.valueOf(allianceLetter));
 
-		// Turret yaw is folded in here, not in the SDK pose: resolved includes it, raw X/Y/Z do not.
+		// Camera yaw is folded in here, not in the SDK pose: resolved includes it, raw X/Y/Z do not.
 		TargetingMath.ResolvedPoint resolvedPoint = TargetingMath.resolve(
 				rawX,
 				rawY,
@@ -422,7 +422,7 @@ public class AprilTagVision extends Node {
 		orchestrator.publish("vision/decimation", clamped);
 	}
 
-	/** Adds to the turret yaw, in degrees, without a redeploy. */
+	/** Adds to the camera yaw, in degrees, without a redeploy. */
 	@SubscribedTo(topic = "vision/nudgeCameraYaw")
 	public void onNudgeCameraYaw(Double degrees) {
 		if (degrees == null || degrees == 0.0) {
@@ -431,7 +431,7 @@ public class AprilTagVision extends Node {
 		cameraPose.nudgeYaw(degrees);
 	}
 
-	/** Set the turret yaw absolutely, in degrees. */
+	/** Set the camera yaw absolutely, in degrees. */
 	@SubscribedTo(topic = "vision/setCameraYaw")
 	public void onSetCameraYaw(Double degrees) {
 		if (degrees == null) {
