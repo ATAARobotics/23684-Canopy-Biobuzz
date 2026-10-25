@@ -42,6 +42,8 @@ public class Constants {
 
     public static ForesightConfig foresightConfig = new ForesightConfig(
             c -> {
+                c.brakeAtEnd.set(true);
+
                 Controller primaryTranslationalForward = Controller.proportional(0.23210000797185648);
                 Controller secondaryTranslationalForward = Controller.proportional(0.0857547511191673);
                 Controller primaryTranslationalLateral = Controller.proportional(0.3360340335383034);

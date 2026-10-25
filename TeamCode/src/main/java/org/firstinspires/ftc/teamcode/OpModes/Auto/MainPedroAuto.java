@@ -86,14 +86,14 @@ public abstract class MainPedroAuto extends StateMachineOpMode {
         @Override
         public void init() {
             telemetry.addData("start pose", lastPath);
-            leavepath = Paths.line(lastPath, poses.point1).constant(poses.point1);
-            setEndCondition(()-> Math.abs(follower.tangentialVelocity()) < Constants.foresightConfig.velocityConstraint.get() && follower.distanceToEndpoint() < 4);
+            leavepath = Paths.line(follower.pose(), poses.point1).constant(poses.point1);
+            setEndCondition(()-> !follower.following());
             follower.follow(leavepath);
         }
         @Override
         public void loop() {
             follower.update();
-            telemetry.addData("isdone?",Math.abs(follower.tangentialVelocity()) < Constants.foresightConfig.velocityConstraint.get() && follower.distanceToEndpoint() < 4);
+            telemetry.addData("isdone?",!follower.following());
             telemetry.addData("Velocity",follower.tangentialVelocity());
             telemetry.addData("Predicted Velocity",Constants.foresightConfig.velocityConstraint.get());
             telemetry.addData("distance to end", follower.distanceToEndpoint());
@@ -116,7 +116,7 @@ public abstract class MainPedroAuto extends StateMachineOpMode {
 
         @Override
         public void init() {
-            flowerPath = Paths.line(lastPath, poses.flowerIntake).linear(lastPath, poses.flowerIntake);
+            flowerPath = Paths.line(follower.pose(), poses.flowerIntake).linear(follower.pose(), poses.flowerIntake);
             leaveFlower = Paths.line(poses.flowerIntake, poses.flowerLeave).constant(poses.flowerIntake);
             setEndCondition(()->isDone);
         }
@@ -127,12 +127,12 @@ public abstract class MainPedroAuto extends StateMachineOpMode {
             switch (step){
                 case 0:
                     follower.follow(flowerPath);
-                    if(Math.abs(follower.tangentialVelocity()) < Constants.foresightConfig.velocityConstraint.get() && follower.distanceToEndpoint() < 4) step = 1;
+                    if(!follower.following()) step = 1;
                     break;
                 case 1:
                     follower.follow(leaveFlower);
                     intakeMotor.run((m) -> m.setPower(1));
-                    if(Math.abs(follower.tangentialVelocity()) < Constants.foresightConfig.velocityConstraint.get() && follower.distanceToEndpoint() < 4) step = 2;
+                    if(!follower.following()) step = 2;
                     break;
                 case 2:
                     intakeMotor.run((m) -> m.setPower(0));
@@ -158,9 +158,9 @@ public abstract class MainPedroAuto extends StateMachineOpMode {
         boolean isDone = false;
         @Override
         public void init() {
-            halfPark = Paths.line(lastPath, poses.thenShoot).constant(lastPath);
+            halfPark = Paths.line(follower.pose(), poses.thenShoot).constant(lastPath);
             parkPath = Paths.line(poses.thenShoot, poses.audiencePark).constant(lastPath);
-            setEndCondition(()-> Math.abs(follower.tangentialVelocity()) < Constants.foresightConfig.velocityConstraint.get() && follower.distanceToEndpoint() < 4);
+            setEndCondition(()-> !follower.following());
             follower.follow(parkPath);
         }
 
@@ -170,11 +170,11 @@ public abstract class MainPedroAuto extends StateMachineOpMode {
             switch (step){
                 case 0:
                     follower.follow(halfPark);
-                    if(Math.abs(follower.tangentialVelocity()) < Constants.foresightConfig.velocityConstraint.get() && follower.distanceToEndpoint() < 4) step = 1;
+                    if(!follower.following()) step = 1;
                     break;
                 case 1:
                     follower.follow(parkPath);
-                    if(Math.abs(follower.tangentialVelocity()) < Constants.foresightConfig.velocityConstraint.get() && follower.distanceToEndpoint() < 4) step = 2;
+                    if(!follower.following()) step = 2;
                     break;
                 case 2:
                     isDone = true;
@@ -198,14 +198,14 @@ public abstract class MainPedroAuto extends StateMachineOpMode {
 
 
         public void init() {
-            gardenPath = Paths.line(lastPath, poses.point3).linear(lastPath, poses.point3);
+            gardenPath = Paths.line(follower.pose(), poses.point3).linear(follower.pose(), poses.point3);
             leaveGarden = Paths.line(poses.point3, poses.pickupGarden).constant(poses.pickupGarden);
             setEndCondition(()->isDone);
         }
         @Override
         public void loop() {
             follower.update();
-            telemetry.addData("isdone?",Math.abs(follower.tangentialVelocity()) < Constants.foresightConfig.velocityConstraint.get() && follower.distanceToEndpoint() < 4);
+            telemetry.addData("isdone?",!follower.following());
             telemetry.addData("Velocity",follower.tangentialVelocity());
             telemetry.addData("Predicted Velocity",Constants.foresightConfig.velocityConstraint.get());
             telemetry.addData("distance to end", follower.distanceToEndpoint());
@@ -215,12 +215,12 @@ public abstract class MainPedroAuto extends StateMachineOpMode {
                 case 0:
 
                     follower.follow(gardenPath);
-                    if(Math.abs(follower.tangentialVelocity()) < Constants.foresightConfig.velocityConstraint.get() && follower.distanceToEndpoint() < 4) step = 1;
+                    if(!follower.following()) step = 1;
                     break;
                 case 1:
                     intakeMotor.run((m) -> m.setPower(1));
                     follower.follow(leaveGarden);
-                    if(Math.abs(follower.tangentialVelocity()) < Constants.foresightConfig.velocityConstraint.get() && follower.distanceToEndpoint() < 4) step = 2;
+                    if(!follower.following()) step = 2;
                     break;
                 case 2:
                     intakeMotor.run((m) -> m.setPower(0));
@@ -247,6 +247,8 @@ public abstract class MainPedroAuto extends StateMachineOpMode {
         lastPath = getStartingPose();
         poses = new Poses(follower);
         intakeMotor = safeMap.device(DcMotorEx.class, "intake");
+
+        follower.holdEnd.set(true);
 
         return autoStates;
     }

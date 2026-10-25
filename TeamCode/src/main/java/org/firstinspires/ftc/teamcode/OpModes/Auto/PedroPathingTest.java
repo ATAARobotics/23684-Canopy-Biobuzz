@@ -20,12 +20,10 @@ public class PedroPathingTest extends MainPedroAuto {
 
     public void SetRoute(){
         addStep(AutoStates.leave);
-        addStep(5);
+        addStep(1);
         addStep(AutoStates.shootPreload);
-        addStep(5);
-        addStep(AutoStates.pickupGarden);
-        addStep(5);
         addStep(AutoStates.pickFromFlower);
+        addStep(AutoStates.pickupGarden);
         addStep(5);
         addStep(AutoStates.park);
     }
