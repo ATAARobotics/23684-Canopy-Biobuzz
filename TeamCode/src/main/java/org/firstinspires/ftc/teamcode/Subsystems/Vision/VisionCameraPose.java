@@ -27,7 +27,7 @@ public class VisionCameraPose {
 
 	public static final double DEFAULT_ROLL = 0.0;
 
-	/** Resting turret yaw. */
+	/** Default camera yaw. */
 	public static final double DEFAULT_YAW = 0.0;
 
 	private double x = DEFAULT_X;
@@ -113,7 +113,7 @@ public class VisionCameraPose {
 		this.roll = roll;
 	}
 
-	/** Turret yaw: 0 = forward, +90 = left, -90 = right. */
+	/** Camera yaw: 0 = forward, +90 = left, -90 = right. */
 	public void setYaw(double yaw) {
 		this.yaw = yaw;
 	}
@@ -130,7 +130,7 @@ public class VisionCameraPose {
 				z);
 	}
 
-	/** Adds to turret yaw, wrapping to [-180, 180). */
+	/** Adds to the camera yaw, wrapping to [-180, 180). */
 	public void nudgeYaw(double deltaDegrees) {
 		this.yaw = wrapDegrees(this.yaw + deltaDegrees);
 	}
