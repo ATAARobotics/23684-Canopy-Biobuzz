@@ -6,8 +6,10 @@ import com.aaravlabs.synapse.ftc.SafeOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.Servo;
 import org.firstinspires.ftc.teamcode.Config.TurretConfig;
 import org.firstinspires.ftc.teamcode.Subsystems.Drive;
+import org.firstinspires.ftc.teamcode.Subsystems.Gate;
 import org.firstinspires.ftc.teamcode.Subsystems.Intake;
 import org.firstinspires.ftc.teamcode.Subsystems.Pedro;
 import org.firstinspires.ftc.teamcode.Subsystems.Turret;
@@ -28,6 +30,7 @@ public class MainTeleOp extends SafeOpMode {
 	private Pedro pedro;
 	private AprilTagVision vision;
 	private Turret turret;
+	private Gate gate;
 
 	@Override
 	protected void onSafeInit() {
@@ -60,6 +63,9 @@ public class MainTeleOp extends SafeOpMode {
 
 		orchestrator.registerNode("drive", new Drive(orchestrator, frontLeft, frontRight, backLeft, backRight));
 		orchestrator.registerNode("intake", new Intake(orchestrator, intake));
+
+		gate = new Gate(orchestrator, safeMap.device(Servo.class, "gate"));
+		orchestrator.registerNode("gate", gate);
 	}
 
 	@Override
@@ -84,6 +90,7 @@ public class MainTeleOp extends SafeOpMode {
 				"Intake",
 				"%.2f",
 				orchestrator.getLatestValue("intake/power", Double.class).orElse(0.0));
+		telemetry.addData("Gate", gate.isOpen() ? "OPEN" : "CLOSED");
 		vision.publishTelemetry(telemetry);
 
 		turret.publishTelemetry(telemetry);
