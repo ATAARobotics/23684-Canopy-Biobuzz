@@ -8,6 +8,7 @@ import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import org.firstinspires.ftc.teamcode.Config.TurretConfig;
 import org.firstinspires.ftc.teamcode.Subsystems.Drive;
+import org.firstinspires.ftc.teamcode.Subsystems.Elevator;
 import org.firstinspires.ftc.teamcode.Subsystems.Intake;
 import org.firstinspires.ftc.teamcode.Subsystems.Pedro;
 import org.firstinspires.ftc.teamcode.Subsystems.Turret;
@@ -24,10 +25,12 @@ public class MainTeleOp extends SafeOpMode {
 	private SafeDevice<DcMotorEx> backLeft;
 	private SafeDevice<DcMotorEx> backRight;
 	private SafeDevice<DcMotorEx> intake;
+	private SafeDevice<DcMotorEx> elevator;
 
 	private Pedro pedro;
 	private AprilTagVision vision;
 	private Turret turret;
+	private Elevator elevatorNode;
 
 	@Override
 	protected void onSafeInit() {
@@ -36,6 +39,7 @@ public class MainTeleOp extends SafeOpMode {
 		backLeft = safeMap.device(DcMotorEx.class, "backLeft");
 		backRight = safeMap.device(DcMotorEx.class, "backRight");
 		intake = safeMap.device(DcMotorEx.class, "intake");
+		elevator = safeMap.device(DcMotorEx.class, "elevator");
 
 		GamepadAdaptor.attach(orchestrator, gamepad1, "g1");
 		GamepadAdaptor.attach(orchestrator, gamepad2, "g2");
@@ -60,10 +64,20 @@ public class MainTeleOp extends SafeOpMode {
 
 		orchestrator.registerNode("drive", new Drive(orchestrator, frontLeft, frontRight, backLeft, backRight));
 		orchestrator.registerNode("intake", new Intake(orchestrator, intake));
+
+		elevatorNode = new Elevator(orchestrator, elevator);
+		orchestrator.registerNode("elevator", elevatorNode);
 	}
 
 	@Override
 	protected void onSafeLoop() {
+		double elevatorManualPower =
+				-orchestrator
+						.getLatestValue("g2/right_stick_y", Float.class)
+						.map(Float::doubleValue)
+						.orElse(0.0);
+		orchestrator.publish("elevator/manualPower", elevatorManualPower);
+
 		telemetry.addData(
 				"FL",
 				"%.2f",
@@ -84,6 +98,10 @@ public class MainTeleOp extends SafeOpMode {
 				"Intake",
 				"%.2f",
 				orchestrator.getLatestValue("intake/power", Double.class).orElse(0.0));
+		telemetry.addData(
+				"Elevator",
+				"%.2f",
+				orchestrator.getLatestValue("elevator/power", Double.class).orElse(0.0));
 		vision.publishTelemetry(telemetry);
 
 		turret.publishTelemetry(telemetry);
