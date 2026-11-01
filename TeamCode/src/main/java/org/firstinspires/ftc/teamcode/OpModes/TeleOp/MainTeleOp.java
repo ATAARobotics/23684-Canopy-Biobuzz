@@ -7,6 +7,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import org.firstinspires.ftc.teamcode.Config.TurretConfig;
+import org.firstinspires.ftc.teamcode.Subsystems.BulkCache;
 import org.firstinspires.ftc.teamcode.Subsystems.Drive;
 import org.firstinspires.ftc.teamcode.Subsystems.Intake;
 import org.firstinspires.ftc.teamcode.Subsystems.Pedro;
@@ -25,12 +26,16 @@ public class MainTeleOp extends SafeOpMode {
 	private SafeDevice<DcMotorEx> backRight;
 	private SafeDevice<DcMotorEx> intake;
 
+	private BulkCache bulkCache;
 	private Pedro pedro;
 	private AprilTagVision vision;
 	private Turret turret;
 
 	@Override
 	protected void onSafeInit() {
+		bulkCache = new BulkCache(orchestrator, safeMap, BulkCache.Mode.AUTO);
+		orchestrator.registerNode("bulkcache", bulkCache);
+
 		frontLeft = safeMap.device(DcMotorEx.class, "frontLeft");
 		frontRight = safeMap.device(DcMotorEx.class, "frontRight");
 		backLeft = safeMap.device(DcMotorEx.class, "backLeft");
@@ -84,6 +89,11 @@ public class MainTeleOp extends SafeOpMode {
 				"Intake",
 				"%.2f",
 				orchestrator.getLatestValue("intake/power", Double.class).orElse(0.0));
+		telemetry.addData(
+				"BulkCache",
+				"%d hub(s), %s mode",
+				orchestrator.getLatestValue("bulkcache/hubCount", Integer.class).orElse(0),
+				orchestrator.getLatestValue("bulkcache/mode", String.class).orElse("?"));
 		vision.publishTelemetry(telemetry);
 
 		turret.publishTelemetry(telemetry);
