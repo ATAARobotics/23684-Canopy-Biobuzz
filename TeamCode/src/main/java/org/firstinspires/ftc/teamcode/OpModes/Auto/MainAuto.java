@@ -74,6 +74,7 @@ public abstract class MainAuto extends StateMachineOpMode {
                 return new ParkScoringState();
             case parkAudience:
                 return new ParkAudienceState();
+
         }
         return null;
 

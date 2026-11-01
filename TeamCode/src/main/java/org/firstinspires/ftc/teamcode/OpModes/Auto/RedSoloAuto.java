@@ -8,6 +8,7 @@ public class RedSoloAuto extends MainAuto{
         return new Pose(8,49);
     }
 
+
     @Override
     public void SetRoute() {
         addStep(AutoStates.leavePushAlliance);

@@ -16,5 +16,6 @@ public class RedAudienceSide extends MainAuto {
         addStep(AutoStates.pickFromFlowerAudience);
         addStep(AutoStates.goToGardenShooting);
         addStep(AutoStates.parkAudience);
+
     }
 }

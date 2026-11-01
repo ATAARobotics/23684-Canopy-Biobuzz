@@ -18,5 +18,6 @@ public class RedScoringSideAuto extends MainAuto{
         addStep(1);
         addStep(AutoStates.pickFromFlowerScoring);
         addStep(AutoStates.parkScoring);
+
     }
 }
