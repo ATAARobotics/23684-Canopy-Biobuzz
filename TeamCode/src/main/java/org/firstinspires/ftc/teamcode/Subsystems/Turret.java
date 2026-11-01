@@ -38,7 +38,10 @@ public class Turret extends Node {
 	// Number of |error| samples behind the settle reading on the tuning screen.
 	private static final int SETTLE_WINDOW_SAMPLES = 25;
 
-	private final SafeDevice<CRServo> turretServo;
+	// Three CR servos drive the same turret shaft, so every one of them always gets the same power.
+	private final SafeDevice<CRServo> turretOne;
+	private final SafeDevice<CRServo> turretTwo;
+	private final SafeDevice<CRServo> turretThree;
 	private final SafeDevice<DcMotorEx> encoderMotor;
 	private final SafeHardwareMap safeMap;
 	// Null on the tuner: the tuning OpMode has no odometry.
@@ -96,13 +99,17 @@ public class Turret extends Node {
 	public Turret(
 			Orchestrator orchestrator,
 			SafeHardwareMap safeMap,
-			SafeDevice<CRServo> turretServo,
+			SafeDevice<CRServo> turretOne,
+			SafeDevice<CRServo> turretTwo,
+			SafeDevice<CRServo> turretThree,
 			SafeDevice<DcMotorEx> encoderMotor,
 			Follower follower,
 			String inputPrefix) {
 		super(orchestrator);
 		this.safeMap = safeMap;
-		this.turretServo = turretServo;
+		this.turretOne = turretOne;
+		this.turretTwo = turretTwo;
+		this.turretThree = turretThree;
 		this.encoderMotor = encoderMotor;
 		this.follower = follower;
 		this.inputPrefix = inputPrefix;
@@ -146,9 +153,16 @@ public class Turret extends Node {
 			power = 0.0;
 			atLimit = true;
 		}
-		turretServo.raw().setPower(power);
+		setServoPower(power);
 
 		publish(angle, goal, aim, power);
+	}
+
+	// Runs on the hardware thread, so the raw devices can be written directly.
+	private void setServoPower(double power) {
+		turretOne.raw().setPower(power);
+		turretTwo.raw().setPower(power);
+		turretThree.raw().setPower(power);
 	}
 
 	// Encoder ticks since the zero taken on the first tick, in degrees. That zero is straight ahead.
@@ -620,9 +634,19 @@ public class Turret extends Node {
 		}
 	}
 
-	@Override
-	public void close() {
-		turretServo.run(m -> m.setPower(0.0));
+	/** Stops all three servos together on the hardware thread. Call from the OpMode thread before close. */
+	public void stop() {
+		if (orchestrator.isClosed()) {
+			return;
+		}
+		try {
+			orchestrator.hardware().call(() -> {
+				setServoPower(0.0);
+				return null;
+			});
+		} catch (Exception e) {
+			orchestrator.warn("turret stop failed: " + e.getMessage());
+		}
 	}
 
 	/** Running average of the most recent |error| samples. */
