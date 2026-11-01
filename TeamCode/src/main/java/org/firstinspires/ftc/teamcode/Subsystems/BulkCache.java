@@ -29,17 +29,16 @@ import java.util.List;
 public class BulkCache extends Node {
 
 	public enum Mode {
-		OFF, AUTO, MANUAL
+		OFF,
+		AUTO,
+		MANUAL
 	}
 
 	private final SafeHardwareMap safeMap;
 	private final List<LynxModule> hubs;
 	private final Mode mode;
 
-	public BulkCache(
-			Orchestrator orchestrator,
-			SafeHardwareMap safeMap,
-			Mode mode) {
+	public BulkCache(Orchestrator orchestrator, SafeHardwareMap safeMap, Mode mode) {
 		super(orchestrator);
 		this.safeMap = safeMap;
 		this.mode = mode;
