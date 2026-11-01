@@ -17,9 +17,17 @@ public class Pedro extends Node {
 	private volatile Pose pose;
 
 	public Pedro(Orchestrator orchestrator, SafeHardwareMap safeMap) {
+		this(orchestrator, safeMap, null);
+	}
+
+	/**
+	 * Creates a Pedro node. If {@code follower} is non-null it is used directly; otherwise a new
+	 * follower is created from {@code safeMap} to maintain backwards compatibility.
+	 */
+	public Pedro(Orchestrator orchestrator, SafeHardwareMap safeMap, Follower follower) {
 		super(orchestrator);
-		this.follower = Constants.create(safeMap);
-		this.pose = follower.pose();
+		this.follower = follower != null ? follower : Constants.create(safeMap);
+		this.pose = this.follower.pose();
 	}
 
 	/** The follower that build paths or read raw odometry. */

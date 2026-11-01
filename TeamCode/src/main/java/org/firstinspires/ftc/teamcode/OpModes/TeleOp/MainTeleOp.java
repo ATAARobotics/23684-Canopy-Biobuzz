@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.OpModes.TeleOp;
 
+import com.aaravlabs.safepedropathing.follower.Follower;
 import com.aaravlabs.synapse.ftc.GamepadAdaptor;
 import com.aaravlabs.synapse.ftc.SafeDevice;
 import com.aaravlabs.synapse.ftc.SafeOpMode;
@@ -40,7 +41,8 @@ public class MainTeleOp extends SafeOpMode {
 		GamepadAdaptor.attach(orchestrator, gamepad1, "g1");
 		GamepadAdaptor.attach(orchestrator, gamepad2, "g2");
 
-		pedro = new Pedro(orchestrator, safeMap);
+		Follower follower = Constants.create(safeMap);
+		pedro = new Pedro(orchestrator, safeMap, follower);
 		pedro.setStartPose(Constants.startPose);
 		orchestrator.registerNode("pedro", pedro);
 
