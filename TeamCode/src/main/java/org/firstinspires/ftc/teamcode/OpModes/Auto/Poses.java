@@ -7,6 +7,7 @@ import com.aaravlabs.safepedropathing.math.Pose;
 public class Poses {
 
 
+
     //TODO: Glean out repeating poses. we only need one per location.
 
     public final PoseFactory redposeFactory = PoseFactory.degrees();

@@ -11,6 +11,7 @@ public class RedScoringSideAuto extends MainAuto{
         return new Pose(63,133,Math.toRadians(90));
     }
 
+
     @Override
     public void SetRoute() {
         addStep(AutoStates.leaveScoring);

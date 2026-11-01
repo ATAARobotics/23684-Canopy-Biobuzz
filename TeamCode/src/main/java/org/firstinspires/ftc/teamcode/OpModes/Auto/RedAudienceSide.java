@@ -9,6 +9,7 @@ public class RedAudienceSide extends MainAuto {
         return new Pose(55, 9, Math.toRadians(90));
     }
 
+
     public void SetRoute(){
         addStep(AutoStates.leaveAudience);
         addStep(1);

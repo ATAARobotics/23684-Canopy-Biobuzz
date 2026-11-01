@@ -9,6 +9,7 @@ public class RedSoloAuto extends MainAuto{
     }
 
 
+
     @Override
     public void SetRoute() {
         addStep(AutoStates.leavePushAlliance);
