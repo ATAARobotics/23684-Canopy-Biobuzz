@@ -71,13 +71,6 @@ public class MainTeleOp extends SafeOpMode {
 
 	@Override
 	protected void onSafeLoop() {
-		double elevatorManualPower =
-				-orchestrator
-						.getLatestValue("g2/right_stick_y", Float.class)
-						.map(Float::doubleValue)
-						.orElse(0.0);
-		orchestrator.publish("elevator/manualPower", elevatorManualPower);
-
 		telemetry.addData(
 				"FL",
 				"%.2f",

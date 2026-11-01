@@ -7,11 +7,9 @@ import com.aaravlabs.synapse.ftc.SafeDevice;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 
 /**
- * Moves the elevator based on manual power published on {@code elevator/manualPower} (range -1 to 1).
- * When a command arrives, the elevator sets motor power and publishes {@code elevator/power} with the
- * actual power. Publishing the manual command from MainTeleOp and subscribing here lets later
- * subsystems (e.g. a shooter) command the elevator automatically while manual gamepad 2 input
- * overrides it.
+ * Moves the elevator based on gamepad 2's right stick Y (range -1 to 1). Subscribes directly to
+ * {@code g2/right_stick_y} so the gamepad reading lives in the subsystem instead of MainTeleOp's
+ * loop. Sets motor power and publishes {@code elevator/power} with the actual power.
  */
 public class Elevator extends Node {
 
@@ -22,9 +20,9 @@ public class Elevator extends Node {
 		this.elevator = elevator;
 	}
 
-	@SubscribedTo(topic = "elevator/manualPower")
-	public void onManualPower(Double power) {
-		double applied = power != null ? power : 0.0;
+	@SubscribedTo(topic = "g2/right_stick_y")
+	public void onManualPower(Float stickY) {
+		double applied = stickY != null ? -stickY.doubleValue() : 0.0;
 		elevator.run(m -> m.setPower(applied));
 		orchestrator.publish("elevator/power", applied);
 	}
