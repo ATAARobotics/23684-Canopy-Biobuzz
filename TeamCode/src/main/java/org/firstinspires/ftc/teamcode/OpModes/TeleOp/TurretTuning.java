@@ -55,7 +55,9 @@ public class TurretTuning extends SafeOpMode {
 		turret = new Turret(
 				orchestrator,
 				safeMap,
-				safeMap.device(CRServo.class, "turret"),
+				safeMap.device(CRServo.class, "turretOne"),
+				safeMap.device(CRServo.class, "turretTwo"),
+				safeMap.device(CRServo.class, "turretThree"),
 				safeMap.device(DcMotorEx.class, "intake"),
 				null,
 				"g1");
@@ -145,6 +147,13 @@ public class TurretTuning extends SafeOpMode {
 						TurretConfig.ki,
 						TurretConfig.kd));
 		joinedTelemetry.update();
+	}
+
+	@Override
+	protected void onSafeStop() {
+		if (turret != null) {
+			turret.stop();
+		}
 	}
 
 	// Drives the square-wave goal; when paused (a/b), holds the turret at base.
