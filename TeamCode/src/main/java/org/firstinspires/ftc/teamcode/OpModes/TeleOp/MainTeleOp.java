@@ -1,9 +1,9 @@
 package org.firstinspires.ftc.teamcode.OpModes.TeleOp;
 
+import com.aaravlabs.safepedropathing.math.Pose;
 import com.aaravlabs.synapse.ftc.GamepadAdaptor;
 import com.aaravlabs.synapse.ftc.SafeDevice;
 import com.aaravlabs.synapse.ftc.SafeOpMode;
-import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import org.firstinspires.ftc.teamcode.Config.TurretConfig;
@@ -14,10 +14,13 @@ import org.firstinspires.ftc.teamcode.Subsystems.Turret;
 import org.firstinspires.ftc.teamcode.Subsystems.Vision.AprilTagVision;
 import org.firstinspires.ftc.teamcode.Subsystems.Vision.PointOfInterest;
 import org.firstinspires.ftc.teamcode.Subsystems.Vision.VisionCameraPose;
-import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
+import org.firstinspires.ftc.teamcode.Utils.Team;
 
-@TeleOp(name = "Main TeleOp", group = "TeleOp")
-public class MainTeleOp extends SafeOpMode {
+/**
+ * Shared TeleOp base. RedTeleOp and BlueTeleOp supply the team and starting
+ * pose. Everything else (drive, intake, turret, vision) is shared here.
+ */
+public abstract class MainTeleOp extends SafeOpMode {
 
 	private SafeDevice<DcMotorEx> frontLeft;
 	private SafeDevice<DcMotorEx> frontRight;
@@ -28,6 +31,12 @@ public class MainTeleOp extends SafeOpMode {
 	private Pedro pedro;
 	private AprilTagVision vision;
 	private Turret turret;
+
+	// Which alliance this TeleOp is for (BLUE or RED).
+	protected abstract Team getTeam();
+
+	// Starting pose for this alliance's side of the field.
+	protected abstract Pose getStartingPose();
 
 	@Override
 	protected void onSafeInit() {
@@ -41,12 +50,12 @@ public class MainTeleOp extends SafeOpMode {
 		GamepadAdaptor.attach(orchestrator, gamepad2, "g2");
 
 		pedro = new Pedro(orchestrator, safeMap);
-		pedro.setStartPose(Constants.startPose);
+		pedro.setStartPose(getStartingPose());
 		orchestrator.registerNode("pedro", pedro);
 
 		VisionCameraPose cameraPose = new VisionCameraPose();
 		PointOfInterest poi = new PointOfInterest("AIM");
-		vision = new AprilTagVision(orchestrator, safeMap.raw(), cameraPose, poi, TurretConfig.allianceLetter());
+		vision = new AprilTagVision(orchestrator, safeMap.raw(), cameraPose, poi, allianceLetter(getTeam()));
 		orchestrator.registerNode("vision", vision);
 
 		turret = new Turret(
@@ -60,6 +69,11 @@ public class MainTeleOp extends SafeOpMode {
 
 		orchestrator.registerNode("drive", new Drive(orchestrator, frontLeft, frontRight, backLeft, backRight));
 		orchestrator.registerNode("intake", new Intake(orchestrator, intake));
+	}
+
+	// 'B' for blue, 'R' for red or unknown. Matches TurretConfig.allianceLetter().
+	private static char allianceLetter(Team team) {
+		return team == Team.BLUE ? 'B' : 'R';
 	}
 
 	@Override
@@ -84,6 +98,7 @@ public class MainTeleOp extends SafeOpMode {
 				"Intake",
 				"%.2f",
 				orchestrator.getLatestValue("intake/power", Double.class).orElse(0.0));
+		telemetry.addData("Alliance", getTeam());
 		vision.publishTelemetry(telemetry);
 
 		turret.publishTelemetry(telemetry);
