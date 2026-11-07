@@ -16,6 +16,7 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 import java.util.Locale;
 import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.teamcode.Config.Cluster;
 import org.firstinspires.ftc.teamcode.Config.FieldMap;
 import org.firstinspires.ftc.teamcode.Config.TurretConfig;
 
