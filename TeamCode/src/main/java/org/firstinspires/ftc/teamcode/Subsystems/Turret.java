@@ -16,6 +16,7 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 import java.util.Locale;
 import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.teamcode.Config.Cluster;
 import org.firstinspires.ftc.teamcode.Config.FieldMap;
 import org.firstinspires.ftc.teamcode.Config.TurretConfig;
 
@@ -322,7 +323,7 @@ public class Turret extends Node {
 		if (half == null) {
 			return null;
 		}
-		FieldMap.Cluster cell = FieldMap.forCell(TurretConfig.allianceLetter() == 'B', "SCORING".equals(half));
+		Cluster cell = FieldMap.forCell(TurretConfig.allianceLetter() == 'B', "SCORING".equals(half));
 		return new double[] {cell.x, cell.y};
 	}
 
