@@ -323,7 +323,7 @@ public class Turret extends Node {
 		if (half == null) {
 			return null;
 		}
-		FieldMap.Cluster cell = FieldMap.forCell(TurretConfig.allianceLetter() == 'B', "SCORING".equals(half));
+		Cluster cell = FieldMap.forCell(TurretConfig.allianceLetter() == 'B', "SCORING".equals(half));
 		return new double[] {cell.x, cell.y};
 	}
 
