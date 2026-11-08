@@ -6,9 +6,7 @@ import com.aaravlabs.safepedropathing.math.Pose;
 
 public class Poses {
 
-
-
-    //TODO: Glean out repeating poses. we only need one per location.
+    public static Pose finalPose = new Pose(0,0,0);
 
     public final PoseFactory redposeFactory = PoseFactory.degrees();
 
@@ -50,7 +48,9 @@ public class Poses {
     public final Pose redParkingZoneAlliancePush = redposeFactory.of(7.8945, 82.0361, 270);
     public final Pose toFlowerScoringControl1 = redposeFactory.of(16.8906, 81.2109, 0);
 
-    PoseFactory blueposeFactory = redposeFactory.rotateAround(72,72, 180);
+    //TODO: Test Blue please :P
+
+    PoseFactory blueposeFactory = redposeFactory.rotateAround(70.75,70.75, 180);
 
     public final Pose blueStartAudience = blueposeFactory.of(55, 9, 90);
     public final Pose blueAudienceLeave = blueposeFactory.of(55, 18, 90);

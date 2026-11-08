@@ -112,6 +112,7 @@ public abstract class MainAuto extends StateMachineOpMode {
             telemetry.addData("Velocity",follower.tangentialVelocity());
             telemetry.addData("Predicted Velocity",Constants.foresightConfig.velocityConstraint.get());
             telemetry.addData("distance to end", follower.distanceToEndpoint());
+            Poses.finalPose = follower.pose();
         }
 
         @Override
@@ -136,6 +137,7 @@ public abstract class MainAuto extends StateMachineOpMode {
             telemetry.addData("Velocity",follower.tangentialVelocity());
             telemetry.addData("Predicted Velocity",Constants.foresightConfig.velocityConstraint.get());
             telemetry.addData("distance to end", follower.distanceToEndpoint());
+            Poses.finalPose = follower.pose();
         }
 
         @Override
@@ -160,6 +162,7 @@ public abstract class MainAuto extends StateMachineOpMode {
             telemetry.addData("Velocity",follower.tangentialVelocity());
             telemetry.addData("Predicted Velocity",Constants.foresightConfig.velocityConstraint.get());
             telemetry.addData("distance to end", follower.distanceToEndpoint());
+            Poses.finalPose = follower.pose();
         }
 
         @Override
@@ -195,6 +198,7 @@ public abstract class MainAuto extends StateMachineOpMode {
         @Override
         public void loop() {
             follower.update();
+            Poses.finalPose = follower.pose();
         }
 
         @Override
@@ -215,6 +219,7 @@ public abstract class MainAuto extends StateMachineOpMode {
         @Override
         public void loop() {
             follower.update();
+            Poses.finalPose = follower.pose();
         }
 
         @Override
@@ -270,6 +275,7 @@ public abstract class MainAuto extends StateMachineOpMode {
         @Override
         public void loop() {
             follower.update();
+            Poses.finalPose = follower.pose();
         }
 
         @Override
@@ -308,6 +314,7 @@ public abstract class MainAuto extends StateMachineOpMode {
             telemetry.addData("Velocity", follower.tangentialVelocity());
             telemetry.addData("Predicted Velocity", Constants.foresightConfig.velocityConstraint.get());
             telemetry.addData("distance to end", follower.distanceToEndpoint());
+            Poses.finalPose = follower.pose();
         }
 
         @Override
@@ -333,6 +340,7 @@ public abstract class MainAuto extends StateMachineOpMode {
             telemetry.addData("Velocity", follower.tangentialVelocity());
             telemetry.addData("Predicted Velocity", Constants.foresightConfig.velocityConstraint.get());
             telemetry.addData("distance to end", follower.distanceToEndpoint());
+            Poses.finalPose = follower.pose();
         }
 
         @Override
@@ -353,6 +361,7 @@ public abstract class MainAuto extends StateMachineOpMode {
         @Override
         public void loop() {
             follower.update();
+            Poses.finalPose = follower.pose();
         }
 
         @Override
@@ -374,6 +383,7 @@ public abstract class MainAuto extends StateMachineOpMode {
         @Override
         public void loop() {
             follower.update();
+            Poses.finalPose = follower.pose();
         }
 
         @Override
