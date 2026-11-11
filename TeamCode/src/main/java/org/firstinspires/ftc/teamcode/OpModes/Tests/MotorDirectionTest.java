@@ -5,6 +5,7 @@ import com.aaravlabs.synapse.ftc.SafeDevice;
 import com.aaravlabs.synapse.ftc.SafeOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 
 @TeleOp(name = "Motor Direction Test", group = "Tests")
 public class MotorDirectionTest extends SafeOpMode {
@@ -15,6 +16,9 @@ public class MotorDirectionTest extends SafeOpMode {
 	private SafeDevice<DcMotorEx> backRight;
 	private SafeDevice<DcMotorEx> intake;
 
+	private SafeDevice<DcMotorEx> shooterTest;
+
+
 	@Override
 	protected void onSafeInit() {
 		frontLeft = safeMap.device(DcMotorEx.class, "frontLeft");
@@ -23,6 +27,12 @@ public class MotorDirectionTest extends SafeOpMode {
 		backRight = safeMap.device(DcMotorEx.class, "backRight");
 		intake = safeMap.device(DcMotorEx.class, "intake");
 
+		shooterTest = safeMap.device(DcMotorEx.class,"pollenShooter");
+
+		intake.run((m)-> m.setDirection(DcMotorSimple.Direction.REVERSE));
+		shooterTest.run((m)-> m.setDirection(DcMotorSimple.Direction.REVERSE));
+
+
 		GamepadAdaptor.attach(orchestrator, gamepad1, "g1");
 
 		orchestrator.subscribe("g1/x", Boolean.class, v -> frontLeft.run(m -> m.setPower(v ? 1.0 : 0.0)));
@@ -30,6 +40,7 @@ public class MotorDirectionTest extends SafeOpMode {
 		orchestrator.subscribe("g1/y", Boolean.class, v -> frontRight.run(m -> m.setPower(v ? 1.0 : 0.0)));
 		orchestrator.subscribe("g1/b", Boolean.class, v -> backRight.run(m -> m.setPower(v ? 1.0 : 0.0)));
 		orchestrator.subscribe("g1/left_bumper", Boolean.class, v -> intake.run(m -> m.setPower(v ? 1.0 : 0.0)));
+		orchestrator.subscribe("g1/left_bumper", Boolean.class, v -> shooterTest.run(m -> m.setPower(v ? 1.0 : 0.0)));
 	}
 
 	@Override

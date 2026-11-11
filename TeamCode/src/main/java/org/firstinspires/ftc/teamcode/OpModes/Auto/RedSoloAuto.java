@@ -8,6 +8,10 @@ public class RedSoloAuto extends MainAuto{
         return new Pose(8,49);
     }
 
+    @Override
+    protected boolean onRed() {
+        return false;
+    }
 
 
     @Override

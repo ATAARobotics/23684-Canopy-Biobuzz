@@ -11,6 +11,11 @@ public class RedScoringSideAuto extends MainAuto{
         return new Pose(63,133,Math.toRadians(90));
     }
 
+    @Override
+    protected boolean onRed() {
+        return false;
+    }
+
 
     @Override
     public void SetRoute() {

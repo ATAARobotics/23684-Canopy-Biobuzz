@@ -9,7 +9,11 @@ import com.aaravlabs.safepedropathing.api.Paths;
 import com.aaravlabs.safepedropathing.follower.Follower;
 import com.aaravlabs.safepedropathing.math.Pose;
 import com.aaravlabs.safepedropathing.paths.Path;
+import com.aaravlabs.synapse.ftc.SafeDevice;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 
+import org.firstinspires.ftc.teamcode.Subsystems.Intake;
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 
 import java.util.ArrayList;
@@ -38,6 +42,8 @@ public abstract class MainAuto extends StateMachineOpMode {
     Pose lastPath;
 
     Poses poses;
+
+    private SafeDevice<DcMotorEx> intake;
     public void SetRoute(){}
 
     public void addStep(AutoStates autostates){
@@ -49,6 +55,8 @@ public abstract class MainAuto extends StateMachineOpMode {
     }
 
     protected abstract Pose getStartingPose();
+
+    protected abstract boolean onRed(); // will become the alliance swap thing
 
 
     private State GetState(AutoStates autoStates){
@@ -402,8 +410,10 @@ public abstract class MainAuto extends StateMachineOpMode {
         follower.setPose(getStartingPose());
         lastPath = getStartingPose();
         poses = new Poses(follower);
-//        orchestrator.registerNode("shooter", new Intake(orchestrator, shooter));
+        intake = safeMap.device(DcMotorEx.class,"intake");
+        orchestrator.registerNode("intake", new Intake(orchestrator, intake));
         follower.holdEnd.set(true);
+
 
         return autoStates;
     }
