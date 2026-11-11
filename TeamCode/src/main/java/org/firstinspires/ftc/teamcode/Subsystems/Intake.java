@@ -9,10 +9,12 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 public class Intake extends Node {
 
 	private final SafeDevice<DcMotorEx> intake;
+	private final SafeDevice.Scope<DcMotorEx> intakeSet;
 
 	public Intake(Orchestrator orchestrator, SafeDevice<DcMotorEx> intake) {
 		super(orchestrator);
 		this.intake = intake;
+		this.intakeSet = intake.labels("write/intake").slot("intake/power");
 	}
 
 	@RunPeriodically(hz = 50, hardware = true)
@@ -27,7 +29,7 @@ public class Intake extends Node {
 				.map(Float::doubleValue)
 				.orElse(0.0);
 		double power = Math.max(operator, trigger);
-		intake.run(m -> m.setPower(power));
+		intakeSet.run(m -> m.setPower(power));
 		orchestrator.publish("intake/power", power);
 	}
 }

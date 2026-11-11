@@ -10,6 +10,7 @@ import org.firstinspires.ftc.teamcode.Config.TurretConfig;
 import org.firstinspires.ftc.teamcode.Subsystems.Drive;
 import org.firstinspires.ftc.teamcode.Subsystems.Elevator;
 import org.firstinspires.ftc.teamcode.Subsystems.Intake;
+import org.firstinspires.ftc.teamcode.Subsystems.MatchGate;
 import org.firstinspires.ftc.teamcode.Subsystems.Pedro;
 import org.firstinspires.ftc.teamcode.Subsystems.Turret;
 import org.firstinspires.ftc.teamcode.Subsystems.Vision.AprilTagVision;
@@ -34,6 +35,9 @@ public class MainTeleOp extends SafeOpMode {
 
 	@Override
 	protected void onSafeInit() {
+		// The gate holds hardware actions before any other subsystem attempts to run.
+		orchestrator.registerNode("matchGate", new MatchGate(orchestrator));
+
 		frontLeft = safeMap.device(DcMotorEx.class, "frontLeft");
 		frontRight = safeMap.device(DcMotorEx.class, "frontRight");
 		backLeft = safeMap.device(DcMotorEx.class, "backLeft");
@@ -71,6 +75,8 @@ public class MainTeleOp extends SafeOpMode {
 
 	@Override
 	protected void onSafeLoop() {
+		telemetry.addData(
+				"Writes", orchestrator.hardware().isRestricted("write") ? "HELD, press share to release" : "GO");
 		telemetry.addData(
 				"FL",
 				"%.2f",

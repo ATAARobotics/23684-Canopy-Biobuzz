@@ -14,22 +14,24 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 public class Elevator extends Node {
 
 	private final SafeDevice<DcMotorEx> elevator;
+	private final SafeDevice.Scope<DcMotorEx> elevatorWrite;
 
 	public Elevator(Orchestrator orchestrator, SafeDevice<DcMotorEx> elevator) {
 		super(orchestrator);
 		this.elevator = elevator;
-		this.elevator.run(m -> m.setDirection(DcMotorEx.Direction.REVERSE));
+		this.elevatorWrite = elevator.labels("write/elevator").slot("elevator/power");
+		elevator.labels("write/elevator").run(m -> m.setDirection(DcMotorEx.Direction.REVERSE));
 	}
 
 	@SubscribedTo(topic = "g2/right_stick_y")
 	public void onManualPower(Float stickY) {
 		double applied = stickY != null ? -stickY.doubleValue() : 0.0;
-		elevator.run(m -> m.setPower(applied));
+		elevatorWrite.run(m -> m.setPower(applied));
 		orchestrator.publish("elevator/power", applied);
 	}
 
 	@Override
 	public void close() {
-		elevator.run(m -> m.setPower(0.0));
+		elevatorWrite.run(m -> m.setPower(0.0));
 	}
 }
