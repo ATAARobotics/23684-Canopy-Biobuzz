@@ -66,18 +66,19 @@ public class Shooter extends Node {
 
 	private void refreshController() {
 		shooterPID.setPID(kP, kI, kD);
-		shooterFF = new SimpleMotorFeedforward(kS, kV, 0);
+		shooterFF.setKs(kS);
+		shooterFF.setKv(kV);
 	}
 
-	@SubscribedTo(topic = "g2/x/rising")
-	public void g2XRising() {
+	@SubscribedTo(topic = "g2/right_bumper/rising")
+	public void g2RightBumperRising() {
 		if ("g2".equals(inputPrefix)) {
 			orchestrator.publish("shooter/targetRPM", RPM_TARGET);
 		}
 	}
 
-	@SubscribedTo(topic = "g2/x/falling")
-	public void g2XFalling() {
+	@SubscribedTo(topic = "g2/right_bumper/falling")
+	public void g2RightBumperFalling() {
 		if ("g2".equals(inputPrefix)) {
 			orchestrator.publish("shooter/targetRPM", 0.0);
 		}
