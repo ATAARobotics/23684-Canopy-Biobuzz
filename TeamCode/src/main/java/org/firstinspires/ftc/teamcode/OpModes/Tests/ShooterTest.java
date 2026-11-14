@@ -9,7 +9,7 @@ import com.bylazar.telemetry.PanelsTelemetry;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.Servo;
-import org.firstinspires.ftc.teamcode.Subsystems.HoodServo;
+import org.firstinspires.ftc.teamcode.Subsystems.Hood;
 import org.firstinspires.ftc.teamcode.Subsystems.Shooter;
 import org.firstinspires.ftc.teamcode.Subsystems.ShooterKicker;
 
@@ -33,7 +33,7 @@ public class ShooterTest extends SafeOpMode {
 		orchestrator.registerNode("shooterKicker", new ShooterKicker(orchestrator, shooterKicker));
 
 		hoodServo = safeMap.device(Servo.class, "hoodServo");
-		orchestrator.registerNode("hoodServo", new HoodServo(orchestrator, hoodServo));
+		orchestrator.registerNode("hoodServo", new Hood(orchestrator, hoodServo));
 
 		joinedTelemetry = new JoinedTelemetry(PanelsTelemetry.INSTANCE.getFtcTelemetry(), telemetry);
 	}
@@ -54,9 +54,7 @@ public class ShooterTest extends SafeOpMode {
 				orchestrator.getLatestValue("shooterKicker/power", Double.class).orElse(0.0));
 		joinedTelemetry.addData(
 				"Hood Position",
-				orchestrator
-						.getLatestValue("hood/targetPosition", Boolean.class)
-						.orElse(false));
+				orchestrator.getLatestValue("hood/targetPosition", Double.class).orElse(0.0));
 		joinedTelemetry.update();
 	}
 }
