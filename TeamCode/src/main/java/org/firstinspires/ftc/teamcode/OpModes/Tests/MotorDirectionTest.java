@@ -18,7 +18,6 @@ public class MotorDirectionTest extends SafeOpMode {
 
 	private SafeDevice<DcMotorEx> shooterTest;
 
-
 	@Override
 	protected void onSafeInit() {
 		frontLeft = safeMap.device(DcMotorEx.class, "frontLeft");
@@ -27,11 +26,10 @@ public class MotorDirectionTest extends SafeOpMode {
 		backRight = safeMap.device(DcMotorEx.class, "backRight");
 		intake = safeMap.device(DcMotorEx.class, "intake");
 
-		shooterTest = safeMap.device(DcMotorEx.class,"pollenShooter");
+		shooterTest = safeMap.device(DcMotorEx.class, "pollenShooter");
 
-		intake.run((m)-> m.setDirection(DcMotorSimple.Direction.REVERSE));
-		shooterTest.run((m)-> m.setDirection(DcMotorSimple.Direction.REVERSE));
-
+		intake.run((m) -> m.setDirection(DcMotorSimple.Direction.REVERSE));
+		shooterTest.run((m) -> m.setDirection(DcMotorSimple.Direction.REVERSE));
 
 		GamepadAdaptor.attach(orchestrator, gamepad1, "g1");
 
