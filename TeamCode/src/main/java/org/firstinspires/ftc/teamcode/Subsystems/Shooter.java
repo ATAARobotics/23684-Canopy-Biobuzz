@@ -14,8 +14,8 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 @Configurable
 public class Shooter extends Node {
 	private final SafeDevice<DcMotorEx> shooter;
-	public static double kP = 0.00012, kI = 0, kD = 0;
-	public static double kV = 0.000173, kS = 0.04;
+	public static double kP = 0.00012, kI = 0.0, kD = 0.0;
+	public static double kV = 0.000173, kS = 0.04, kA = 0.0;
 	PIDController shooterPID;
 	SimpleMotorFeedforward shooterFF;
 	private volatile double targetRPM = 0.0;
@@ -32,7 +32,7 @@ public class Shooter extends Node {
 	public Shooter(Orchestrator orchestrator, SafeDevice<DcMotorEx> shooter, String inputPrefix) {
 		super(orchestrator);
 		this.shooter = shooter;
-		shooterFF = new SimpleMotorFeedforward(kS, kV, 0);
+		shooterFF = new SimpleMotorFeedforward(kS, kV, kA);
 		shooterPID = new PIDController(kP, kI, kD);
 		this.inputPrefix = inputPrefix;
 		shooter.run(m -> m.setDirection(DcMotor.Direction.FORWARD));
@@ -68,16 +68,17 @@ public class Shooter extends Node {
 		shooterPID.setPID(kP, kI, kD);
 		shooterFF.setKs(kS);
 		shooterFF.setKv(kV);
+		shooterFF.setKa(kA);
 	}
 
-	@SubscribedTo(topic = "g2/right_bumper/rising")
+	@SubscribedTo(topic = "g2/right_trigger_pressed/rising")
 	public void g2RightBumperRising() {
 		if ("g2".equals(inputPrefix)) {
 			orchestrator.publish("shooter/targetRPM", RPM_TARGET);
 		}
 	}
 
-	@SubscribedTo(topic = "g2/right_bumper/falling")
+	@SubscribedTo(topic = "g2/right_trigger_pressed/falling")
 	public void g2RightBumperFalling() {
 		if ("g2".equals(inputPrefix)) {
 			orchestrator.publish("shooter/targetRPM", 0.0);
