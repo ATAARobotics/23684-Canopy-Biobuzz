@@ -5,71 +5,81 @@ import com.aaravlabs.control.controller.SimpleMotorFeedforward;
 import com.aaravlabs.synapse.Node;
 import com.aaravlabs.synapse.Orchestrator;
 import com.aaravlabs.synapse.annotation.RunPeriodically;
+import com.aaravlabs.synapse.annotation.SubscribedTo;
 import com.aaravlabs.synapse.ftc.SafeDevice;
 import com.bylazar.configurables.annotations.Configurable;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
-import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 
 @Configurable
 public class Shooter extends Node {
-
 	private final SafeDevice<DcMotorEx> shooter;
-	public static double kP = 0.001, kI = 0, kD = 0;
-	public static double kV = 0.00063, kS = 0.17;
+	public static double kP = 0.00012, kI = 0, kD = 0;
+	public static double kV = 0.000173, kS = 0.04;
 	PIDController shooterPID;
 	SimpleMotorFeedforward shooterFF;
-	double targetRPM = 0.0;
-	double currentRPM = 0.0;
+	private volatile double targetRPM = 0.0;
+	private volatile double currentRPM = 0.0;
 	public static double STOP_POWER = 0.0;
+	public static int MIN_RPM = 80;
+	public static int RPM_TOLERANCE = 50;
 	public boolean atRPM;
+	private final String inputPrefix;
+	public static double TICKS_PER_REVOLUTION = 28.0;
+	public static final double RPM_CONVERSION = 60.0 / TICKS_PER_REVOLUTION;
+	public static double RPM_TARGET = 4000.0;
 
-	public Shooter(Orchestrator orchestrator, SafeDevice<DcMotorEx> shooter) {
+	public Shooter(Orchestrator orchestrator, SafeDevice<DcMotorEx> shooter, String inputPrefix) {
 		super(orchestrator);
 		this.shooter = shooter;
 		shooterFF = new SimpleMotorFeedforward(kS, kV, 0);
 		shooterPID = new PIDController(kP, kI, kD);
+		this.inputPrefix = inputPrefix;
 		shooter.run(m -> m.setDirection(DcMotor.Direction.FORWARD));
 		orchestrator.getOrCreateTopic("shooter/currentRPM", Double.class);
 		orchestrator.getOrCreateTopic("shooter/targetRPM", Double.class);
 		orchestrator.getOrCreateTopic("shooter/atRPM", Boolean.class);
-		orchestrator.getOrCreateTopic("shooter/RPM", Double.class);
+		orchestrator.publish("shooter/targetRPM", 0.0);
 	}
 
 	@RunPeriodically(hz = 50, hardware = true)
 	public void update() {
-		double targetRPM =
-				orchestrator.getLatestValue("shooter/RPM", Integer.class).orElse(0);
-		setTargetRPM(targetRPM);
-		updateRPM();
-		updateMotor();
-		atRPM = (this.targetRPM > 80) && (Math.abs(this.targetRPM - currentRPM) < 50);
+		refreshController();
+
+		targetRPM =
+				orchestrator.getLatestValue("shooter/targetRPM", Double.class).orElse(0.0);
+		currentRPM = shooter.raw().getVelocity() * RPM_CONVERSION; // rotations per minute
+		atRPM = (targetRPM > MIN_RPM) && (Math.abs(targetRPM - currentRPM) < RPM_TOLERANCE);
+
+		if (targetRPM > MIN_RPM) {
+			double pidOutput = shooterPID.calculate(currentRPM, targetRPM);
+			double ffOutput = shooterFF.calculate(targetRPM);
+			shooter.raw().setPower(pidOutput + ffOutput);
+		} else {
+			shooter.raw().setPower(STOP_POWER);
+			shooterPID.reset();
+		}
 
 		orchestrator.publish("shooter/currentRPM", currentRPM);
-		orchestrator.publish("shooter/targetRPM", this.targetRPM);
 		orchestrator.publish("shooter/atRPM", atRPM);
 	}
 
-	private void updateRPM() {
-		shooter.run(m -> {
-			double velocity = m.getVelocity(AngleUnit.DEGREES); // degrees per second
-			// Conversion: (deg/s) / 360 = rev/s. rev/s * 60 = RPM
-			currentRPM = velocity / 6;
-		});
+	private void refreshController() {
+		shooterPID.setPID(kP, kI, kD);
+		shooterFF = new SimpleMotorFeedforward(kS, kV, 0);
 	}
 
-	private void updateMotor() {
-		if (targetRPM < 80) {
-			shooter.run(m -> m.setPower(STOP_POWER));
-			shooterPID.reset();
-		} else {
-			double pidOutput = shooterPID.calculate(currentRPM, targetRPM);
-			double ffOutput = shooterFF.calculate(targetRPM, 0);
-			shooter.run(m -> m.setPower(pidOutput + ffOutput));
+	@SubscribedTo(topic = "g2/x/rising")
+	public void g2XRising() {
+		if ("g2".equals(inputPrefix)) {
+			orchestrator.publish("shooter/targetRPM", RPM_TARGET);
 		}
 	}
 
-	public void setTargetRPM(double targetRPM) {
-		this.targetRPM = targetRPM;
+	@SubscribedTo(topic = "g2/x/falling")
+	public void g2XFalling() {
+		if ("g2".equals(inputPrefix)) {
+			orchestrator.publish("shooter/targetRPM", 0.0);
+		}
 	}
 }
