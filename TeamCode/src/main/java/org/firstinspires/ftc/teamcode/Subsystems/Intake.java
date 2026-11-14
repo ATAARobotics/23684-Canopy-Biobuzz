@@ -5,6 +5,7 @@ import com.aaravlabs.synapse.Orchestrator;
 import com.aaravlabs.synapse.annotation.RunPeriodically;
 import com.aaravlabs.synapse.ftc.SafeDevice;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 
 public class Intake extends Node {
 
@@ -13,6 +14,7 @@ public class Intake extends Node {
 	public Intake(Orchestrator orchestrator, SafeDevice<DcMotorEx> intake) {
 		super(orchestrator);
 		this.intake = intake;
+		this.intake.run(m -> m.setDirection(DcMotorSimple.Direction.REVERSE));
 	}
 
 	@RunPeriodically(hz = 50, hardware = true)
