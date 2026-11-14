@@ -18,6 +18,7 @@ public class Elevator extends Node {
 	public Elevator(Orchestrator orchestrator, SafeDevice<DcMotorEx> elevator) {
 		super(orchestrator);
 		this.elevator = elevator;
+		this.elevator.run(m -> m.setDirection(DcMotorEx.Direction.REVERSE));
 	}
 
 	@SubscribedTo(topic = "g2/right_stick_y")
