@@ -25,16 +25,23 @@ public class Shooter extends Node {
 	public static int RPM_TOLERANCE = 50;
 	public boolean atRPM;
 	private final String inputPrefix;
+	private final boolean refreshControllers;
 	public static double TICKS_PER_REVOLUTION = 28.0;
 	public static final double RPM_CONVERSION = 60.0 / TICKS_PER_REVOLUTION;
 	public static double RPM_TARGET = 4000.0;
 
 	public Shooter(Orchestrator orchestrator, SafeDevice<DcMotorEx> shooter, String inputPrefix) {
+		this(orchestrator, shooter, inputPrefix, false);
+	}
+
+	public Shooter(
+			Orchestrator orchestrator, SafeDevice<DcMotorEx> shooter, String inputPrefix, boolean refreshControllers) {
 		super(orchestrator);
 		this.shooter = shooter;
+		this.inputPrefix = inputPrefix;
+		this.refreshControllers = refreshControllers;
 		shooterFF = new SimpleMotorFeedforward(kS, kV, kA);
 		shooterPID = new PIDController(kP, kI, kD);
-		this.inputPrefix = inputPrefix;
 		shooter.run(m -> m.setDirection(DcMotor.Direction.FORWARD));
 		orchestrator.getOrCreateTopic("shooter/currentRPM", Double.class);
 		orchestrator.getOrCreateTopic("shooter/targetRPM", Double.class);
@@ -44,7 +51,9 @@ public class Shooter extends Node {
 
 	@RunPeriodically(hz = 50, hardware = true)
 	public void update() {
-		refreshController();
+		if (refreshControllers) {
+			refreshController();
+		}
 
 		targetRPM =
 				orchestrator.getLatestValue("shooter/targetRPM", Double.class).orElse(0.0);

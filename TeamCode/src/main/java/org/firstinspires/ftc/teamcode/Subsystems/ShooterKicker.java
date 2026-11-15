@@ -19,8 +19,8 @@ public class ShooterKicker extends Node {
 		super(orchestrator);
 		this.shooterKicker = shooterKicker;
 		shooterKicker.run(m -> {
-			m.setDirection(DcMotor.Direction.FORWARD);
-			m.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+			m.setDirection(DcMotor.Direction.REVERSE);
+			m.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
 		});
 
 		orchestrator.getOrCreateTopic("shooterKicker/power", Double.class);

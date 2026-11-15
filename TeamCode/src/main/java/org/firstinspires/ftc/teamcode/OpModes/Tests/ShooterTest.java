@@ -27,7 +27,8 @@ public class ShooterTest extends SafeOpMode {
 	protected void onSafeInit() {
 		GamepadAdaptor.attach(orchestrator, gamepad2, "g2");
 		shooter = safeMap.device(DcMotorEx.class, "pollenShooter");
-		orchestrator.registerNode("shooter", new Shooter(orchestrator, shooter, "g2"));
+		// Re-read the @Configurable gains every tick.
+		orchestrator.registerNode("shooter", new Shooter(orchestrator, shooter, "g2", true));
 
 		shooterKicker = safeMap.device(DcMotorEx.class, "shooterKicker");
 		orchestrator.registerNode("shooterKicker", new ShooterKicker(orchestrator, shooterKicker));
