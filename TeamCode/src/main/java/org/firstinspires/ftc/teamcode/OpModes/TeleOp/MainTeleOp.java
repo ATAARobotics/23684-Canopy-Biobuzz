@@ -6,12 +6,16 @@ import com.aaravlabs.synapse.ftc.SafeDevice;
 import com.aaravlabs.synapse.ftc.SafeOpMode;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.Servo;
 import org.firstinspires.ftc.teamcode.Config.TurretConfig;
 import org.firstinspires.ftc.teamcode.Subsystems.BulkCache;
 import org.firstinspires.ftc.teamcode.Subsystems.Drive;
 import org.firstinspires.ftc.teamcode.Subsystems.Elevator;
+import org.firstinspires.ftc.teamcode.Subsystems.Hood;
 import org.firstinspires.ftc.teamcode.Subsystems.Intake;
 import org.firstinspires.ftc.teamcode.Subsystems.Pedro;
+import org.firstinspires.ftc.teamcode.Subsystems.Shooter;
+import org.firstinspires.ftc.teamcode.Subsystems.ShooterKicker;
 import org.firstinspires.ftc.teamcode.Subsystems.Turret;
 import org.firstinspires.ftc.teamcode.Subsystems.Vision.AprilTagVision;
 import org.firstinspires.ftc.teamcode.Subsystems.Vision.PointOfInterest;
@@ -20,7 +24,7 @@ import org.firstinspires.ftc.teamcode.Utils.Team;
 
 /**
  * Shared TeleOp base. RedTeleOp and BlueTeleOp supply the team and starting
- * pose. Everything else (drive, intake, turret, vision) is shared here.
+ * pose. Everything else (drive, intake, shooter, turret, vision) is shared here.
  */
 public abstract class MainTeleOp extends SafeOpMode {
 
@@ -30,6 +34,9 @@ public abstract class MainTeleOp extends SafeOpMode {
 	private SafeDevice<DcMotorEx> backRight;
 	private SafeDevice<DcMotorEx> intake;
 	private SafeDevice<DcMotorEx> elevator;
+	private SafeDevice<DcMotorEx> shooter;
+	private SafeDevice<DcMotorEx> shooterKicker;
+	private SafeDevice<Servo> hoodServo;
 
 	private BulkCache bulkCache;
 	private Pedro pedro;
@@ -54,6 +61,9 @@ public abstract class MainTeleOp extends SafeOpMode {
 		backRight = safeMap.device(DcMotorEx.class, "backRight");
 		intake = safeMap.device(DcMotorEx.class, "intake");
 		elevator = safeMap.device(DcMotorEx.class, "elevator");
+		shooter = safeMap.device(DcMotorEx.class, "pollenShooter");
+		shooterKicker = safeMap.device(DcMotorEx.class, "shooterKicker");
+		hoodServo = safeMap.device(Servo.class, "hoodServo");
 
 		GamepadAdaptor.attach(orchestrator, gamepad1, "g1");
 		GamepadAdaptor.attach(orchestrator, gamepad2, "g2");
@@ -78,6 +88,10 @@ public abstract class MainTeleOp extends SafeOpMode {
 
 		orchestrator.registerNode("drive", new Drive(orchestrator, frontLeft, frontRight, backLeft, backRight));
 		orchestrator.registerNode("intake", new Intake(orchestrator, intake));
+
+		orchestrator.registerNode("shooter", new Shooter(orchestrator, shooter, "g2"));
+		orchestrator.registerNode("shooterKicker", new ShooterKicker(orchestrator, shooterKicker));
+		orchestrator.registerNode("hood", new Hood(orchestrator, hoodServo));
 
 		elevatorNode = new Elevator(orchestrator, elevator);
 		orchestrator.registerNode("elevator", elevatorNode);
@@ -120,6 +134,19 @@ public abstract class MainTeleOp extends SafeOpMode {
 				"Elevator",
 				"%.2f",
 				orchestrator.getLatestValue("elevator/power", Double.class).orElse(0.0));
+		telemetry.addData(
+				"Shooter RPM",
+				"%.0f / %.0f",
+				orchestrator.getLatestValue("shooter/currentRPM", Double.class).orElse(0.0),
+				orchestrator.getLatestValue("shooter/targetRPM", Double.class).orElse(0.0));
+		telemetry.addData(
+				"Kicker",
+				"%.2f",
+				orchestrator.getLatestValue("shooterKicker/power", Double.class).orElse(0.0));
+		telemetry.addData(
+				"Hood",
+				"%.2f",
+				orchestrator.getLatestValue("hood/targetPosition", Double.class).orElse(0.0));
 		vision.publishTelemetry(telemetry);
 
 		turret.publishTelemetry(telemetry);
