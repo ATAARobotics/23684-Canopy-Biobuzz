@@ -11,6 +11,7 @@ import org.firstinspires.ftc.teamcode.Config.TurretConfig;
 import org.firstinspires.ftc.teamcode.Subsystems.BulkCache;
 import org.firstinspires.ftc.teamcode.Subsystems.Drive;
 import org.firstinspires.ftc.teamcode.Subsystems.Elevator;
+import org.firstinspires.ftc.teamcode.Subsystems.Gate;
 import org.firstinspires.ftc.teamcode.Subsystems.Hood;
 import org.firstinspires.ftc.teamcode.Subsystems.Intake;
 import org.firstinspires.ftc.teamcode.Subsystems.Pedro;
@@ -43,6 +44,7 @@ public abstract class MainTeleOp extends SafeOpMode {
 	private AprilTagVision vision;
 	private Turret turret;
 	private Elevator elevatorNode;
+	private Gate gate;
 
 	// Which alliance this TeleOp is for (BLUE or RED).
 	protected abstract Team getTeam();
@@ -95,6 +97,9 @@ public abstract class MainTeleOp extends SafeOpMode {
 
 		elevatorNode = new Elevator(orchestrator, elevator);
 		orchestrator.registerNode("elevator", elevatorNode);
+
+		gate = new Gate(orchestrator, safeMap.device(Servo.class, "gate"));
+		orchestrator.registerNode("gate", gate);
 	}
 
 	// 'B' for blue, 'R' for red or unknown. Matches TurretConfig.allianceLetter().
@@ -124,6 +129,7 @@ public abstract class MainTeleOp extends SafeOpMode {
 				"Intake",
 				"%.2f",
 				orchestrator.getLatestValue("intake/power", Double.class).orElse(0.0));
+		telemetry.addData("Gate", gate.isOpen() ? "OPEN" : "CLOSED");
 		telemetry.addData("Alliance", getTeam());
 		telemetry.addData(
 				"BulkCache",
