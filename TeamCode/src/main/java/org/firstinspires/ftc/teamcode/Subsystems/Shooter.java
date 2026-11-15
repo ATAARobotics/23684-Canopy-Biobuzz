@@ -42,7 +42,7 @@ public class Shooter extends Node {
 		this.refreshControllers = refreshControllers;
 		shooterFF = new SimpleMotorFeedforward(kS, kV, kA);
 		shooterPID = new PIDController(kP, kI, kD);
-		shooter.labels("write/shooter").run(m -> m.setDirection(DcMotor.Direction.FORWARD));
+		shooter.labels("write/shooter").run(m -> m.setDirection(DcMotor.Direction.REVERSE));
 		orchestrator.getOrCreateTopic("shooter/currentRPM", Double.class);
 		orchestrator.getOrCreateTopic("shooter/targetRPM", Double.class);
 		orchestrator.getOrCreateTopic("shooter/atRPM", Boolean.class);
