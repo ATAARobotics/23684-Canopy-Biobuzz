@@ -153,7 +153,11 @@ public class Turret extends Node {
 			power = 0.0;
 			atLimit = true;
 		}
-		setServoPower(power);
+		// Write raw so it lands on this tick: run() would re-queue through the gate
+		// executor, putting an unknown gap between the angle read and the write.
+		if (!orchestrator.hardware().isRestricted("write")) {
+			setServoPower(power);
+		}
 
 		publish(angle, goal, aim, power);
 	}
@@ -647,6 +651,12 @@ public class Turret extends Node {
 		} catch (Exception e) {
 			orchestrator.warn("turret stop failed: " + e.getMessage());
 		}
+	}
+
+	@Override
+	public void close() {
+		// Direct write: orchestrator.close() shuts the gate executor down right after this.
+		setServoPower(0.0);
 	}
 
 	/** Running average of the most recent |error| samples. */
