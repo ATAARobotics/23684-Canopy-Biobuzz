@@ -7,6 +7,7 @@ import com.aaravlabs.synapse.ftc.SafeOpMode;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import org.firstinspires.ftc.teamcode.Config.TurretConfig;
+import org.firstinspires.ftc.teamcode.Subsystems.BulkCache;
 import org.firstinspires.ftc.teamcode.Subsystems.Drive;
 import org.firstinspires.ftc.teamcode.Subsystems.Elevator;
 import org.firstinspires.ftc.teamcode.Subsystems.Intake;
@@ -30,6 +31,7 @@ public abstract class MainTeleOp extends SafeOpMode {
 	private SafeDevice<DcMotorEx> intake;
 	private SafeDevice<DcMotorEx> elevator;
 
+	private BulkCache bulkCache;
 	private Pedro pedro;
 	private AprilTagVision vision;
 	private Turret turret;
@@ -43,6 +45,9 @@ public abstract class MainTeleOp extends SafeOpMode {
 
 	@Override
 	protected void onSafeInit() {
+		bulkCache = new BulkCache(orchestrator, safeMap, BulkCache.Mode.AUTO);
+		orchestrator.registerNode("bulkcache", bulkCache);
+
 		frontLeft = safeMap.device(DcMotorEx.class, "frontLeft");
 		frontRight = safeMap.device(DcMotorEx.class, "frontRight");
 		backLeft = safeMap.device(DcMotorEx.class, "backLeft");
@@ -106,6 +111,11 @@ public abstract class MainTeleOp extends SafeOpMode {
 				"%.2f",
 				orchestrator.getLatestValue("intake/power", Double.class).orElse(0.0));
 		telemetry.addData("Alliance", getTeam());
+		telemetry.addData(
+				"BulkCache",
+				"%d hub(s), %s mode",
+				orchestrator.getLatestValue("bulkcache/hubCount", Integer.class).orElse(0),
+				orchestrator.getLatestValue("bulkcache/mode", String.class).orElse("?"));
 		telemetry.addData(
 				"Elevator",
 				"%.2f",
