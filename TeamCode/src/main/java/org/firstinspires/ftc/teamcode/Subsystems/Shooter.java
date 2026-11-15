@@ -42,7 +42,7 @@ public class Shooter extends Node {
 		this.refreshControllers = refreshControllers;
 		shooterFF = new SimpleMotorFeedforward(kS, kV, kA);
 		shooterPID = new PIDController(kP, kI, kD);
-		shooter.run(m -> m.setDirection(DcMotor.Direction.FORWARD));
+		shooter.labels("write/shooter").run(m -> m.setDirection(DcMotor.Direction.FORWARD));
 		orchestrator.getOrCreateTopic("shooter/currentRPM", Double.class);
 		orchestrator.getOrCreateTopic("shooter/targetRPM", Double.class);
 		orchestrator.getOrCreateTopic("shooter/atRPM", Boolean.class);
@@ -60,12 +60,21 @@ public class Shooter extends Node {
 		currentRPM = shooter.raw().getVelocity() * RPM_CONVERSION; // rotations per minute
 		atRPM = (targetRPM > MIN_RPM) && (Math.abs(targetRPM - currentRPM) < RPM_TOLERANCE);
 
+		// Same pattern as the Turret: this 50 Hz control loop runs on the hardware
+		// thread, so it must not hand the write back to the gate executor, which would
+		// put an unknown gap between the velocity read and the write. It checks the
+		// restriction inline and writes the motor raw instead.
+		boolean held = orchestrator.hardware().isRestricted("write");
 		if (targetRPM > MIN_RPM) {
 			double pidOutput = shooterPID.calculate(currentRPM, targetRPM);
 			double ffOutput = shooterFF.calculate(targetRPM);
-			shooter.raw().setPower(pidOutput + ffOutput);
+			if (!held) {
+				shooter.raw().setPower(pidOutput + ffOutput);
+			}
 		} else {
-			shooter.raw().setPower(STOP_POWER);
+			if (!held) {
+				shooter.raw().setPower(STOP_POWER);
+			}
 			shooterPID.reset();
 		}
 

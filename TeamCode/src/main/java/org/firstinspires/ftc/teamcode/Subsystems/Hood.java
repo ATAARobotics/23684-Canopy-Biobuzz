@@ -22,7 +22,11 @@ public class Hood extends Node {
 	public void increaseAngle() {
 		double targetPosition = hood.raw().getPosition() + STEP;
 		orchestrator.publish("hood/targetPosition", targetPosition);
-		hood.raw().setPosition(targetPosition);
+		// Write raw so it lands on this tick: run() would re-queue through the gate
+		// executor, putting an unknown gap between the position read and the write.
+		if (!orchestrator.hardware().isRestricted("write")) {
+			hood.raw().setPosition(targetPosition);
+		}
 	}
 
 	@OnHardwareThread
@@ -30,6 +34,8 @@ public class Hood extends Node {
 	public void decreaseAngle() {
 		double targetPosition = hood.raw().getPosition() - STEP;
 		orchestrator.publish("hood/targetPosition", targetPosition);
-		hood.raw().setPosition(targetPosition);
+		if (!orchestrator.hardware().isRestricted("write")) {
+			hood.raw().setPosition(targetPosition);
+		}
 	}
 }

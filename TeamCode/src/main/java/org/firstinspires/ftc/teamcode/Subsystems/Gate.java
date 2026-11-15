@@ -35,14 +35,14 @@ public class Gate extends Node {
 	@SubscribedTo(topic = "g2/b/rising")
 	public void close() {
 		position = CLOSED_POSITION;
-		gate.run(servo -> servo.setPosition(CLOSED_POSITION));
+		gate.labels("write/gate").run(servo -> servo.setPosition(CLOSED_POSITION));
 	}
 
 	/** Open the Gate: servo position OPEN_POSITION clears the path so pollen can enter the Shooter. */
 	@SubscribedTo(topic = "g2/a/rising")
 	public void open() {
 		position = OPEN_POSITION;
-		gate.run(servo -> servo.setPosition(OPEN_POSITION));
+		gate.labels("write/gate").run(servo -> servo.setPosition(OPEN_POSITION));
 	}
 
 	/** Whether the Gate was last commanded open. */

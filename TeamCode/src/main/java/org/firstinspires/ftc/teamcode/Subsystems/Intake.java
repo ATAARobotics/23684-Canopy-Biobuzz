@@ -9,22 +9,24 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 
 public class Intake extends Node {
 	private final SafeDevice<DcMotorEx> intake;
+	private final SafeDevice.Scope<DcMotorEx> intakeSet;
 
 	public Intake(Orchestrator orchestrator, SafeDevice<DcMotorEx> intake) {
 		super(orchestrator);
 		this.intake = intake;
-		this.intake.run(m -> m.setDirection(DcMotorSimple.Direction.REVERSE));
+		this.intakeSet = intake.labels("write/intake").slot("intake/power");
+		intake.labels("write/intake").run(m -> m.setDirection(DcMotorSimple.Direction.REVERSE));
 	}
 
 	@SubscribedTo(topic = "g2/left_stick_y")
 	public void onManualPower(Float stickY) {
 		double applied = stickY != null ? -stickY.doubleValue() : 0.0;
-		intake.run(m -> m.setPower(applied));
+		intakeSet.run(m -> m.setPower(applied));
 		orchestrator.publish("intake/power", applied);
 	}
 
 	@Override
 	public void close() {
-		intake.run(m -> m.setPower(0.0));
+		intakeSet.run(m -> m.setPower(0.0));
 	}
 }

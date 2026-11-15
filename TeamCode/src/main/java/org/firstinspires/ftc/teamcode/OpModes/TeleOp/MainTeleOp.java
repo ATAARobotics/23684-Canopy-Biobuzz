@@ -14,6 +14,7 @@ import org.firstinspires.ftc.teamcode.Subsystems.Elevator;
 import org.firstinspires.ftc.teamcode.Subsystems.Gate;
 import org.firstinspires.ftc.teamcode.Subsystems.Hood;
 import org.firstinspires.ftc.teamcode.Subsystems.Intake;
+import org.firstinspires.ftc.teamcode.Subsystems.MatchGate;
 import org.firstinspires.ftc.teamcode.Subsystems.Pedro;
 import org.firstinspires.ftc.teamcode.Subsystems.Shooter;
 import org.firstinspires.ftc.teamcode.Subsystems.ShooterKicker;
@@ -54,6 +55,8 @@ public abstract class MainTeleOp extends SafeOpMode {
 
 	@Override
 	protected void onSafeInit() {
+		// The gate holds hardware actions before any other subsystem attempts to run.
+		orchestrator.registerNode("matchGate", new MatchGate(orchestrator));
 		bulkCache = new BulkCache(orchestrator, safeMap, BulkCache.Mode.AUTO);
 		orchestrator.registerNode("bulkcache", bulkCache);
 
@@ -109,6 +112,8 @@ public abstract class MainTeleOp extends SafeOpMode {
 
 	@Override
 	protected void onSafeLoop() {
+		telemetry.addData(
+				"Writes", orchestrator.hardware().isRestricted("write") ? "HELD, press share to release" : "GO");
 		telemetry.addData(
 				"FL",
 				"%.2f",

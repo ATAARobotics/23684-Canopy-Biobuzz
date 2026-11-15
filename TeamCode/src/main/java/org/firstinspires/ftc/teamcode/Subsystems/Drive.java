@@ -27,15 +27,16 @@ public class Drive extends Node {
 		this.bl = backLeft;
 		this.br = backRight;
 
-		fl.run(m -> m.setDirection(DcMotor.Direction.REVERSE));
-		bl.run(m -> m.setDirection(DcMotor.Direction.REVERSE));
-		fr.run(m -> m.setDirection(DcMotor.Direction.FORWARD));
-		br.run(m -> m.setDirection(DcMotor.Direction.FORWARD));
+		// Config writes have no slot, so each one replays in order instead of coalescing.
+		fl.labels("write/drive").run(m -> m.setDirection(DcMotor.Direction.REVERSE));
+		bl.labels("write/drive").run(m -> m.setDirection(DcMotor.Direction.REVERSE));
+		fr.labels("write/drive").run(m -> m.setDirection(DcMotor.Direction.FORWARD));
+		br.labels("write/drive").run(m -> m.setDirection(DcMotor.Direction.FORWARD));
 
-		fl.run(m -> m.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE));
-		bl.run(m -> m.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE));
-		fr.run(m -> m.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE));
-		br.run(m -> m.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE));
+		fl.labels("write/drive").run(m -> m.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE));
+		bl.labels("write/drive").run(m -> m.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE));
+		fr.labels("write/drive").run(m -> m.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE));
+		br.labels("write/drive").run(m -> m.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE));
 	}
 
 	@RunPeriodically(hz = 50, hardware = true)
@@ -59,10 +60,10 @@ public class Drive extends Node {
 		double pBR = y + x - r;
 		double max = Math.max(Math.abs(y) + Math.abs(x) + Math.abs(r), 1);
 
-		fl.run(m -> m.setPower(pFL / max));
-		fr.run(m -> m.setPower(pFR / max));
-		bl.run(m -> m.setPower(pBL / max));
-		br.run(m -> m.setPower(pBR / max));
+		fl.labels("write/drive").slot("drive/fl").run(m -> m.setPower(pFL / max));
+		fr.labels("write/drive").slot("drive/fr").run(m -> m.setPower(pFR / max));
+		bl.labels("write/drive").slot("drive/bl").run(m -> m.setPower(pBL / max));
+		br.labels("write/drive").slot("drive/br").run(m -> m.setPower(pBR / max));
 
 		orchestrator.publish("drive/power/fl", pFL / max);
 		orchestrator.publish("drive/power/fr", pFR / max);

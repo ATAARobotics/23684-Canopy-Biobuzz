@@ -18,7 +18,7 @@ public class ShooterKicker extends Node {
 	public ShooterKicker(Orchestrator orchestrator, SafeDevice<DcMotorEx> shooterKicker) {
 		super(orchestrator);
 		this.shooterKicker = shooterKicker;
-		shooterKicker.run(m -> {
+		shooterKicker.labels("write/shooterKicker").run(m -> {
 			m.setDirection(DcMotor.Direction.REVERSE);
 			m.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
 		});
@@ -30,7 +30,11 @@ public class ShooterKicker extends Node {
 	@SubscribedTo(topic = "shooter/targetRPM")
 	public void onTargetRPM(Double targetRPM) {
 		double power = targetRPM != null && targetRPM > Shooter.MIN_RPM ? KICKER_POWER : STOP_POWER;
-		shooterKicker.raw().setPower(power);
+		// Write raw so it lands on this tick: run() would re-queue through the gate
+		// executor instead of gating the write inline.
+		if (!orchestrator.hardware().isRestricted("write")) {
+			shooterKicker.raw().setPower(power);
+		}
 		orchestrator.publish("shooterKicker/power", power);
 	}
 }
