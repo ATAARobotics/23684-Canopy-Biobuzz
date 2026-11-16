@@ -38,4 +38,13 @@ public class Hood extends Node {
 			hood.raw().setPosition(targetPosition);
 		}
 	}
+
+	/**
+	 * Move the Hood to an arbitrary servo position and publish it as the target,
+	 * so telemetry and the a/b handlers stay in sync.
+	 */
+	public void moveTo(double target) {
+		orchestrator.publish("hood/targetPosition", target);
+		hood.labels("write/hood").run(servo -> servo.setPosition(target));
+	}
 }
