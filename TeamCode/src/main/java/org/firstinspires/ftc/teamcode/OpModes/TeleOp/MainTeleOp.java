@@ -85,7 +85,9 @@ public abstract class MainTeleOp extends SafeOpMode {
 		turret = new Turret(
 				orchestrator,
 				safeMap,
-				safeMap.device(CRServo.class, "turret"),
+				safeMap.device(CRServo.class, "turretOne"),
+				safeMap.device(CRServo.class, "turretTwo"),
+				safeMap.device(CRServo.class, "turretThree"),
 				safeMap.device(DcMotorEx.class, "intake"),
 				pedro.follower(),
 				"g2");
@@ -169,5 +171,12 @@ public abstract class MainTeleOp extends SafeOpMode {
 			turret.publishVerboseTelemetry(telemetry);
 		}
 		telemetry.update();
+	}
+
+	@Override
+	protected void onSafeStop() {
+		if (turret != null) {
+			turret.stop();
+		}
 	}
 }

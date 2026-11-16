@@ -16,7 +16,9 @@ public class TurretPowerTest extends SafeOpMode {
 
 	private static final double DEADZONE = 0.05;
 
-	private SafeDevice<CRServo> turretServo;
+	private SafeDevice<CRServo> turretOne;
+	private SafeDevice<CRServo> turretTwo;
+	private SafeDevice<CRServo> turretThree;
 	private SafeDevice<DcMotorEx> encoder;
 
 	private boolean zeroCaptured;
@@ -25,14 +27,16 @@ public class TurretPowerTest extends SafeOpMode {
 
 	@Override
 	protected void onSafeInit() {
-		turretServo = safeMap.device(CRServo.class, "turret");
+		turretOne = safeMap.device(CRServo.class, "turretOne");
+		turretTwo = safeMap.device(CRServo.class, "turretTwo");
+		turretThree = safeMap.device(CRServo.class, "turretThree");
 		encoder = safeMap.device(DcMotorEx.class, "intake");
 	}
 
 	@Override
 	protected void onSafeLoop() {
 		double power = deadzone(gamepad2.left_stick_y);
-		turretServo.run(m -> m.setPower(power));
+		setServoPower(power);
 
 		ticks = readTicks();
 		if (!zeroCaptured) {
@@ -58,7 +62,25 @@ public class TurretPowerTest extends SafeOpMode {
 
 	@Override
 	protected void onSafeStop() {
-		turretServo.run(m -> m.setPower(0.0));
+		try {
+			hardware.call(() -> {
+				applyPower(0.0);
+				return null;
+			});
+		} catch (Exception e) {
+			orchestrator.warn("turret stop failed: " + e.getMessage());
+		}
+	}
+
+	private void setServoPower(double power) {
+		hardware.run(() -> applyPower(power));
+	}
+
+	// Runs on the hardware thread.
+	private void applyPower(double power) {
+		turretOne.raw().setPower(power);
+		turretTwo.raw().setPower(power);
+		turretThree.raw().setPower(power);
 	}
 
 	private int readTicks() {
