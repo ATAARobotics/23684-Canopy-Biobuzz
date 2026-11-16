@@ -34,6 +34,7 @@ public class Gate extends Node {
 	public Gate(Orchestrator orchestrator, SafeDevice<Servo> gate) {
 		super(orchestrator);
 		this.gate = gate;
+		orchestrator.getOrCreateTopic("gate/open", Boolean.class);
 		// Start closed: hold pollen back until the Shooter is at speed. Queued under MatchGate.
 		close();
 	}
@@ -81,12 +82,14 @@ public class Gate extends Node {
 	public void close() {
 		position = CLOSED_POSITION;
 		gate.labels("write/gate").run(servo -> servo.setPosition(CLOSED_POSITION));
+		orchestrator.publish("gate/open", false);
 	}
 
 	/** Open the Gate: servo position OPEN_POSITION clears the path so pollen can enter the Shooter. */
 	public void open() {
 		position = OPEN_POSITION;
 		gate.labels("write/gate").run(servo -> servo.setPosition(OPEN_POSITION));
+		orchestrator.publish("gate/open", true);
 	}
 
 	/** Whether the Gate was last commanded open. */
