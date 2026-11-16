@@ -134,7 +134,11 @@ public abstract class MainTeleOp extends SafeOpMode {
 				"Intake",
 				"%.2f",
 				orchestrator.getLatestValue("intake/power", Double.class).orElse(0.0));
-		telemetry.addData("Gate", gate.isOpen() ? "OPEN" : "CLOSED");
+		telemetry.addData(
+				"Gate",
+				gate.isOverridden()
+						? (gate.isOpen() ? "OPEN (RB override)" : "CLOSED (RB override)")
+						: (gate.isOpen() ? "OPEN" : "CLOSED"));
 		telemetry.addData("Alliance", getTeam());
 		telemetry.addData(
 				"BulkCache",

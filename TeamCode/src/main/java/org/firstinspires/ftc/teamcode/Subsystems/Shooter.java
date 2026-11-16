@@ -22,7 +22,7 @@ public class Shooter extends Node {
 	private volatile double currentRPM = 0.0;
 	public static double STOP_POWER = 0.0;
 	public static int MIN_RPM = 80;
-	public static int RPM_TOLERANCE = 50;
+	public static int RPM_TOLERANCE = 100;
 	public boolean atRPM;
 	private final String inputPrefix;
 	private final boolean refreshControllers;
@@ -58,7 +58,9 @@ public class Shooter extends Node {
 		targetRPM =
 				orchestrator.getLatestValue("shooter/targetRPM", Double.class).orElse(0.0);
 		currentRPM = shooter.raw().getVelocity() * RPM_CONVERSION; // rotations per minute
-		atRPM = (targetRPM > MIN_RPM) && (Math.abs(targetRPM - currentRPM) < RPM_TOLERANCE);
+		// "At speed" is at or above the tolerance band, not just inside it: the wheel
+		// overshoots on the way up and can still be above target when the setpoint drops.
+		atRPM = (targetRPM > MIN_RPM) && (currentRPM >= targetRPM - RPM_TOLERANCE);
 
 		// Same pattern as the Turret: this 50 Hz control loop runs on the hardware
 		// thread, so it must not hand the write back to the gate executor, which would
