@@ -1,7 +1,9 @@
 package org.firstinspires.ftc.teamcode.OpModes.Auto;
 
 import com.aaravlabs.safepedropathing.math.Pose;
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
+@Autonomous
 public class RedSoloAuto extends MainAuto {
 	@Override
 	protected Pose getStartingPose() {
