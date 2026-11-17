@@ -19,11 +19,11 @@ public class TurretConfig {
 	// ── Turret mechanics ─────────────────────────────────────────────────────────
 
 	// Travel limits, degrees clockwise from straight ahead; power cuts at either end (negative = left).
-	public static double minAngleDeg = -1.0;
-	public static double maxAngleDeg = 290.0;
+	public static double minAngleDeg = -90;
+	public static double maxAngleDeg = 180;
 
 	// Studica Cypher MAX through-bore encoder, on the encoder gear shaft.
-	public static double encoderCountsPerRev = 2048.0;
+	public static double encoderCountsPerRev = 8192.0;
 
 	// Gear tooth counts; the encoder gear shares the servo pinion, so these must match the hardware.
 	public static double turretGearTeeth = 150.0;
@@ -39,7 +39,7 @@ public class TurretConfig {
 	// ── Feedforward (volts, degrees, seconds) ─────────────────────────────────────
 
 	public static double ks = 0.9;
-	public static double kv = 0.045;
+	public static double kv = 0.01;
 	public static double ka = 0.0;
 
 	// Trapezoid profile limits, degrees/s and degrees/s².
@@ -51,7 +51,7 @@ public class TurretConfig {
 
 	// ── PID (volts) ───────────────────────────────────────────────────────────────
 
-	public static double kp = 0.215;
+	public static double kp = 0.04;
 	public static double ki = 0.0;
 	public static double kd = 0.0;
 

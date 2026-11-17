@@ -43,7 +43,7 @@ public class Pedro extends Node {
 		orchestrator.publish("robot/pose/x", p.x());
 		orchestrator.publish("robot/pose/y", p.y());
 		// Heading is CCW-positive radians (Pedro convention). Converted to degrees only at publish.
-		orchestrator.publish("robot/pose/headingRad", p.heading());
+		orchestrator.publish("robot/pose/headingRad", follower.pose().heading());
 		orchestrator.publish("vision/robotHeading", Math.toDegrees(p.heading()));
 	}
 

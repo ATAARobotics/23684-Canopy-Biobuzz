@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.OpModes.TeleOp;
 
+import com.aaravlabs.safepedropathing.follower.Follower;
 import com.aaravlabs.safepedropathing.math.Pose;
 import com.aaravlabs.synapse.ftc.GamepadAdaptor;
 import com.aaravlabs.synapse.ftc.SafeDevice;
@@ -70,7 +71,9 @@ public abstract class MainTeleOp extends SafeOpMode {
 		turret = new Turret(
 				orchestrator,
 				safeMap,
-				safeMap.device(CRServo.class, "turret"),
+				safeMap.device(CRServo.class, "turretServo1"),
+				safeMap.device(CRServo.class, "turretServo2"),
+				safeMap.device(CRServo.class, "turretServo3"),
 				safeMap.device(DcMotorEx.class, "intake"),
 				pedro.follower(),
 				"g2");
@@ -120,6 +123,9 @@ public abstract class MainTeleOp extends SafeOpMode {
 				"Elevator",
 				"%.2f",
 				orchestrator.getLatestValue("elevator/power", Double.class).orElse(0.0));
+
+		telemetry.addData("pedro",
+				orchestrator.getLatestValue("vision/robotHeading",Double.class).orElse(0.0));
 		vision.publishTelemetry(telemetry);
 
 		turret.publishTelemetry(telemetry);

@@ -38,7 +38,9 @@ public class Turret extends Node {
 	// Number of |error| samples behind the settle reading on the tuning screen.
 	private static final int SETTLE_WINDOW_SAMPLES = 25;
 
-	private final SafeDevice<CRServo> turretServo;
+	private final SafeDevice<CRServo> turretServo1;
+	private final SafeDevice<CRServo> turretServo2;
+	private final SafeDevice<CRServo> turretServo3;
 	private final SafeDevice<DcMotorEx> encoderMotor;
 	private final SafeHardwareMap safeMap;
 	// Null on the tuner: the tuning OpMode has no odometry.
@@ -96,13 +98,17 @@ public class Turret extends Node {
 	public Turret(
 			Orchestrator orchestrator,
 			SafeHardwareMap safeMap,
-			SafeDevice<CRServo> turretServo,
+			SafeDevice<CRServo> turretServo1,
+			SafeDevice<CRServo> turretServo2,
+			SafeDevice<CRServo> turretServo3,
 			SafeDevice<DcMotorEx> encoderMotor,
 			Follower follower,
 			String inputPrefix) {
 		super(orchestrator);
 		this.safeMap = safeMap;
-		this.turretServo = turretServo;
+		this.turretServo1 = turretServo1;
+		this.turretServo2 = turretServo2;
+		this.turretServo3 = turretServo3;
 		this.encoderMotor = encoderMotor;
 		this.follower = follower;
 		this.inputPrefix = inputPrefix;
@@ -146,7 +152,9 @@ public class Turret extends Node {
 			power = 0.0;
 			atLimit = true;
 		}
-		turretServo.raw().setPower(power);
+		turretServo1.raw().setPower(power);
+		turretServo2.raw().setPower(power);
+		turretServo3.raw().setPower(power);
 
 		publish(angle, goal, aim, power);
 	}
@@ -622,7 +630,9 @@ public class Turret extends Node {
 
 	@Override
 	public void close() {
-		turretServo.run(m -> m.setPower(0.0));
+		turretServo1.run(m -> m.setPower(0.0));
+		turretServo2.run(m -> m.setPower(0.0));
+		turretServo3.run(m -> m.setPower(0.0));
 	}
 
 	/** Running average of the most recent |error| samples. */
