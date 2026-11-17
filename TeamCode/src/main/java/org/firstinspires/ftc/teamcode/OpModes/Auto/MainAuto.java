@@ -37,7 +37,7 @@ public abstract class MainAuto extends StateMachineOpMode {
 		pickFromFlowerScoring,
 		parkScoring,
 		parkAudience,
-		wait
+		shoot
 	}
 
 	List<State> autoStates;
@@ -73,7 +73,7 @@ public abstract class MainAuto extends StateMachineOpMode {
 
 		switch (autoStates) {
 			case shootPreload:
-				return new ShootPreloadState();
+				return ShootingSub();
 			case leaveScoring:
 				return new LeaveScoringState();
 			case leaveAudience:
@@ -92,6 +92,8 @@ public abstract class MainAuto extends StateMachineOpMode {
 				return new ParkScoringState();
 			case parkAudience:
 				return new ParkAudienceState();
+			case shoot:
+				return ShootingSub();
 		}
 		return null;
 	}
@@ -161,6 +163,62 @@ public abstract class MainAuto extends StateMachineOpMode {
 		return (System.nanoTime() - startNanos) / 1_000_000_000L;
 	}
 
+	private Submachine ShootingSub(){
+		return new Submachine(
+				"Shooter", Arrays.asList(
+						new ShootState("shooting Sub"),
+						new RunTranferState(),
+						new WaitState(0.2),
+						new StopTranferState()
+				));
+	}
+
+	private final class OpenGateState extends AbstractState{
+
+		@Override
+		public void init() {
+
+		}
+
+		@Override
+		public void loop() {
+
+		}
+
+		@Override
+		public void stop() {
+
+		}
+	}
+
+	private final class RunTranferState extends AbstractState{
+		float speed = 0f;
+		@Override
+		public void init() {
+			setEndCondition(()-> Math.abs(speed) > 0);
+		}
+
+		@Override
+		public void loop() {
+			orchestrator.publish("g2/right_stick_y",1.0f);
+			speed = orchestrator.getLatestValue("g2/right_stick_y", Float.class).orElse(0.0f);
+		}
+	}
+
+	private final class StopTranferState extends AbstractState{
+		float speed = 0f;
+		@Override
+		public void init() {
+			setEndCondition(()-> Math.abs(speed) == 0);
+		}
+
+		@Override
+		public void loop() {
+			orchestrator.publish("g2/right_stick_y",0.0f);
+			speed = orchestrator.getLatestValue("g2/right_stick_y", Float.class).orElse(0.0f);
+		}
+	}
+
 	private final class LeaveScoringState extends AbstractState {
 		Path leavepath;
 
@@ -183,7 +241,7 @@ public abstract class MainAuto extends StateMachineOpMode {
 			telemetry.addData("Velocity", follower.tangentialVelocity());
 			telemetry.addData("Predicted Velocity", Constants.foresightConfig.velocityConstraint.get());
 			telemetry.addData("distance to end", follower.distanceToEndpoint());
-			Poses.finalPose = follower.pose();
+			if (follower != null )Poses.finalPose = follower.pose();
 		}
 
 		@Override
@@ -214,7 +272,7 @@ public abstract class MainAuto extends StateMachineOpMode {
 			telemetry.addData("Velocity", follower.tangentialVelocity());
 			telemetry.addData("Predicted Velocity", Constants.foresightConfig.velocityConstraint.get());
 			telemetry.addData("distance to end", follower.distanceToEndpoint());
-			Poses.finalPose = follower.pose();
+			if (follower != null )Poses.finalPose = follower.pose();
 		}
 
 		@Override
@@ -245,7 +303,7 @@ public abstract class MainAuto extends StateMachineOpMode {
 			telemetry.addData("Velocity", follower.tangentialVelocity());
 			telemetry.addData("Predicted Velocity", Constants.foresightConfig.velocityConstraint.get());
 			telemetry.addData("distance to end", follower.distanceToEndpoint());
-			Poses.finalPose = follower.pose();
+			if (follower != null )Poses.finalPose = follower.pose();
 		}
 
 		@Override
@@ -276,7 +334,7 @@ public abstract class MainAuto extends StateMachineOpMode {
 		@Override
 		public void loop() {
 			follower.update();
-			Poses.finalPose = follower.pose();
+			if (follower != null )Poses.finalPose = follower.pose();
 		}
 
 		@Override
@@ -298,7 +356,7 @@ public abstract class MainAuto extends StateMachineOpMode {
 		@Override
 		public void loop() {
 			follower.update();
-			Poses.finalPose = follower.pose();
+			if (follower != null )Poses.finalPose = follower.pose();
 		}
 
 		@Override
@@ -350,7 +408,7 @@ public abstract class MainAuto extends StateMachineOpMode {
 		@Override
 		public void loop() {
 			follower.update();
-			Poses.finalPose = follower.pose();
+			if (follower != null )Poses.finalPose = follower.pose();
 		}
 
 		@Override
@@ -391,7 +449,7 @@ public abstract class MainAuto extends StateMachineOpMode {
 			telemetry.addData("Velocity", follower.tangentialVelocity());
 			telemetry.addData("Predicted Velocity", Constants.foresightConfig.velocityConstraint.get());
 			telemetry.addData("distance to end", follower.distanceToEndpoint());
-			Poses.finalPose = follower.pose();
+			if (follower != null )Poses.finalPose = follower.pose();
 		}
 
 		@Override
@@ -422,7 +480,7 @@ public abstract class MainAuto extends StateMachineOpMode {
 			telemetry.addData("Velocity", follower.tangentialVelocity());
 			telemetry.addData("Predicted Velocity", Constants.foresightConfig.velocityConstraint.get());
 			telemetry.addData("distance to end", follower.distanceToEndpoint());
-			Poses.finalPose = follower.pose();
+			if (follower != null )Poses.finalPose = follower.pose();
 		}
 
 		@Override
@@ -446,7 +504,7 @@ public abstract class MainAuto extends StateMachineOpMode {
 		@Override
 		public void loop() {
 			follower.update();
-			Poses.finalPose = follower.pose();
+			if (follower != null )Poses.finalPose = follower.pose();
 		}
 
 		@Override
@@ -471,7 +529,7 @@ public abstract class MainAuto extends StateMachineOpMode {
 		@Override
 		public void loop() {
 			follower.update();
-			Poses.finalPose = follower.pose();
+			if (follower != null )Poses.finalPose = follower.pose();
 		}
 
 		@Override
@@ -507,7 +565,14 @@ public abstract class MainAuto extends StateMachineOpMode {
 		orchestrator.registerNode("hood", hood);
 
 		// Turret shares the intake motor as its encoder, as in MainTeleOp, and aims from the follower.
-		turret = new Turret(orchestrator, safeMap, safeMap.device(CRServo.class, "turret"), intake, follower, "g2");
+		turret = new Turret(orchestrator, safeMap,
+				safeMap.device(CRServo.class, "turretServo1"),
+				safeMap.device(CRServo.class, "turretServo2"),
+				safeMap.device(CRServo.class, "turretServo3"),
+				intake,
+				follower,
+
+				"g2");
 		orchestrator.registerNode("turret", turret);
 
 		follower.holdEnd.set(true);
