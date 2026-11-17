@@ -28,5 +28,6 @@ dependencies {
     implementation "com.bylazar:fullpanels:1.0.13"
     implementation 'com.aaravlabs:autonomy:0.2.0'
     implementation 'com.aaravlabs.safepedropathing:revhub:0.3.01'
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.0.4'
 }
 
