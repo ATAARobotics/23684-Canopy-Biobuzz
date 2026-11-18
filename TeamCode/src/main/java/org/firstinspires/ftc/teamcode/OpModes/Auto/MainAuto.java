@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import org.firstinspires.ftc.teamcode.Subsystems.BulkCache;
+import org.firstinspires.ftc.teamcode.Subsystems.Gate;
 import org.firstinspires.ftc.teamcode.Subsystems.Hood;
 import org.firstinspires.ftc.teamcode.Subsystems.Intake;
 import org.firstinspires.ftc.teamcode.Subsystems.Shooter;
@@ -54,6 +55,8 @@ public abstract class MainAuto extends StateMachineOpMode {
 	private ShooterKicker shooterKicker;
 	private Hood hood;
 	private Turret turret;
+
+	private Gate gate;
 
 	public void SetRoute() {}
 
@@ -145,11 +148,6 @@ public abstract class MainAuto extends StateMachineOpMode {
 		}
 
 		@Override
-		public void stop() {
-			orchestrator.publish("shooter/targetRPM", 0.0);
-		}
-
-		@Override
 		public String name() {
 			return stateName;
 		}
@@ -163,35 +161,7 @@ public abstract class MainAuto extends StateMachineOpMode {
 		return (System.nanoTime() - startNanos) / 1_000_000_000L;
 	}
 
-	private Submachine ShootingSub(){
-		return new Submachine(
-				"Shooter", Arrays.asList(
-						new ShootState("shooting Sub"),
-						new RunTranferState(),
-						new WaitState(0.2),
-						new StopTranferState()
-				));
-	}
-
-	private final class OpenGateState extends AbstractState{
-
-		@Override
-		public void init() {
-
-		}
-
-		@Override
-		public void loop() {
-
-		}
-
-		@Override
-		public void stop() {
-
-		}
-	}
-
-	private final class RunTranferState extends AbstractState{
+	private class ShooterStop extends AbstractState{
 		float speed = 0f;
 		@Override
 		public void init() {
@@ -200,9 +170,34 @@ public abstract class MainAuto extends StateMachineOpMode {
 
 		@Override
 		public void loop() {
-			orchestrator.publish("g2/right_stick_y",1.0f);
-			speed = orchestrator.getLatestValue("g2/right_stick_y", Float.class).orElse(0.0f);
+			orchestrator.publish("shooter/targetRPM", 0.0f);;
+			speed = orchestrator.getLatestValue("shooter/targetRPM", Float.class).orElse(0.0f);
 		}
+	}
+
+	private Submachine ShootingSub(){
+		return new Submachine(
+				"Shooter", Arrays.asList(
+						new ShootState("shooting Sub"),
+						new RunTranferState(),
+						new WaitState(0.2),
+						new StopTranferState(),
+				        new ShooterStop()
+				));
+	}
+
+	private final class RunTranferState extends AbstractState{
+			float speed = 0f;
+			@Override
+			public void init() {
+				setEndCondition(()-> Math.abs(speed) > 0);
+			}
+
+			@Override
+			public void loop() {
+				orchestrator.publish("g2/right_stick_y",1.0f);
+				speed = orchestrator.getLatestValue("g2/right_stick_y", Float.class).orElse(0.0f);
+			}
 	}
 
 	private final class StopTranferState extends AbstractState{
@@ -216,6 +211,34 @@ public abstract class MainAuto extends StateMachineOpMode {
 		public void loop() {
 			orchestrator.publish("g2/right_stick_y",0.0f);
 			speed = orchestrator.getLatestValue("g2/right_stick_y", Float.class).orElse(0.0f);
+		}
+	}
+
+	private final class RunIntake extends AbstractState{
+		float speed = 0f;
+		@Override
+		public void init() {
+			setEndCondition(()-> Math.abs(speed) > 0);
+		}
+
+		@Override
+		public void loop() {
+			orchestrator.publish("g2/left_stick_y",1.0f);
+			speed = orchestrator.getLatestValue("g2/left_stick_y", Float.class).orElse(0.0f);
+		}
+	}
+
+	private final class StopIntake extends AbstractState{
+		float speed = 0f;
+		@Override
+		public void init() {
+			setEndCondition(()-> Math.abs(speed) == 0);
+		}
+
+		@Override
+		public void loop() {
+			orchestrator.publish("g2/left_stick_y",0.0f);
+			speed = orchestrator.getLatestValue("g2/left_stick_y", Float.class).orElse(0.0f);
 		}
 	}
 
@@ -423,7 +446,11 @@ public abstract class MainAuto extends StateMachineOpMode {
 		if (shooting) {
 			garden.add(new ShootState("GardenShoot"));
 		}
+		garden.add(new RunIntake());
+		garden.add(new RunTranferState());
 		garden.add(new CollectGarden());
+		garden.add(new StopTranferState());
+		garden.add(new StopIntake());
 		return new Submachine("Garden", garden);
 	}
 
@@ -563,6 +590,9 @@ public abstract class MainAuto extends StateMachineOpMode {
 
 		hood = new Hood(orchestrator, safeMap.device(Servo.class, "hoodServo"));
 		orchestrator.registerNode("hood", hood);
+
+		gate = new Gate(orchestrator, safeMap.device(Servo.class,"gate"));
+		orchestrator.registerNode("gate",gate);
 
 		// Turret shares the intake motor as its encoder, as in MainTeleOp, and aims from the follower.
 		turret = new Turret(orchestrator, safeMap,
