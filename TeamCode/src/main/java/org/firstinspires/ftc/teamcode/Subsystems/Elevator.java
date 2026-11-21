@@ -22,6 +22,7 @@ public class Elevator extends Node {
 	public static double AUTO_POWER = 1.0;
 
 	// Stick magnitudes inside this band count as centred, so a drifting stick is not an override.
+	// Applied as a deadzone on the raw reading below.
 	private static final double STICK_DEADBAND = 0.05;
 
 	private final SafeDevice<DcMotorEx> elevator;
@@ -43,7 +44,9 @@ public class Elevator extends Node {
 
 	@SubscribedTo(topic = "g2/right_stick_y")
 	public void onManualPower(Float stickY) {
-		manualPower = stickY != null ? -stickY.doubleValue() : 0.0;
+		double raw = stickY != null ? -stickY.doubleValue() : 0.0;
+		// Deadzone: ignore tiny deflections so stick drift doesn't creep the elevator.
+		manualPower = Math.abs(raw) < STICK_DEADBAND ? 0.0 : raw;
 		apply();
 	}
 

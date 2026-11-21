@@ -18,7 +18,7 @@ public class Intake extends Node {
 	public static double BUMPER_POWER = 1.0;
 
 	// Stick magnitudes inside this band count as centred, so a drifting stick is not treated as
-	// an override of the bumper.
+	// an override of the bumper. Applied as a deadzone on the raw reading below.
 	private static final double STICK_DEADBAND = 0.05;
 
 	private final SafeDevice<DcMotorEx> intake;
@@ -38,7 +38,9 @@ public class Intake extends Node {
 
 	@SubscribedTo(topic = "g2/left_stick_y")
 	public void onManualPower(Float stickY) {
-		manualPower = stickY != null ? -stickY.doubleValue() : 0.0;
+		double raw = stickY != null ? -stickY.doubleValue() : 0.0;
+		// Deadzone: ignore tiny deflections so stick drift doesn't spin the intake.
+		manualPower = Math.abs(raw) < STICK_DEADBAND ? 0.0 : raw;
 		apply();
 	}
 

@@ -40,6 +40,8 @@ public class Turret extends Node {
 	// While the turret is disabled (x), the owning gamepad's left stick X spins it directly. Full stick
 	// (1.0) commands this fraction of power; centred (0.0) commands none.
 	private static final double MANUAL_TURN_SCALE = 0.5;
+	// Left stick X magnitude below this counts as centred, so drift doesn't creep the turret while disabled.
+	private static final double MANUAL_TURN_DEADZONE = 0.05;
 
 	private final SafeDevice<CRServo> turretServo1;
 	private final SafeDevice<CRServo> turretServo2;
@@ -483,17 +485,12 @@ public class Turret extends Node {
 		}
 	}
 
-	@SubscribedTo(topic = "g1/left_stick_x")
-	public void g1LeftStickX(Float stickX) {
-		if ("g1".equals(inputPrefix)) {
-			manualTurnInput = stickX != null ? stickX : 0.0;
-		}
-	}
-
 	@SubscribedTo(topic = "g2/left_stick_x")
 	public void g2LeftStickX(Float stickX) {
 		if ("g2".equals(inputPrefix)) {
-			manualTurnInput = stickX != null ? stickX : 0.0;
+			double raw = stickX != null ? stickX : 0.0;
+			// Deadzone: ignore tiny deflections so stick drift doesn't spin the disabled turret.
+			manualTurnInput = Math.abs(raw) < MANUAL_TURN_DEADZONE ? 0.0 : raw;
 		}
 	}
 
