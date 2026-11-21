@@ -554,7 +554,7 @@ public abstract class MainAuto extends StateMachineOpMode {
 
 		@Override
 		public void init() {
-			parkPath = Paths.line(lastPath, poses.redScoringPark).constant(lastPath);
+			parkPath = Paths.curve(lastPath, poses.redScoringParkControl, poses.redScoringPark).constant(lastPath);
 			setEndCondition(
 					() -> Math.abs(follower.tangentialVelocity()) < Constants.foresightConfig.velocityConstraint.get()
 							&& follower.distanceToEndpoint() < 4);
