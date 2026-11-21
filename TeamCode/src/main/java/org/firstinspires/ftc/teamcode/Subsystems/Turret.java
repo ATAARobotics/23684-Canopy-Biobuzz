@@ -605,6 +605,7 @@ public class Turret extends Node {
 				enabled
 						? "ON"
 						: "OFF");
+		telemetry.addData("Feild half",fieldHalf());
 	}
 
 	/** Extra detail, only shown when TurretConfig.verboseTelemetry is on. */

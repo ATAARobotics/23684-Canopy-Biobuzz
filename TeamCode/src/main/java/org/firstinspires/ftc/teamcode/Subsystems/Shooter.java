@@ -12,7 +12,7 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 
 @Configurable
-public class Shooter extends Node {
+public class  Shooter extends Node {
 	private final SafeDevice<DcMotorEx> shooter;
 	public static double kP = 0.00012, kI = 0.0, kD = 0.0;
 	public static double kV = 0.000173, kS = 0.04, kA = 0.0;

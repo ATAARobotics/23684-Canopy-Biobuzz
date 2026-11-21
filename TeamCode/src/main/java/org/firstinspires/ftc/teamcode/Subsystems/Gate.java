@@ -81,14 +81,14 @@ public class Gate extends Node {
     /** Close the Gate: servo position CLOSED_POSITION blocks pollen from reaching the Shooter. */
     public void close() {
         position = CLOSED_POSITION;
-        gate.labels("write/gate").run(servo -> servo.setPosition(CLOSED_POSITION));
+        gate.run(servo -> servo.setPosition(CLOSED_POSITION));
         orchestrator.publish("gate/open", false);
     }
 
     /** Open the Gate: servo position OPEN_POSITION clears the path so pollen can enter the Shooter. */
     public void open() {
         position = OPEN_POSITION;
-        gate.labels("write/gate").run(servo -> servo.setPosition(OPEN_POSITION));
+        gate.run(servo -> servo.setPosition(OPEN_POSITION));
         orchestrator.publish("gate/open", true);
     }
 
