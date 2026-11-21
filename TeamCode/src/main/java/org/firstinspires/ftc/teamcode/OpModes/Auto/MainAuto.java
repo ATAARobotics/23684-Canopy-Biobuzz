@@ -129,6 +129,9 @@ public abstract class MainAuto extends StateMachineOpMode {
 			// Clear the path before the Shooter spins up: the override holds the Gate open
 			// regardless of RPM, so pollen can reach the wheel the moment it is up to speed.
 			gate.setPowerOverride(true);
+			// Same for the kicker: hold it at a fixed power for the whole shoot instead of
+			// letting the Shooter's target RPM decide.
+			shooterKicker.setPowerOverride(0.6);
 			orchestrator.publish("shooter/targetRPM", Shooter.RPM_TARGET);
 			setEndCondition(
 					() -> (settled && elapsedSince(settledNanos) >= SHOOT_SETTLE_SECONDS) || timer().hasElapsed());
@@ -174,6 +177,8 @@ public abstract class MainAuto extends StateMachineOpMode {
 		public void init() {
 			// Shooting is done: close the Gate and let it follow the Shooter again.
 			gate.setPowerOverride(false);
+			// Hand the kicker back to the Shooter's RPM as well.
+			shooterKicker.clearPowerOverride();
 			setEndCondition(() -> Math.abs(speed) > 0);
 		}
 
