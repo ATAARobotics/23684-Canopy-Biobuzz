@@ -31,7 +31,7 @@ public class TurretConfig {
 	public static double encoderGearTeeth = 60.0;
 
 	// Bench check (measurement only): true if the encoder counts backwards as the turret turns clockwise.
-	public static boolean encoderReversed = true;
+	public static boolean encoderReversed = false;
 
 	// Output check: +1 if positive power turns clockwise, -1 if counter-clockwise; wrong sign = runaway.
 	public static double powerSign = -1.0;

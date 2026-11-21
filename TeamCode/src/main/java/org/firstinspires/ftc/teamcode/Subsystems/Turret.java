@@ -152,9 +152,13 @@ public class Turret extends Node {
 			power = 0.0;
 			atLimit = true;
 		}
-		turretServo1.raw().setPower(power);
-		turretServo2.raw().setPower(power);
-		turretServo3.raw().setPower(power);
+		boolean held = orchestrator.hardware().isRestricted("write");
+
+		if(!held) {
+			turretServo1.raw().setPower(power);
+			turretServo2.raw().setPower(power);
+			turretServo3.raw().setPower(power);
+		}
 
 		publish(angle, goal, aim, power);
 	}
