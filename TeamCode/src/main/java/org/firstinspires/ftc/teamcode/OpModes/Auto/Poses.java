@@ -10,7 +10,7 @@ import org.firstinspires.ftc.teamcode.Utils.Team;
  * Field poses for the autonomous routes, in Pedro inches and degrees.
  *
  * <p>Coordinates are authored once for the red half of the field. {@link #onSide} hands back the same poses
- * mirrored across the field's center line for the blue half, so a blue auto is the red auto flipped rather
+ * rotated 180° about the field's center for the blue half, so a blue auto is the red auto flipped rather
  * than a second set of hand-tuned numbers.
  */
 public class Poses {
@@ -66,7 +66,7 @@ public class Poses {
 	// True once the poses are mirrored, so the same field coordinates serve both alliances.
 	private final boolean mirrored;
 
-	/** Poses for one alliance's half of the field. Blue is the red half flipped across the center line. */
+	/** Poses for one alliance's half of the field. Blue is the red half rotated 180° about the field center. */
 	public static Poses onSide(Follower follower, Team team) {
 		return new Poses(follower, team == Team.BLUE);
 	}
@@ -120,8 +120,11 @@ public class Poses {
 		return mirrored ? mirror(pose) : pose;
 	}
 
-	/** Mirrors a pose across the field's center line: X and heading flip, Y stays. */
+	/** Mirrors a pose through the field's center: X, Y, and heading all flip. */
 	public static Pose mirror(Pose pose) {
-		return pose.withX(FieldMap.mirror(pose.x())).withHeading(Math.PI - pose.heading());
+		return pose
+				.withX(FieldMap.mirror(pose.x()))
+				.withY(FieldMap.mirror(pose.y()))
+				.withHeading(pose.heading() + Math.PI);
 	}
 }
