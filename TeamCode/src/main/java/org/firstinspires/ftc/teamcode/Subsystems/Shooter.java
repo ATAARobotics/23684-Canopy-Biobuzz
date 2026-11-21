@@ -14,8 +14,8 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 @Configurable
 public class  Shooter extends Node {
 	private final SafeDevice<DcMotorEx> shooter;
-	public static double kP = 0.00016, kI = 0.0, kD = 0.0;
-	public static double kV = 0.000186, kS = 0.12, kA = 0.0;
+	public static double kP = 0.0006, kI = 0.0, kD = 0.0;
+	public static double kV = 0.000175, kS = 0.08, kA = 0.0;
 	PIDController shooterPID;
 	SimpleMotorFeedforward shooterFF;
 	private volatile double targetRPM = 0.0;
