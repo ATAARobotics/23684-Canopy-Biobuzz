@@ -24,7 +24,9 @@ public class Poses {
 	public final Pose redScoringLeave = redposeFactory.of(60.3538, 116.909, 270);
 	public final Pose redScoringFlowerIntake = redposeFactory.of(46.2697, 127.238, 90);
 	public final Pose redScoringFlowerLeave = redposeFactory.of(51.357346875, 106.5348046875, 90);
-	public final Pose redScoringPark = redposeFactory.of(16.5, 122.9, 90);
+	public final Pose redScoringPark = redposeFactory.of(9.9916, 121.5171, 90);
+	public final Pose redScoringParkControl1 = redposeFactory.of(52.0623, 99.3749, 0);
+	public final Pose redScoringParkControl2 = redposeFactory.of(32.0284, 126.9064, 0);
 
 
 	public final Pose firstShoot = redposeFactory.of(56, 10, 180);
