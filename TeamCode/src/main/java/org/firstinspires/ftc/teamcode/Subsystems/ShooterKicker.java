@@ -8,6 +8,7 @@ import com.aaravlabs.synapse.ftc.SafeDevice;
 import com.bylazar.configurables.annotations.Configurable;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 
 @Configurable
 public class ShooterKicker extends Node {
@@ -19,7 +20,7 @@ public class ShooterKicker extends Node {
 		super(orchestrator);
 		this.shooterKicker = shooterKicker;
 		shooterKicker.labels("write/shooterKicker").run(m -> {
-			m.setDirection(DcMotor.Direction.REVERSE);
+			m.setDirection(DcMotor.Direction.FORWARD);
 			m.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
 		});
 
