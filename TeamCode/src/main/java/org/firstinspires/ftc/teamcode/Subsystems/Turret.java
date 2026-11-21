@@ -317,6 +317,7 @@ public class Turret extends Node {
 
 		double[] cell = cellPosition();
 		Pose pose = follower == null ? null : follower.pose();
+		pose.plus(new Pose(TurretConfig.offsetX, TurretConfig.offsetY, pose.heading()));
 		if (cell != null && pose != null) {
 			double dx = cell[0] - pose.x();
 			double dy = cell[1] - pose.y();

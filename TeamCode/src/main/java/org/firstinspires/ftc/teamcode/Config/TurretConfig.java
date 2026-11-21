@@ -30,6 +30,10 @@ public class TurretConfig {
 
 	public static double encoderGearTeeth = 60.0;
 
+
+	public static double offsetX = -1.1023622;
+	public static double offsetY = -0.62992126;
+
 	// Bench check (measurement only): true if the encoder counts backwards as the turret turns clockwise.
 	public static boolean encoderReversed = false;
 
