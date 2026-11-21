@@ -42,6 +42,8 @@ public class Turret extends Node {
 	private static final double MANUAL_TURN_SCALE = 0.5;
 	// Left stick X magnitude below this counts as centred, so drift doesn't creep the turret while disabled.
 	private static final double MANUAL_TURN_DEADZONE = 0.05;
+	// Only treat the turret as manually moved if it turned this many degrees while disabled.
+	private static final double MANUAL_MOVE_DEADZONE_DEG = 2.0;
 
 	private final SafeDevice<CRServo> turretServo1;
 	private final SafeDevice<CRServo> turretServo2;
@@ -52,6 +54,9 @@ public class Turret extends Node {
 	private final Follower follower;
 	// Gamepad that owns the offsets and the enabled toggle: "g1" or "g2".
 	private final String inputPrefix;
+
+	// Angle when the turret was disabled; compared on re-enable to detect manual movement.
+	private volatile double disabledAngle;
 
 	private final ProfiledPIDController profiledPid;
 	private final SimpleMotorFeedforward feedforward;
@@ -388,9 +393,9 @@ public class Turret extends Node {
 	}
 
 	// ── gamepad ───────────────────────────────────────────────────────────────────
-	// Dpad trims the aim angle and the lateral offset, y zeroes both, and x toggles the turret. While the turret
-	// is disabled, the left stick X spins it directly. There are two handlers per button because each gamepad has
-	// its own topic prefix. The guard picks ours.
+	// Dpad left/right trims the aim angle, y zeroes the offsets, and x toggles the turret. While the turret
+	// is disabled, the left stick X spins it directly. There are two handlers per button because each gamepad
+	// has its own topic prefix. The guard picks ours.
 
 	@SubscribedTo(topic = "g1/dpad_left/rising")
 	public void g1DpadLeft() {
@@ -402,7 +407,7 @@ public class Turret extends Node {
 	@SubscribedTo(topic = "g2/dpad_left/rising")
 	public void g2DpadLeft() {
 		if ("g2".equals(inputPrefix)) {
-			nudgeAim(-1.0);
+			nudgeAim(-0.5);
 		}
 	}
 
@@ -416,7 +421,7 @@ public class Turret extends Node {
 	@SubscribedTo(topic = "g2/dpad_right/rising")
 	public void g2DpadRight() {
 		if ("g2".equals(inputPrefix)) {
-			nudgeAim(1.0);
+			nudgeAim(0.5);
 		}
 	}
 
@@ -435,23 +440,9 @@ public class Turret extends Node {
 		}
 	}
 
-	@SubscribedTo(topic = "g2/dpad_up/rising")
-	public void g2DpadUp() {
-		if ("g2".equals(inputPrefix)) {
-			nudgeLateral(1.0);
-		}
-	}
-
 	@SubscribedTo(topic = "g1/dpad_down/rising")
 	public void g1DpadDown() {
 		if ("g1".equals(inputPrefix)) {
-			nudgeLateral(-1.0);
-		}
-	}
-
-	@SubscribedTo(topic = "g2/dpad_down/rising")
-	public void g2DpadDown() {
-		if ("g2".equals(inputPrefix)) {
 			nudgeLateral(-1.0);
 		}
 	}
@@ -475,14 +466,37 @@ public class Turret extends Node {
 	@SubscribedTo(topic = "g1/x/rising")
 	public void g1ToggleEnabled() {
 		if ("g1".equals(inputPrefix)) {
-			enabled = !enabled;
+			toggleEnabled();
 		}
 	}
 
 	@SubscribedTo(topic = "g2/x/rising")
 	public void g2ToggleEnabled() {
 		if ("g2".equals(inputPrefix)) {
-			enabled = !enabled;
+			toggleEnabled();
+		}
+	}
+
+	@SubscribedTo(topic = "g2/b/rising")
+	public void g2B() {
+		if ("g2".equals(inputPrefix) && !enabled) {
+			// Re-enable. If the turret was turned by hand past the deadzone, shift the aim so it holds where it
+			// was left instead of snapping back. Use the target, not the disable-time angle: the robot keeps
+			// moving while disabled, so the target drifts away from where the turret was parked.
+			double moved = wrapDeg(angleDeg - disabledAngle);
+			if (Math.abs(moved) > MANUAL_MOVE_DEADZONE_DEG) {
+				aimOffsetDeg += wrapDeg(angleDeg - aimDeg);
+			}
+			enabled = true;
+		}
+	}
+
+	private void toggleEnabled() {
+		if (enabled) {
+			disabledAngle = angleDeg;
+			enabled = false;
+		} else {
+			enabled = true;
 		}
 	}
 

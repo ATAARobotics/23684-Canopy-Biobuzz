@@ -18,7 +18,7 @@ public class Hood extends Node {
 	}
 
 	@OnHardwareThread
-	@SubscribedTo(topic = "g2/a/rising")
+	@SubscribedTo(topic = "g2/dpad_up/rising")
 	public void increaseAngle() {
 		double targetPosition = hood.raw().getPosition() + STEP;
 		orchestrator.publish("hood/targetPosition", targetPosition);
@@ -30,7 +30,7 @@ public class Hood extends Node {
 	}
 
 	@OnHardwareThread
-	@SubscribedTo(topic = "g2/b/rising")
+	@SubscribedTo(topic = "g2/dpad_down/rising")
 	public void decreaseAngle() {
 		double targetPosition = hood.raw().getPosition() - STEP;
 		orchestrator.publish("hood/targetPosition", targetPosition);
