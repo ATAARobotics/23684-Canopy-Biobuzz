@@ -50,6 +50,8 @@ public abstract class MainTeleOp extends SafeOpMode {
 	private Elevator elevatorNode;
 	private Gate gate;
 	private Hood hood;
+	private Intake intakeNode;
+	private ShooterKicker shooterKickerNode;
 
 	// Which alliance this TeleOp is for (BLUE or RED).
 	protected abstract Team getTeam();
@@ -98,10 +100,12 @@ public abstract class MainTeleOp extends SafeOpMode {
 		orchestrator.registerNode("turret", turret);
 
 		orchestrator.registerNode("drive", new Drive(orchestrator, frontLeft, frontRight, backLeft, backRight));
-		orchestrator.registerNode("intake", new Intake(orchestrator, intake));
+		intakeNode = new Intake(orchestrator, intake);
+		orchestrator.registerNode("intake", intakeNode);
 
 		orchestrator.registerNode("shooter", new Shooter(orchestrator, shooter, "g2"));
-		orchestrator.registerNode("shooterKicker", new ShooterKicker(orchestrator, shooterKicker));
+		shooterKickerNode = new ShooterKicker(orchestrator, shooterKicker);
+		orchestrator.registerNode("shooterKicker", shooterKickerNode);
 		hood = new Hood(orchestrator, hoodServo);
 		orchestrator.registerNode("hood", hood);
 
@@ -118,6 +122,16 @@ public abstract class MainTeleOp extends SafeOpMode {
 
 		gate = new Gate(orchestrator, safeMap.device(Servo.class, "gate"));
 		orchestrator.registerNode("gate", gate);
+
+		// Release every override position so teleop starts with the drivers in control. Each
+		// subsystem already defaults to released, so this is defensive, but it keeps init from
+		// depending on whatever a previous caller (e.g. Auto) may have latched.
+		intakeNode.clearPowerOverride();
+		elevatorNode.clearPowerOverride();
+		shooterKickerNode.clearPowerOverride();
+		gate.clearPowerOverride();
+		hood.clearPowerOverride();
+		turret.setManualGoal(null);
 	}
 
 	// 'B' for blue, 'R' for red or unknown. Matches TurretConfig.allianceLetter().
