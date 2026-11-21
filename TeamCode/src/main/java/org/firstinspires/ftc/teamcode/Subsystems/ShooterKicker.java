@@ -13,7 +13,7 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 @Configurable
 public class ShooterKicker extends Node {
 	private final SafeDevice<DcMotorEx> shooterKicker;
-	public static double KICKER_POWER = 1.0;
+	public static double KICKER_POWER = 0.8;
 	public static double STOP_POWER = 0.0;
 
 	// Set by auto (or any other caller) to drive the kicker directly. While non-null it wins over
