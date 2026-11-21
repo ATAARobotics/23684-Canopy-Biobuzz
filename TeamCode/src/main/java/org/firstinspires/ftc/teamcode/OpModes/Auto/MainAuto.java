@@ -29,6 +29,10 @@ import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 
 public abstract class MainAuto extends StateMachineOpMode {
 
+	// Where the Hood is parked once the match gate releases hardware writes, matching
+	// MainTeleOp's HOOD_RELEASE_POSITION.
+	private static final double HOOD_RELEASE_POSITION = 0.20;
+
 	public enum AutoStates {
 		shootPreload,
 		leaveScoring,
@@ -644,6 +648,14 @@ public abstract class MainAuto extends StateMachineOpMode {
 
 		hood = new Hood(orchestrator, safeMap.device(Servo.class, "hoodServo"));
 		orchestrator.registerNode("hood", hood);
+
+		// Park the Hood at the same position TeleOp uses once the match gate releases
+		// hardware writes, so auto starts from the same hood position.
+		orchestrator.subscribe(MatchGate.HELD_TOPIC, Boolean.class, held -> {
+			if (Boolean.FALSE.equals(held)) {
+				hood.moveTo(HOOD_RELEASE_POSITION);
+			}
+		});
 
 		gate = new Gate(orchestrator, safeMap.device(Servo.class, "gate"));
 		orchestrator.registerNode("gate", gate);
