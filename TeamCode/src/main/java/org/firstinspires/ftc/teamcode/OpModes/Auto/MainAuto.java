@@ -161,83 +161,90 @@ public abstract class MainAuto extends StateMachineOpMode {
 		return (System.nanoTime() - startNanos) / 1_000_000_000L;
 	}
 
-	private class ShooterStop extends AbstractState{
+	private class ShooterStop extends AbstractState {
 		float speed = 0f;
+
 		@Override
 		public void init() {
-			setEndCondition(()-> Math.abs(speed) > 0);
+			setEndCondition(() -> Math.abs(speed) > 0);
 		}
 
 		@Override
 		public void loop() {
-			orchestrator.publish("shooter/targetRPM", 0.0f);;
-			speed = orchestrator.getLatestValue("shooter/targetRPM", Float.class).orElse(0.0f);
+			orchestrator.publish("shooter/targetRPM", 0.0f);
+			speed = orchestrator
+					.getLatestValue("shooter/targetRPM", Float.class)
+					.orElse(0.0f);
 		}
 	}
 
-	private Submachine ShootingSub(){
+	private Submachine ShootingSub() {
 		return new Submachine(
-				"Shooter", Arrays.asList(
+				"Shooter",
+				Arrays.asList(
 						new ShootState("shooting Sub"),
 						new RunTranferState(),
 						new WaitState(0.2),
 						new StopTranferState(),
-				        new ShooterStop()
-				));
+						new ShooterStop()));
 	}
 
-	private final class RunTranferState extends AbstractState{
-			float speed = 0f;
-			@Override
-			public void init() {
-				setEndCondition(()-> Math.abs(speed) > 0);
-			}
-
-			@Override
-			public void loop() {
-				orchestrator.publish("g2/right_stick_y",1.0f);
-				speed = orchestrator.getLatestValue("g2/right_stick_y", Float.class).orElse(0.0f);
-			}
-	}
-
-	private final class StopTranferState extends AbstractState{
+	private final class RunTranferState extends AbstractState {
 		float speed = 0f;
+
 		@Override
 		public void init() {
-			setEndCondition(()-> Math.abs(speed) == 0);
+			setEndCondition(() -> Math.abs(speed) > 0);
 		}
 
 		@Override
 		public void loop() {
-			orchestrator.publish("g2/right_stick_y",0.0f);
+			orchestrator.publish("g2/right_stick_y", 1.0f);
 			speed = orchestrator.getLatestValue("g2/right_stick_y", Float.class).orElse(0.0f);
 		}
 	}
 
-	private final class RunIntake extends AbstractState{
+	private final class StopTranferState extends AbstractState {
 		float speed = 0f;
+
 		@Override
 		public void init() {
-			setEndCondition(()-> Math.abs(speed) > 0);
+			setEndCondition(() -> Math.abs(speed) == 0);
 		}
 
 		@Override
 		public void loop() {
-			orchestrator.publish("g2/left_stick_y",1.0f);
+			orchestrator.publish("g2/right_stick_y", 0.0f);
+			speed = orchestrator.getLatestValue("g2/right_stick_y", Float.class).orElse(0.0f);
+		}
+	}
+
+	private final class RunIntake extends AbstractState {
+		float speed = 0f;
+
+		@Override
+		public void init() {
+			setEndCondition(() -> Math.abs(speed) > 0);
+		}
+
+		@Override
+		public void loop() {
+			orchestrator.publish("g2/left_stick_y", 1.0f);
 			speed = orchestrator.getLatestValue("g2/left_stick_y", Float.class).orElse(0.0f);
 		}
 	}
 
-	private final class StopIntake extends AbstractState{
+	private final class StopIntake extends AbstractState {
 		float speed = 0f;
+
 		@Override
 		public void init() {
-			setEndCondition(()-> Math.abs(speed) == 0);
+			setEndCondition(() -> Math.abs(speed) == 0);
 		}
 
 		@Override
 		public void loop() {
-			orchestrator.publish("g2/left_stick_y",0.0f);
+			orchestrator.publish("g2/left_stick_y", 0.0f);
 			speed = orchestrator.getLatestValue("g2/left_stick_y", Float.class).orElse(0.0f);
 		}
 	}
@@ -264,7 +271,7 @@ public abstract class MainAuto extends StateMachineOpMode {
 			telemetry.addData("Velocity", follower.tangentialVelocity());
 			telemetry.addData("Predicted Velocity", Constants.foresightConfig.velocityConstraint.get());
 			telemetry.addData("distance to end", follower.distanceToEndpoint());
-			if (follower != null )Poses.finalPose = follower.pose();
+			if (follower != null) Poses.finalPose = follower.pose();
 		}
 
 		@Override
@@ -295,7 +302,7 @@ public abstract class MainAuto extends StateMachineOpMode {
 			telemetry.addData("Velocity", follower.tangentialVelocity());
 			telemetry.addData("Predicted Velocity", Constants.foresightConfig.velocityConstraint.get());
 			telemetry.addData("distance to end", follower.distanceToEndpoint());
-			if (follower != null )Poses.finalPose = follower.pose();
+			if (follower != null) Poses.finalPose = follower.pose();
 		}
 
 		@Override
@@ -326,7 +333,7 @@ public abstract class MainAuto extends StateMachineOpMode {
 			telemetry.addData("Velocity", follower.tangentialVelocity());
 			telemetry.addData("Predicted Velocity", Constants.foresightConfig.velocityConstraint.get());
 			telemetry.addData("distance to end", follower.distanceToEndpoint());
-			if (follower != null )Poses.finalPose = follower.pose();
+			if (follower != null) Poses.finalPose = follower.pose();
 		}
 
 		@Override
@@ -357,7 +364,7 @@ public abstract class MainAuto extends StateMachineOpMode {
 		@Override
 		public void loop() {
 			follower.update();
-			if (follower != null )Poses.finalPose = follower.pose();
+			if (follower != null) Poses.finalPose = follower.pose();
 		}
 
 		@Override
@@ -379,7 +386,7 @@ public abstract class MainAuto extends StateMachineOpMode {
 		@Override
 		public void loop() {
 			follower.update();
-			if (follower != null )Poses.finalPose = follower.pose();
+			if (follower != null) Poses.finalPose = follower.pose();
 		}
 
 		@Override
@@ -431,7 +438,7 @@ public abstract class MainAuto extends StateMachineOpMode {
 		@Override
 		public void loop() {
 			follower.update();
-			if (follower != null )Poses.finalPose = follower.pose();
+			if (follower != null) Poses.finalPose = follower.pose();
 		}
 
 		@Override
@@ -476,7 +483,7 @@ public abstract class MainAuto extends StateMachineOpMode {
 			telemetry.addData("Velocity", follower.tangentialVelocity());
 			telemetry.addData("Predicted Velocity", Constants.foresightConfig.velocityConstraint.get());
 			telemetry.addData("distance to end", follower.distanceToEndpoint());
-			if (follower != null )Poses.finalPose = follower.pose();
+			if (follower != null) Poses.finalPose = follower.pose();
 		}
 
 		@Override
@@ -507,7 +514,7 @@ public abstract class MainAuto extends StateMachineOpMode {
 			telemetry.addData("Velocity", follower.tangentialVelocity());
 			telemetry.addData("Predicted Velocity", Constants.foresightConfig.velocityConstraint.get());
 			telemetry.addData("distance to end", follower.distanceToEndpoint());
-			if (follower != null )Poses.finalPose = follower.pose();
+			if (follower != null) Poses.finalPose = follower.pose();
 		}
 
 		@Override
@@ -531,7 +538,7 @@ public abstract class MainAuto extends StateMachineOpMode {
 		@Override
 		public void loop() {
 			follower.update();
-			if (follower != null )Poses.finalPose = follower.pose();
+			if (follower != null) Poses.finalPose = follower.pose();
 		}
 
 		@Override
@@ -556,7 +563,7 @@ public abstract class MainAuto extends StateMachineOpMode {
 		@Override
 		public void loop() {
 			follower.update();
-			if (follower != null )Poses.finalPose = follower.pose();
+			if (follower != null) Poses.finalPose = follower.pose();
 		}
 
 		@Override
@@ -591,17 +598,18 @@ public abstract class MainAuto extends StateMachineOpMode {
 		hood = new Hood(orchestrator, safeMap.device(Servo.class, "hoodServo"));
 		orchestrator.registerNode("hood", hood);
 
-		gate = new Gate(orchestrator, safeMap.device(Servo.class,"gate"));
-		orchestrator.registerNode("gate",gate);
+		gate = new Gate(orchestrator, safeMap.device(Servo.class, "gate"));
+		orchestrator.registerNode("gate", gate);
 
 		// Turret shares the intake motor as its encoder, as in MainTeleOp, and aims from the follower.
-		turret = new Turret(orchestrator, safeMap,
+		turret = new Turret(
+				orchestrator,
+				safeMap,
 				safeMap.device(CRServo.class, "turretServo1"),
 				safeMap.device(CRServo.class, "turretServo2"),
 				safeMap.device(CRServo.class, "turretServo3"),
 				intake,
 				follower,
-
 				"g2");
 		orchestrator.registerNode("turret", turret);
 

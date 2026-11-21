@@ -184,7 +184,7 @@ public class Turret extends Node {
 		}
 		boolean held = orchestrator.hardware().isRestricted("write");
 
-		if(!held) {
+		if (!held) {
 			turretServo1.raw().setPower(power);
 			turretServo2.raw().setPower(power);
 			turretServo3.raw().setPower(power);
@@ -659,7 +659,7 @@ public class Turret extends Node {
 				enabled
 						? "ON"
 						: "OFF");
-		telemetry.addData("Feild half",fieldHalf());
+		telemetry.addData("Feild half", fieldHalf());
 	}
 
 	/** Extra detail, only shown when TurretConfig.verboseTelemetry is on. */

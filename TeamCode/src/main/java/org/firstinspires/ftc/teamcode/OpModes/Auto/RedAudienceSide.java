@@ -19,7 +19,7 @@ public class RedAudienceSide extends MainAuto {
 	public void SetRoute() {
 		addStep(AutoStates.leaveAudience);
 		addStep(1);
-		//addStep(AutoStates.shootPreload);
+		// addStep(AutoStates.shootPreload);
 		addStep(AutoStates.pickFromFlowerAudience);
 		addStep(AutoStates.goToGarden);
 		addStep(AutoStates.parkAudience);

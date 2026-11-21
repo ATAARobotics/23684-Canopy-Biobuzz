@@ -30,7 +30,6 @@ public class TurretConfig {
 
 	public static double encoderGearTeeth = 60.0;
 
-
 	public static double offsetX = -1.1023622;
 	public static double offsetY = -0.62992126;
 

@@ -82,13 +82,14 @@ public abstract class MainTeleOp extends SafeOpMode {
 		vision = new AprilTagVision(orchestrator, safeMap.raw(), cameraPose, poi, allianceLetter(getTeam()));
 		orchestrator.registerNode("vision", vision);
 
-		turret = new Turret(orchestrator, safeMap,
+		turret = new Turret(
+				orchestrator,
+				safeMap,
 				safeMap.device(CRServo.class, "turretServo1"),
 				safeMap.device(CRServo.class, "turretServo2"),
 				safeMap.device(CRServo.class, "turretServo3"),
 				intake,
 				pedro.follower(),
-
 				"g2");
 		orchestrator.registerNode("turret", turret);
 

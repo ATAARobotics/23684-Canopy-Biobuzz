@@ -8,13 +8,14 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 
 /**
  * Moves the elevator based on gamepad 2's right stick Y (range -1 to 1), or while gamepad 2's left
- * bumper is held. Subscribes directly to {@code g2/right_stick_y} and {@code g2/left_bumper} so the
- * gamepad readings live in the subsystem instead of MainTeleOp's loop. Sets motor power and publishes
- * {@code elevator/power} with the actual power. When both inputs are active the stick wins.
+ * bumper or left trigger is held. Subscribes directly to {@code g2/right_stick_y},
+ * {@code g2/left_bumper}, and {@code g2/left_trigger_pressed} so the gamepad readings live in the
+ * subsystem instead of MainTeleOp's loop. Sets motor power and publishes {@code elevator/power} with
+ * the actual power. When the stick is off-centre it wins.
  * <p>
  * While the Gate is open and the Shooter is at target RPM the elevator runs itself at
  * {@link #AUTO_POWER}, so pollen feeds without the driver holding the stick. Moving the stick
- * off-centre (or holding the bumper) overrides that until it returns to centre.
+ * off-centre (or holding the bumper or trigger) overrides that until it returns to centre.
  */
 public class Elevator extends Node {
 
@@ -32,6 +33,7 @@ public class Elevator extends Node {
 	// threads. Each is a single field read back by apply(), so volatile is enough.
 	private volatile double manualPower = 0.0;
 	private volatile boolean bumperPressed;
+	private volatile boolean triggerPressed;
 	private volatile boolean gateOpen;
 	private volatile boolean shooterAtRpm;
 
@@ -56,6 +58,18 @@ public class Elevator extends Node {
 		apply();
 	}
 
+	@SubscribedTo(topic = "g2/left_trigger_pressed/rising")
+	public void onLeftTriggerPressed() {
+		triggerPressed = true;
+		apply();
+	}
+
+	@SubscribedTo(topic = "g2/left_trigger_pressed/falling")
+	public void onLeftTriggerReleased() {
+		triggerPressed = false;
+		apply();
+	}
+
 	@SubscribedTo(topic = "gate/open")
 	public void onGateOpen(Boolean open) {
 		gateOpen = Boolean.TRUE.equals(open);
@@ -68,13 +82,13 @@ public class Elevator extends Node {
 		apply();
 	}
 
-	// Off-centre stick wins; otherwise a held bumper runs the elevator, then the elevator feeds on
-	// its own while the Gate is open and the Shooter is up to speed.
+	// Off-centre stick wins; otherwise a held bumper or left trigger runs the elevator, then the
+	// elevator feeds on its own while the Gate is open and the Shooter is up to speed.
 	private void apply() {
 		double applied;
 		if (Math.abs(manualPower) > STICK_DEADBAND) {
 			applied = manualPower;
-		} else if (bumperPressed) {
+		} else if (bumperPressed || triggerPressed) {
 			applied = AUTO_POWER;
 		} else if (gateOpen && shooterAtRpm) {
 			applied = AUTO_POWER;
