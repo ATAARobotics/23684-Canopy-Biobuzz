@@ -30,6 +30,9 @@ import org.firstinspires.ftc.teamcode.Utils.Team;
  */
 public abstract class MainTeleOp extends SafeOpMode {
 
+	// Where the Hood is parked once the match gate releases hardware writes.
+	private static final double HOOD_RELEASE_POSITION = 0.20;
+
 	private SafeDevice<DcMotorEx> frontLeft;
 	private SafeDevice<DcMotorEx> frontRight;
 	private SafeDevice<DcMotorEx> backLeft;
@@ -46,6 +49,7 @@ public abstract class MainTeleOp extends SafeOpMode {
 	private Turret turret;
 	private Elevator elevatorNode;
 	private Gate gate;
+	private Hood hood;
 
 	// Which alliance this TeleOp is for (BLUE or RED).
 	protected abstract Team getTeam();
@@ -98,7 +102,16 @@ public abstract class MainTeleOp extends SafeOpMode {
 
 		orchestrator.registerNode("shooter", new Shooter(orchestrator, shooter, "g2"));
 		orchestrator.registerNode("shooterKicker", new ShooterKicker(orchestrator, shooterKicker));
-		orchestrator.registerNode("hood", new Hood(orchestrator, hoodServo));
+		hood = new Hood(orchestrator, hoodServo);
+		orchestrator.registerNode("hood", hood);
+
+		// The Hood sits at its default until the match gate releases hardware writes,
+		// so nothing moves before the match timer starts.
+		orchestrator.subscribe(MatchGate.HELD_TOPIC, Boolean.class, held -> {
+			if (Boolean.FALSE.equals(held)) {
+				hood.moveTo(HOOD_RELEASE_POSITION);
+			}
+		});
 
 		elevatorNode = new Elevator(orchestrator, elevator);
 		orchestrator.registerNode("elevator", elevatorNode);
