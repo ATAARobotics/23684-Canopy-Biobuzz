@@ -24,11 +24,13 @@ public class  Shooter extends Node {
 	public static int MIN_RPM = 80;
 	public static int RPM_TOLERANCE = 100;
 	public boolean atRPM;
+
+	public boolean eightyPercent;
 	private final String inputPrefix;
 	private final boolean refreshControllers;
 	public static double TICKS_PER_REVOLUTION = 28.0;
 	public static final double RPM_CONVERSION = 60.0 / TICKS_PER_REVOLUTION;
-	public static double RPM_TARGET = 3000.0;
+	public static double RPM_TARGET = 3100.0;
 
 	public Shooter(Orchestrator orchestrator, SafeDevice<DcMotorEx> shooter, String inputPrefix) {
 		this(orchestrator, shooter, inputPrefix, false);
@@ -61,6 +63,7 @@ public class  Shooter extends Node {
 		// "At speed" is at or above the tolerance band, not just inside it: the wheel
 		// overshoots on the way up and can still be above target when the setpoint drops.
 		atRPM = (targetRPM > MIN_RPM) && (currentRPM >= targetRPM - RPM_TOLERANCE);
+		eightyPercent = (targetRPM > MIN_RPM) && (currentRPM >= (targetRPM * 0.8) - RPM_TOLERANCE);
 
 		// Same pattern as the Turret: this 50 Hz control loop runs on the hardware
 		// thread, so it must not hand the write back to the gate executor, which would
@@ -82,6 +85,7 @@ public class  Shooter extends Node {
 
 		orchestrator.publish("shooter/currentRPM", currentRPM);
 		orchestrator.publish("shooter/atRPM", atRPM);
+		orchestrator.publish("shooter/eightyPercent", eightyPercent);
 	}
 
 	private void refreshController() {

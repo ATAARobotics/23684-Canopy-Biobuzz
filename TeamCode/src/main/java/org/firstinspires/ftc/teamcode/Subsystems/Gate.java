@@ -66,6 +66,8 @@ public class Gate extends Node {
 
 	// Republished every tick, so act when the at-RPM state flips or while it is still inside the
 	// grace period. While overridden, just track it.
+
+
 	@SubscribedTo(topic = "shooter/atRPM")
 	public void onAtRpm(Boolean atRpm) {
 		boolean atTarget = Boolean.TRUE.equals(atRpm);
