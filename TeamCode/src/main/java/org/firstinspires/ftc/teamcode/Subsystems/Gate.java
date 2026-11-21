@@ -103,11 +103,13 @@ public class Gate extends Node {
 		if (atRpmSinceNanos == 0) {
 			atRpmSinceNanos = now;
 		}
-		if (isHolding(now)) {
-			close();
-		} else {
-			open();
-		}
+
+		// TODO: identify issues with the gate not auto-opening
+//		if (isHolding(now)) {
+//			close();
+//		} else {
+//			open();
+//		}
 	}
 
 	/** Whether the grace period that starts when the Shooter reached RPM is still running. */
