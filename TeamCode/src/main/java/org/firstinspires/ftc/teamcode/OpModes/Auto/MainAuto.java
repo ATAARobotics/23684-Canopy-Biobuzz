@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import org.firstinspires.ftc.teamcode.Subsystems.BulkCache;
+import org.firstinspires.ftc.teamcode.Subsystems.Elevator;
 import org.firstinspires.ftc.teamcode.Subsystems.Gate;
 import org.firstinspires.ftc.teamcode.Subsystems.Hood;
 import org.firstinspires.ftc.teamcode.Subsystems.Intake;
@@ -57,6 +58,8 @@ public abstract class MainAuto extends StateMachineOpMode {
 	private Turret turret;
 
 	private Gate gate;
+	private Elevator elevator;
+	private Intake intakeNode;
 
 	public void SetRoute() {}
 
@@ -123,6 +126,9 @@ public abstract class MainAuto extends StateMachineOpMode {
 			settled = false;
 			settledNanos = 0L;
 			startTimer(SHOOT_TIMEOUT_SECONDS);
+			// Clear the path before the Shooter spins up: the override holds the Gate open
+			// regardless of RPM, so pollen can reach the wheel the moment it is up to speed.
+			gate.setPowerOverride(true);
 			orchestrator.publish("shooter/targetRPM", Shooter.RPM_TARGET);
 			setEndCondition(
 					() -> (settled && elapsedSince(settledNanos) >= SHOOT_SETTLE_SECONDS) || timer().hasElapsed());
@@ -166,6 +172,8 @@ public abstract class MainAuto extends StateMachineOpMode {
 
 		@Override
 		public void init() {
+			// Shooting is done: close the Gate and let it follow the Shooter again.
+			gate.setPowerOverride(false);
 			setEndCondition(() -> Math.abs(speed) > 0);
 		}
 
@@ -194,13 +202,18 @@ public abstract class MainAuto extends StateMachineOpMode {
 
 		@Override
 		public void init() {
+			// Drive the elevator directly instead of faking g2/right_stick_y: the override wins over
+			// the auto-feed until StopTranferState clears it.
+			elevator.setPowerOverride(1.0);
 			setEndCondition(() -> Math.abs(speed) > 0);
 		}
 
 		@Override
 		public void loop() {
-			orchestrator.publish("g2/right_stick_y", 1.0f);
-			speed = orchestrator.getLatestValue("g2/right_stick_y", Float.class).orElse(0.0f);
+			speed = orchestrator
+					.getLatestValue("elevator/power", Double.class)
+					.orElse(0.0)
+					.floatValue();
 		}
 	}
 
@@ -209,13 +222,17 @@ public abstract class MainAuto extends StateMachineOpMode {
 
 		@Override
 		public void init() {
+			// Hand the elevator back to the auto-feed.
+			elevator.clearPowerOverride();
 			setEndCondition(() -> Math.abs(speed) == 0);
 		}
 
 		@Override
 		public void loop() {
-			orchestrator.publish("g2/right_stick_y", 0.0f);
-			speed = orchestrator.getLatestValue("g2/right_stick_y", Float.class).orElse(0.0f);
+			speed = orchestrator
+					.getLatestValue("elevator/power", Double.class)
+					.orElse(0.0)
+					.floatValue();
 		}
 	}
 
@@ -224,13 +241,18 @@ public abstract class MainAuto extends StateMachineOpMode {
 
 		@Override
 		public void init() {
+			// Drive the intake directly instead of faking g2/left_stick_y: the override wins over
+			// the stick and bumper/trigger until StopIntake clears it.
+			intakeNode.setPowerOverride(1.0);
 			setEndCondition(() -> Math.abs(speed) > 0);
 		}
 
 		@Override
 		public void loop() {
-			orchestrator.publish("g2/left_stick_y", 1.0f);
-			speed = orchestrator.getLatestValue("g2/left_stick_y", Float.class).orElse(0.0f);
+			speed = orchestrator
+					.getLatestValue("intake/power", Double.class)
+					.orElse(0.0)
+					.floatValue();
 		}
 	}
 
@@ -239,13 +261,17 @@ public abstract class MainAuto extends StateMachineOpMode {
 
 		@Override
 		public void init() {
+			// Hand the intake back to the gamepad.
+			intakeNode.clearPowerOverride();
 			setEndCondition(() -> Math.abs(speed) == 0);
 		}
 
 		@Override
 		public void loop() {
-			orchestrator.publish("g2/left_stick_y", 0.0f);
-			speed = orchestrator.getLatestValue("g2/left_stick_y", Float.class).orElse(0.0f);
+			speed = orchestrator
+					.getLatestValue("intake/power", Double.class)
+					.orElse(0.0)
+					.floatValue();
 		}
 	}
 
@@ -587,7 +613,8 @@ public abstract class MainAuto extends StateMachineOpMode {
 		orchestrator.registerNode("bulkcache", bulkCache);
 
 		intake = safeMap.device(DcMotorEx.class, "intake");
-		orchestrator.registerNode("intake", new Intake(orchestrator, intake));
+		intakeNode = new Intake(orchestrator, intake);
+		orchestrator.registerNode("intake", intakeNode);
 
 		shooter = new Shooter(orchestrator, safeMap.device(DcMotorEx.class, "pollenShooter"), "g2");
 		orchestrator.registerNode("shooter", shooter);
@@ -600,6 +627,10 @@ public abstract class MainAuto extends StateMachineOpMode {
 
 		gate = new Gate(orchestrator, safeMap.device(Servo.class, "gate"));
 		orchestrator.registerNode("gate", gate);
+
+		// Auto drives the elevator through its override (see RunTranferState), like the Hood.
+		elevator = new Elevator(orchestrator, safeMap.device(DcMotorEx.class, "elevator"));
+		orchestrator.registerNode("elevator", elevator);
 
 		// Turret shares the intake motor as its encoder, as in MainTeleOp, and aims from the follower.
 		turret = new Turret(

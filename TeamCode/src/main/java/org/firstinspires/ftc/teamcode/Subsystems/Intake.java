@@ -11,6 +11,10 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
  * Runs the intake from gamepad 2's left stick Y (range -1 to 1) or, as a convenience, while the
  * left bumper or left trigger is held at {@link #BUMPER_POWER}. When the stick is off-centre it
  * wins, so a centred stick falls through to the bumper/trigger.
+ * <p>
+ * Auto drives the intake through {@link #setPowerOverride(Double)} instead of faking gamepad stick
+ * topics. While an override is set it wins over the stick and the bumper/trigger, until
+ * {@link #clearPowerOverride()} hands control back.
  */
 public class Intake extends Node {
 
@@ -29,6 +33,10 @@ public class Intake extends Node {
 	private volatile double manualPower = 0.0;
 	private volatile boolean bumperPressed;
 	private volatile boolean triggerPressed;
+
+	// Set by auto (or any other caller) to drive the intake directly. While non-null it wins over
+	// the stick and the bumper/trigger; null hands control back to the gamepad.
+	private volatile Double powerOverride;
 
 	public Intake(Orchestrator orchestrator, SafeDevice<DcMotorEx> intake) {
 		super(orchestrator);
@@ -63,10 +71,12 @@ public class Intake extends Node {
 		apply();
 	}
 
-	// Off-centre stick wins; otherwise a held bumper or left trigger runs the intake at full power.
+	// An explicit auto override wins; otherwise an off-centre stick, then a held bumper or trigger.
 	private void apply() {
 		double applied;
-		if (Math.abs(manualPower) > STICK_DEADBAND) {
+		if (powerOverride != null) {
+			applied = powerOverride;
+		} else if (Math.abs(manualPower) > STICK_DEADBAND) {
 			applied = manualPower;
 		} else if (bumperPressed || triggerPressed) {
 			applied = BUMPER_POWER;
@@ -75,6 +85,26 @@ public class Intake extends Node {
 		}
 		intakeSet.run(m -> m.setPower(applied));
 		orchestrator.publish("intake/power", applied);
+	}
+
+	/**
+	 * Drive the intake from auto: the power is latched and wins over the stick and bumper/trigger
+	 * until {@link #clearPowerOverride()} is called. Pass {@code null} to release the override.
+	 */
+	public void setPowerOverride(Double power) {
+		powerOverride = power;
+		apply();
+	}
+
+	/** Release a {@link #setPowerOverride(Double)} so the gamepad drives the intake. */
+	public void clearPowerOverride() {
+		powerOverride = null;
+		apply();
+	}
+
+	/** Whether auto currently owns the intake. */
+	public boolean isOverridden() {
+		return powerOverride != null;
 	}
 
 	@Override

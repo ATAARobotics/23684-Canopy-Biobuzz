@@ -30,6 +30,11 @@ public class Gate extends Node {
 	// Set while the right bumper is held. Shooter updates are ignored.
 	private boolean overridden;
 
+	// Set by auto (or any other caller) through setPowerOverride. While non-null the Gate is held
+	// open (or closed) regardless of the Shooter's RPM, so auto can clear the path before the
+	// Shooter spins up.
+	private volatile Boolean powerOverride;
+
 	// Last at-RPM state seen from the Shooter, so only a change moves the Gate.
 	private boolean lastAtRpm;
 
@@ -73,7 +78,9 @@ public class Gate extends Node {
 		synchronized (stateLock) {
 			boolean changed = atTarget != lastAtRpm;
 			lastAtRpm = atTarget;
-			if (overridden) {
+			// The bumper and the auto override both pin the Gate; Shooter updates are ignored while
+			// either holds it.
+			if (overridden || powerOverride != null) {
 				return;
 			}
 			if (!changed) {
@@ -89,6 +96,14 @@ public class Gate extends Node {
 
 	/** Applies the current override/at-RPM state. Callers must hold {@code stateLock}. */
 	private void sync() {
+		if (powerOverride != null) {
+			if (powerOverride) {
+				open();
+			} else {
+				close();
+			}
+			return;
+		}
 		if (overridden) {
 			open();
 			return;
@@ -105,11 +120,11 @@ public class Gate extends Node {
 		}
 
 		// TODO: identify issues with the gate not auto-opening
-//		if (isHolding(now)) {
-//			close();
-//		} else {
-//			open();
-//		}
+		// 		if (isHolding(now)) {
+		// 			close();
+		// 		} else {
+		// 			open();
+		// 		}
 	}
 
 	/** Whether the grace period that starts when the Shooter reached RPM is still running. */
@@ -143,7 +158,33 @@ public class Gate extends Node {
 	/** Whether the right bumper currently overrides the Shooter. */
 	public boolean isOverridden() {
 		synchronized (stateLock) {
-			return overridden;
+			return overridden || powerOverride != null;
 		}
+	}
+
+	/**
+	 * Drive the Gate from auto: {@code open} holds the Gate open (or closed when {@code false})
+	 * regardless of the Shooter's RPM until {@link #clearPowerOverride()} is called. Used to clear
+	 * the path before the Shooter spins up. Pass {@code null} to release the override.
+	 */
+	public void setPowerOverride(Boolean open) {
+		synchronized (stateLock) {
+			powerOverride = open;
+			if (open != null) {
+				// Hold it now instead of waiting for the next Shooter tick.
+				if (open) {
+					open();
+				} else {
+					close();
+				}
+			} else {
+				sync();
+			}
+		}
+	}
+
+	/** Release a {@link #setPowerOverride(Boolean)} so the Shooter's RPM drives the Gate again. */
+	public void clearPowerOverride() {
+		setPowerOverride(null);
 	}
 }
