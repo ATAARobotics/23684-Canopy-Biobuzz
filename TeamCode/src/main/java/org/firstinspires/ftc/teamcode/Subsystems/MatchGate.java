@@ -16,6 +16,15 @@ public class MatchGate extends Node {
 	/** Options button: re-take the hold, for practice starts and re-runs. */
 	public static final String REHOLD_BUTTON = "g1/options/rising";
 
+	/**
+	 * Override: publishing a value here forces the gate to that state, whatever the
+	 * release/rehold buttons would say. Auto has no gamepad to press
+	 * {@link #RELEASE_BUTTON}, so it publishes {@code false} on START to let its writes
+	 * flow. The value is the desired held state, matching {@link #HELD_TOPIC}
+	 * (true = hold writes, false = release them).
+	 */
+	public static final String OVERRIDE_TOPIC = "match/override";
+
 	public MatchGate(Orchestrator orchestrator) {
 		super(orchestrator);
 		orchestrator.hardware().restrict("write").queue().sealChildren().apply();
@@ -36,5 +45,18 @@ public class MatchGate extends Node {
 		orchestrator.hardware().restrict("write").queue().sealChildren().apply();
 		orchestrator.publish(HELD_TOPIC, true);
 		orchestrator.log("match gate: re-held by driver");
+	}
+
+	@SubscribedTo(topic = OVERRIDE_TOPIC)
+	public void override(Boolean held) {
+		if (Boolean.TRUE.equals(held)) {
+			orchestrator.hardware().restrict("write").queue().sealChildren().apply();
+			orchestrator.publish(HELD_TOPIC, true);
+			orchestrator.log("match gate: writes held by override");
+		} else {
+			orchestrator.hardware().release("write");
+			orchestrator.publish(HELD_TOPIC, false);
+			orchestrator.log("match gate: writes released by override");
+		}
 	}
 }

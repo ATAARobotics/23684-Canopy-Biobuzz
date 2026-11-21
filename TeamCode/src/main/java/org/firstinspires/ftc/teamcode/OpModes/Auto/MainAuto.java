@@ -21,6 +21,7 @@ import org.firstinspires.ftc.teamcode.Subsystems.Elevator;
 import org.firstinspires.ftc.teamcode.Subsystems.Gate;
 import org.firstinspires.ftc.teamcode.Subsystems.Hood;
 import org.firstinspires.ftc.teamcode.Subsystems.Intake;
+import org.firstinspires.ftc.teamcode.Subsystems.MatchGate;
 import org.firstinspires.ftc.teamcode.Subsystems.Shooter;
 import org.firstinspires.ftc.teamcode.Subsystems.ShooterKicker;
 import org.firstinspires.ftc.teamcode.Subsystems.Turret;
@@ -559,7 +560,8 @@ public abstract class MainAuto extends StateMachineOpMode {
 
 		@Override
 		public void init() {
-			parkPath = Paths.curve(lastPath, poses.redScoringParkControl, poses.redScoringPark).constant(lastPath);
+			parkPath = Paths.curve(lastPath, poses.redScoringParkControl, poses.redScoringPark)
+					.constant(lastPath);
 			setEndCondition(
 					() -> Math.abs(follower.tangentialVelocity()) < Constants.foresightConfig.velocityConstraint.get()
 							&& follower.distanceToEndpoint() < 4);
@@ -604,6 +606,16 @@ public abstract class MainAuto extends StateMachineOpMode {
 		}
 	}
 
+	/**
+	 * Auto has no gamepad to press the gate's release button, so release the writes as
+	 * the route starts. Publishing the override's {@code false} value tells the
+	 * {@link MatchGate} to let hardware writes flow for the rest of the routine.
+	 */
+	@Override
+	protected void onRouteStarted() {
+		orchestrator.publish(MatchGate.OVERRIDE_TOPIC, false);
+	}
+
 	protected List<State> buildStates() {
 
 		follower = Constants.create(safeMap);
@@ -612,6 +624,9 @@ public abstract class MainAuto extends StateMachineOpMode {
 		follower.setPose(getStartingPose());
 		lastPath = getStartingPose();
 		poses = new Poses(follower);
+
+		// The gate holds hardware writes before any other subsystem attempts to run.
+		orchestrator.registerNode("matchGate", new MatchGate(orchestrator));
 
 		// Same subsystems TeleOp uses, registered before any state runs.
 		bulkCache = new BulkCache(orchestrator, safeMap, BulkCache.Mode.AUTO);
