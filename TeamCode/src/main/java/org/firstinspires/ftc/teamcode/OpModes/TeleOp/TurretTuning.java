@@ -16,6 +16,7 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import java.util.Locale;
 import org.firstinspires.ftc.teamcode.Config.TurretConfig;
 import org.firstinspires.ftc.teamcode.Subsystems.Turret;
+import org.firstinspires.ftc.teamcode.Utils.Team;
 
 /**
  * Turret tuning against a square-wave goal, with no vision or odometry. Every value is editable in Panels.
@@ -52,6 +53,8 @@ public class TurretTuning extends SafeOpMode {
 
 		joinedTelemetry = new JoinedTelemetry(PanelsTelemetry.INSTANCE.getFtcTelemetry(), telemetry);
 
+		// The tuner aims at a manual goal, so the alliance letter never selects a cell. Pass the default
+		// through the shared Team util rather than reading a config switch.
 		turret = new Turret(
 				orchestrator,
 				safeMap,
@@ -60,7 +63,8 @@ public class TurretTuning extends SafeOpMode {
 				safeMap.device(CRServo.class, "turretServo3"),
 				safeMap.device(DcMotorEx.class, "intake"),
 				null,
-				"g1");
+				"g1",
+				Team.RED.allianceLetter());
 		orchestrator.registerNode("turret", turret);
 
 		cycle = new TuningCycle(orchestrator, turret);

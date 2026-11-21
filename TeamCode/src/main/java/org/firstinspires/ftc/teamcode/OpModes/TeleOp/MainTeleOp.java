@@ -85,7 +85,8 @@ public abstract class MainTeleOp extends SafeOpMode {
 
 		VisionCameraPose cameraPose = new VisionCameraPose();
 		PointOfInterest poi = new PointOfInterest("AIM");
-		vision = new AprilTagVision(orchestrator, safeMap.raw(), cameraPose, poi, allianceLetter(getTeam()));
+		vision = new AprilTagVision(
+				orchestrator, safeMap.raw(), cameraPose, poi, getTeam().allianceLetter());
 		orchestrator.registerNode("vision", vision);
 
 		turret = new Turret(
@@ -96,7 +97,8 @@ public abstract class MainTeleOp extends SafeOpMode {
 				safeMap.device(CRServo.class, "turretServo3"),
 				intake,
 				pedro.follower(),
-				"g2");
+				"g2",
+				getTeam().allianceLetter());
 		orchestrator.registerNode("turret", turret);
 
 		orchestrator.registerNode("drive", new Drive(orchestrator, frontLeft, frontRight, backLeft, backRight));
@@ -132,11 +134,6 @@ public abstract class MainTeleOp extends SafeOpMode {
 		gate.clearPowerOverride();
 		hood.clearPowerOverride();
 		turret.setManualGoal(null);
-	}
-
-	// 'B' for blue, 'R' for red or unknown. Matches TurretConfig.allianceLetter().
-	private static char allianceLetter(Team team) {
-		return team == Team.BLUE ? 'B' : 'R';
 	}
 
 	@Override

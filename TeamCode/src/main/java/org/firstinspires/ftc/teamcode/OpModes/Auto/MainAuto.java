@@ -16,7 +16,6 @@ import com.qualcomm.robotcore.hardware.Servo;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import org.firstinspires.ftc.teamcode.Config.TurretConfig;
 import org.firstinspires.ftc.teamcode.Subsystems.BulkCache;
 import org.firstinspires.ftc.teamcode.Subsystems.Elevator;
 import org.firstinspires.ftc.teamcode.Subsystems.Gate;
@@ -673,8 +672,8 @@ public abstract class MainAuto extends StateMachineOpMode {
 		orchestrator.registerNode("elevator", elevator);
 
 		// The OpMode's alliance decides which HIVE cell the turret aims at, so the auto is right
-		// without the Panels alliance switch being set to match.
-		TurretConfig.alliance = getTeam() == Team.BLUE ? "BLUE" : "RED";
+		// without any Panels alliance switch being set to match.
+		char allianceLetter = getTeam().allianceLetter();
 
 		// Turret shares the intake motor as its encoder, as in MainTeleOp, and aims from the follower.
 		turret = new Turret(
@@ -685,7 +684,8 @@ public abstract class MainAuto extends StateMachineOpMode {
 				safeMap.device(CRServo.class, "turretServo3"),
 				intake,
 				follower,
-				"g2");
+				"g2",
+				allianceLetter);
 		orchestrator.registerNode("turret", turret);
 
 		follower.holdEnd.set(true);

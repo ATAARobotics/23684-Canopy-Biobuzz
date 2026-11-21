@@ -54,6 +54,9 @@ public class Turret extends Node {
 	private final Follower follower;
 	// Gamepad that owns the offsets and the enabled toggle: "g1" or "g2".
 	private final String inputPrefix;
+	// Alliance this turret aims for: 'B' or 'R'. Comes from the running OpMode's Team (getTeam().allianceLetter()),
+	// so BlueTeleOp aims at the blue cell instead of a stale config default.
+	private final char allianceLetter;
 
 	// Angle when the turret was disabled; compared on re-enable to detect manual movement.
 	private volatile double disabledAngle;
@@ -116,7 +119,8 @@ public class Turret extends Node {
 			SafeDevice<CRServo> turretServo3,
 			SafeDevice<DcMotorEx> encoderMotor,
 			Follower follower,
-			String inputPrefix) {
+			String inputPrefix,
+			char allianceLetter) {
 		super(orchestrator);
 		this.safeMap = safeMap;
 		this.turretServo1 = turretServo1;
@@ -125,6 +129,7 @@ public class Turret extends Node {
 		this.encoderMotor = encoderMotor;
 		this.follower = follower;
 		this.inputPrefix = inputPrefix;
+		this.allianceLetter = allianceLetter;
 
 		this.profiledPid = new ProfiledPIDController(
 				0.0,
@@ -365,7 +370,7 @@ public class Turret extends Node {
 		if (half == null) {
 			return null;
 		}
-		FieldMap.Cluster cell = FieldMap.forCell(TurretConfig.allianceLetter() == 'B', "SCORING".equals(half));
+		FieldMap.Cluster cell = FieldMap.forCell(allianceLetter == 'B', "SCORING".equals(half));
 		return new double[] {cell.x, cell.y};
 	}
 

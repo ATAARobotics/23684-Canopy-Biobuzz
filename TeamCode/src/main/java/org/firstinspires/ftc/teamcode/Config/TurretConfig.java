@@ -6,10 +6,7 @@ import com.bylazar.configurables.annotations.Configurable;
 @Configurable
 public class TurretConfig {
 
-	// ── Alliance & field ─────────────────────────────────────────────────────────
-
-	// "RED" or "BLUE".
-	public static String alliance = "RED";
+	// ── Field ────────────────────────────────────────────────────────────────────
 
 	// Y of the field midline in inches; above is the scoring half, below the audience half.
 	public static double halfSplitY = 70.5;
@@ -80,14 +77,6 @@ public class TurretConfig {
 	public static double cycleHalfPeriodSec = 2.0;
 
 	private TurretConfig() {}
-
-	/** Alliance letter for cluster names: 'R' for red, 'B' for blue. */
-	public static char allianceLetter() {
-		if (alliance != null && alliance.trim().toUpperCase().startsWith("B")) {
-			return 'B';
-		}
-		return 'R';
-	}
 
 	/** Encoder counts per turret degree, derived from the gear tooth counts above. */
 	public static double countsPerTurretDegree() {
