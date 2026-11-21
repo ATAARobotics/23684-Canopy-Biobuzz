@@ -17,14 +17,15 @@ public class Poses {
 	public final Pose redToGarden = redposeFactory.of(23.5, 9.5, 180);
 	public final Pose redPickupGarden = redposeFactory.of(7.5, 9.8, 180);
 	public final Pose redThenShoot = redposeFactory.of(30, 30, 41.9168);
-	public final Pose redAudiencePark = redposeFactory.of(11.5, 92.5382, 106.4792);
+	public final Pose redAudiencePark = redposeFactory.of(16.5, 97.5382, 106.4792);
+    public final Pose redAudienceParkControl = redposeFactory.of(3, 38.9097, 0);
 
 	public final Pose redStartScoring = redposeFactory.of(60.3538, 133.5359, 270);
 	public final Pose redScoringLeave = redposeFactory.of(60.3538, 116.909, 270);
 	public final Pose redScoringFlowerIntake = redposeFactory.of(46.2697, 127.238, 90);
 	public final Pose redScoringFlowerLeave = redposeFactory.of(51.357346875, 106.5348046875, 90);
-	public final Pose redScoringPark = redposeFactory.of(8.016, 122.9, 90);
-	public final Pose redScoringParkControl = redposeFactory.of(3, 38.9097, 0);
+	public final Pose redScoringPark = redposeFactory.of(16.5, 122.9, 90);
+
 
 	public final Pose firstShoot = redposeFactory.of(56, 10, 180);
 	public final Pose secondShootStart = redposeFactory.of(10, 10, 180);

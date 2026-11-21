@@ -8,7 +8,7 @@ public class RedAudienceSide extends MainAuto {
 
 	@Override
 	protected Pose getStartingPose() {
-		return new Pose(55, 9, Math.toRadians(90));
+		return new Pose(63, 9, Math.toRadians(90));
 	}
 
 	@Override
@@ -17,11 +17,11 @@ public class RedAudienceSide extends MainAuto {
 	}
 
 	public void SetRoute() {
-		addStep(AutoStates.leaveAudience);
+//		addStep(AutoStates.leaveAudience);
 		addStep(1);
-		// addStep(AutoStates.shootPreload);
-		addStep(AutoStates.pickFromFlowerAudience);
-		addStep(AutoStates.goToGarden);
+		addStep(AutoStates.shootPreload);
+//		addStep(AutoStates.pickFromFlowerAudience);
+//		addStep(AutoStates.goToGarden);
 		addStep(AutoStates.parkAudience);
 	}
 }
