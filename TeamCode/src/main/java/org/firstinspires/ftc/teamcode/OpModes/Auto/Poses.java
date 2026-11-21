@@ -81,7 +81,7 @@ public class Poses {
 		toGarden = pose(23.5, 9.5, 180);
 		pickupGarden = pose(7.5, 9.8, 180);
 		thenShoot = pose(30, 30, 41.9168);
-		audiencePark = pose(11.54, 97.34, 106.4792);
+		audiencePark = pose(10, 97.34, 106.4792);
 		audienceParkControl = pose(3, 38.9097, 0);
 
 		startScoring = pose(60.3538, 133.5359, 270);
