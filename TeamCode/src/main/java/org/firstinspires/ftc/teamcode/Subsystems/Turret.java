@@ -37,6 +37,9 @@ public class Turret extends Node {
 	private static final int BATTERY_REFRESH_TICKS = 25;
 	// Number of |error| samples behind the settle reading on the tuning screen.
 	private static final int SETTLE_WINDOW_SAMPLES = 25;
+	// While the turret is disabled (x), the owning gamepad's left stick X spins it directly. Full stick
+	// (1.0) commands this fraction of power; centred (0.0) commands none.
+	private static final double MANUAL_TURN_SCALE = 0.5;
 
 	private final SafeDevice<CRServo> turretServo1;
 	private final SafeDevice<CRServo> turretServo2;
@@ -61,6 +64,9 @@ public class Turret extends Node {
 
 	// Bench override: face this absolute angle instead of a cell.
 	private volatile Double manualGoal;
+
+	// Owning gamepad's left stick X (-1..1), read to spin the turret while it is disabled.
+	private volatile double manualTurnInput;
 
 	// Zero is captured on the first tick, when the turret faces straight ahead at init.
 	private boolean zeroCaptured;
@@ -138,19 +144,36 @@ public class Turret extends Node {
 
 		refreshBattery();
 		double commandedVolts = ffVolts + pidVolts;
-		double power = enabled && hasTarget ? toPower(commandedVolts) : 0.0;
 
-		// Test the commanded volts, not the servo power. toPower() applies TurretConfig.powerSign, so positive
-		// volts raise the angle under either sign. The power sign only agrees with the volts when powerSign is
-		// +1. Inverted, this check would cut the volts that back the turret off a limit, and it would latch at
-		// the travel end.
+		double power;
 		atLimit = false;
-		if (angle >= TurretConfig.maxAngleDeg - LIMIT_EPS_DEG && commandedVolts > 0.0) {
-			power = 0.0;
-			atLimit = true;
-		} else if (angle <= TurretConfig.minAngleDeg + LIMIT_EPS_DEG && commandedVolts < 0.0) {
-			power = 0.0;
-			atLimit = true;
+		if (enabled) {
+			power = hasTarget ? toPower(commandedVolts) : 0.0;
+
+			// Test the commanded volts, not the servo power. toPower() applies TurretConfig.powerSign, so positive
+			// volts raise the angle under either sign. The power sign only agrees with the volts when powerSign is
+			// +1. Inverted, this check would cut the volts that back the turret off a limit, and it would latch at
+			// the travel end.
+			if (angle >= TurretConfig.maxAngleDeg - LIMIT_EPS_DEG && commandedVolts > 0.0) {
+				power = 0.0;
+				atLimit = true;
+			} else if (angle <= TurretConfig.minAngleDeg + LIMIT_EPS_DEG && commandedVolts < 0.0) {
+				power = 0.0;
+				atLimit = true;
+			}
+		} else {
+			// Disabled: the left stick X spins the turret directly (full stick → MANUAL_TURN_SCALE). Still honour
+			// the travel limits, using the direction the commanded power actually drives the angle:
+			// power * powerSign > 0 raises it (positive volts raise the angle, volts = power · battery / powerSign).
+			power = MANUAL_TURN_SCALE * manualTurnInput;
+			double angleDirection = power * TurretConfig.powerSign;
+			if (angle >= TurretConfig.maxAngleDeg - LIMIT_EPS_DEG && angleDirection > 0.0) {
+				power = 0.0;
+				atLimit = true;
+			} else if (angle <= TurretConfig.minAngleDeg + LIMIT_EPS_DEG && angleDirection < 0.0) {
+				power = 0.0;
+				atLimit = true;
+			}
 		}
 		boolean held = orchestrator.hardware().isRestricted("write");
 
@@ -362,8 +385,9 @@ public class Turret extends Node {
 	}
 
 	// ── gamepad ───────────────────────────────────────────────────────────────────
-	// Dpad trims the aim angle and the lateral offset, y zeroes both, and x toggles the turret. There are two
-	// handlers per button because each gamepad has its own topic prefix. The guard picks ours.
+	// Dpad trims the aim angle and the lateral offset, y zeroes both, and x toggles the turret. While the turret
+	// is disabled, the left stick X spins it directly. There are two handlers per button because each gamepad has
+	// its own topic prefix. The guard picks ours.
 
 	@SubscribedTo(topic = "g1/dpad_left/rising")
 	public void g1DpadLeft() {
@@ -456,6 +480,20 @@ public class Turret extends Node {
 	public void g2ToggleEnabled() {
 		if ("g2".equals(inputPrefix)) {
 			enabled = !enabled;
+		}
+	}
+
+	@SubscribedTo(topic = "g1/left_stick_x")
+	public void g1LeftStickX(Float stickX) {
+		if ("g1".equals(inputPrefix)) {
+			manualTurnInput = stickX != null ? stickX : 0.0;
+		}
+	}
+
+	@SubscribedTo(topic = "g2/left_stick_x")
+	public void g2LeftStickX(Float stickX) {
+		if ("g2".equals(inputPrefix)) {
+			manualTurnInput = stickX != null ? stickX : 0.0;
 		}
 	}
 

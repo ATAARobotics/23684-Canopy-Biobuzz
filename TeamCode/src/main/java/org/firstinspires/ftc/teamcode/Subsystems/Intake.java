@@ -7,9 +7,27 @@ import com.aaravlabs.synapse.ftc.SafeDevice;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 
+/**
+ * Runs the intake from gamepad 2's left stick Y (range -1 to 1) or, as a convenience, while the
+ * left bumper is held at {@link #BUMPER_POWER}. When both inputs are active the stick wins, so a
+ * centred stick falls through to the bumper.
+ */
 public class Intake extends Node {
+
+	/** Power applied while the left bumper is held and the stick is centred. */
+	public static double BUMPER_POWER = 1.0;
+
+	// Stick magnitudes inside this band count as centred, so a drifting stick is not treated as
+	// an override of the bumper.
+	private static final double STICK_DEADBAND = 0.05;
+
 	private final SafeDevice<DcMotorEx> intake;
 	private final SafeDevice.Scope<DcMotorEx> intakeSet;
+
+	// Written by the stick and bumper callbacks, which Synapse dispatches on separate threads.
+	// Each is a single field read back by apply(), so volatile is enough.
+	private volatile double manualPower = 0.0;
+	private volatile boolean bumperPressed;
 
 	public Intake(Orchestrator orchestrator, SafeDevice<DcMotorEx> intake) {
 		super(orchestrator);
@@ -20,7 +38,26 @@ public class Intake extends Node {
 
 	@SubscribedTo(topic = "g2/left_stick_y")
 	public void onManualPower(Float stickY) {
-		double applied = stickY != null ? -stickY.doubleValue() : 0.0;
+		manualPower = stickY != null ? -stickY.doubleValue() : 0.0;
+		apply();
+	}
+
+	@SubscribedTo(topic = "g2/left_bumper")
+	public void onBumper(Boolean pressed) {
+		bumperPressed = Boolean.TRUE.equals(pressed);
+		apply();
+	}
+
+	// Off-centre stick wins; otherwise a held bumper runs the intake at full power.
+	private void apply() {
+		double applied;
+		if (Math.abs(manualPower) > STICK_DEADBAND) {
+			applied = manualPower;
+		} else if (bumperPressed) {
+			applied = BUMPER_POWER;
+		} else {
+			applied = 0.0;
+		}
 		intakeSet.run(m -> m.setPower(applied));
 		orchestrator.publish("intake/power", applied);
 	}

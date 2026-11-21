@@ -7,14 +7,18 @@ import com.aaravlabs.synapse.ftc.SafeDevice;
 import com.qualcomm.robotcore.hardware.Servo;
 
 /**
- * A servo-actuated barrier below the Shooter that controls whether pollen can reach it. Opens
- * while the Shooter is at target RPM and closes otherwise. Gamepad2's right bumper overrides it
- * while held.
+ * A servo-actuated barrier below the Shooter that controls whether pollen can reach it. Opens once
+ * the Shooter has been at target RPM for {@code AT_RPM_HOLD_NANOS} (200 ms) and closes otherwise.
+ * Gamepad2's right bumper overrides it while held.
  */
 public class Gate extends Node {
 
 	private static final double CLOSED_POSITION = 0.0;
 	private static final double OPEN_POSITION = 0.15;
+
+	// Grace period the Shooter is held at RPM before the Gate opens, so the wheel is settled
+	// before pollen starts moving. 200 ms is about 10 Shooter ticks.
+	private static final long AT_RPM_HOLD_NANOS = 200_000_000L;
 
 	// Guards overridden/lastAtRpm across trigger edges and Shooter ticks.
 	private final Object stateLock = new Object();
@@ -28,6 +32,10 @@ public class Gate extends Node {
 
 	// Last at-RPM state seen from the Shooter, so only a change moves the Gate.
 	private boolean lastAtRpm;
+
+	// When the Shooter first reported at-RPM, or 0 if it is not. While non-zero and less than
+	// AT_RPM_HOLD_NANOS ago the Gate stays closed even though the Shooter is at speed.
+	private long atRpmSinceNanos;
 
 	private final SafeDevice<Servo> gate;
 
@@ -43,6 +51,7 @@ public class Gate extends Node {
 	public void overrideOpen() {
 		synchronized (stateLock) {
 			overridden = true;
+			atRpmSinceNanos = 0;
 			open();
 		}
 	}
@@ -55,14 +64,22 @@ public class Gate extends Node {
 		}
 	}
 
-	// Republished every tick, so act only when it flips. While overridden, just track it.
+	// Republished every tick, so act when the at-RPM state flips or while it is still inside the
+	// grace period. While overridden, just track it.
 	@SubscribedTo(topic = "shooter/atRPM")
 	public void onAtRpm(Boolean atRpm) {
 		boolean atTarget = Boolean.TRUE.equals(atRpm);
 		synchronized (stateLock) {
 			boolean changed = atTarget != lastAtRpm;
 			lastAtRpm = atTarget;
-			if (overridden || !changed) {
+			if (overridden) {
+				return;
+			}
+			if (!changed) {
+				// Still at RPM: open the moment the grace period elapses.
+				if (atTarget && atRpmSinceNanos != 0 && isHolding(nanos())) {
+					sync();
+				}
 				return;
 			}
 			sync();
@@ -71,11 +88,34 @@ public class Gate extends Node {
 
 	/** Applies the current override/at-RPM state. Callers must hold {@code stateLock}. */
 	private void sync() {
-		if (overridden || lastAtRpm) {
+		if (overridden) {
 			open();
-		} else {
-			close();
+			return;
 		}
+		if (!lastAtRpm) {
+			atRpmSinceNanos = 0;
+			close();
+			return;
+		}
+		// At RPM: keep the Gate closed until the Shooter has been at speed for AT_RPM_HOLD_NANOS.
+		long now = nanos();
+		if (atRpmSinceNanos == 0) {
+			atRpmSinceNanos = now;
+		}
+		if (isHolding(now)) {
+			close();
+		} else {
+			open();
+		}
+	}
+
+	/** Whether the grace period that starts when the Shooter reached RPM is still running. */
+	private boolean isHolding(long now) {
+		return now - atRpmSinceNanos < AT_RPM_HOLD_NANOS;
+	}
+
+	private static long nanos() {
+		return System.nanoTime();
 	}
 
 	/** Close the Gate: servo position CLOSED_POSITION blocks pollen from reaching the Shooter. */

@@ -28,7 +28,7 @@ public class  Shooter extends Node {
 	private final boolean refreshControllers;
 	public static double TICKS_PER_REVOLUTION = 28.0;
 	public static final double RPM_CONVERSION = 60.0 / TICKS_PER_REVOLUTION;
-	public static double RPM_TARGET = 3500.0;
+	public static double RPM_TARGET = 3000.0;
 
 	public Shooter(Orchestrator orchestrator, SafeDevice<DcMotorEx> shooter, String inputPrefix) {
 		this(orchestrator, shooter, inputPrefix, false);
