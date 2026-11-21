@@ -1,25 +1,14 @@
 package org.firstinspires.ftc.teamcode.OpModes.Auto;
 
-import com.aaravlabs.safepedropathing.math.Pose;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import org.firstinspires.ftc.teamcode.Utils.Team;
 
+// Garden route for the red alliance.
 @Autonomous
-public class RedSoloAuto extends MainAuto {
-	@Override
-	protected Pose getStartingPose() {
-		return new Pose(8, 49);
-	}
+public class RedSoloAuto extends SoloAuto {
 
 	@Override
-	protected boolean onRed() {
-		return false;
-	}
-
-	@Override
-	public void setRoute() {
-		addStep(AutoStates.leavePushAlliance);
-		addStep(AutoStates.goToGardenShooting);
-		addStep(AutoStates.pickFromFlowerScoring);
-		addStep(AutoStates.parkScoring);
+	protected Team getTeam() {
+		return Team.RED;
 	}
 }

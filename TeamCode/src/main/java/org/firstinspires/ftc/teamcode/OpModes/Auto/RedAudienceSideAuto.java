@@ -1,24 +1,14 @@
 package org.firstinspires.ftc.teamcode.OpModes.Auto;
 
-import com.aaravlabs.safepedropathing.math.Pose;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import org.firstinspires.ftc.teamcode.Utils.Team;
 
+// Audience-half auto for the red alliance.
 @Autonomous
-public class RedAudienceSideAuto extends MainAuto {
+public class RedAudienceSideAuto extends AudienceSideAuto {
 
 	@Override
-	protected Pose getStartingPose() {
-		return new Pose(63, 9, Math.toRadians(90));
-	}
-
-	@Override
-	protected boolean onRed() {
-		return false;
-	}
-
-	public void setRoute() {
-		addStep(1);
-		addStep(AutoStates.shootPreload);
-		addStep(AutoStates.parkAudience);
+	protected Team getTeam() {
+		return Team.RED;
 	}
 }

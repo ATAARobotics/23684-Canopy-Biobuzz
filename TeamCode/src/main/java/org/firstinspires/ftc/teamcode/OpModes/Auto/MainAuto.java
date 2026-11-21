@@ -16,6 +16,7 @@ import com.qualcomm.robotcore.hardware.Servo;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import org.firstinspires.ftc.teamcode.Config.TurretConfig;
 import org.firstinspires.ftc.teamcode.Subsystems.BulkCache;
 import org.firstinspires.ftc.teamcode.Subsystems.Elevator;
 import org.firstinspires.ftc.teamcode.Subsystems.Gate;
@@ -25,6 +26,7 @@ import org.firstinspires.ftc.teamcode.Subsystems.MatchGate;
 import org.firstinspires.ftc.teamcode.Subsystems.Shooter;
 import org.firstinspires.ftc.teamcode.Subsystems.ShooterKicker;
 import org.firstinspires.ftc.teamcode.Subsystems.Turret;
+import org.firstinspires.ftc.teamcode.Utils.Team;
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 
 public abstract class MainAuto extends StateMachineOpMode {
@@ -79,7 +81,8 @@ public abstract class MainAuto extends StateMachineOpMode {
 
 	protected abstract Pose getStartingPose();
 
-	protected abstract boolean onRed(); // will become the alliance swap thing
+	/** Which alliance this auto drives for; picks the side of the field the poses are laid out on. */
+	protected abstract Team getTeam();
 
 	private State getState(AutoStates state) {
 
@@ -288,7 +291,7 @@ public abstract class MainAuto extends StateMachineOpMode {
 
 		@Override
 		public void init() {
-			leavePath = Paths.line(lastPath, poses.redScoringLeave).constant(lastPath);
+			leavePath = Paths.line(lastPath, poses.scoringLeave).constant(lastPath);
 			setEndCondition(() -> follower.atParametricEnd());
 			follower.follow(leavePath);
 		}
@@ -308,7 +311,7 @@ public abstract class MainAuto extends StateMachineOpMode {
 
 		@Override
 		public void stop() {
-			lastPath = poses.redAudienceLeave;
+			lastPath = poses.scoringLeave;
 			follower.stop();
 		}
 	}
@@ -318,7 +321,7 @@ public abstract class MainAuto extends StateMachineOpMode {
 
 		@Override
 		public void init() {
-			leavePath = Paths.line(lastPath, poses.redAudienceLeave).constant(lastPath);
+			leavePath = Paths.line(lastPath, poses.audienceLeave).constant(lastPath);
 			setEndCondition(() -> follower.atParametricEnd());
 			follower.follow(leavePath);
 		}
@@ -338,7 +341,7 @@ public abstract class MainAuto extends StateMachineOpMode {
 
 		@Override
 		public void stop() {
-			lastPath = poses.redAudienceLeave;
+			lastPath = poses.audienceLeave;
 			follower.stop();
 		}
 	}
@@ -348,7 +351,7 @@ public abstract class MainAuto extends StateMachineOpMode {
 
 		@Override
 		public void init() {
-			leavePath = Paths.line(lastPath, poses.redParkingZoneAlliancePush).constant(lastPath);
+			leavePath = Paths.line(lastPath, poses.parkingZoneAlliancePush).constant(lastPath);
 			setEndCondition(
 					() -> Math.abs(follower.tangentialVelocity()) < Constants.foresightConfig.velocityConstraint.get()
 							&& follower.distanceToEndpoint() < 4);
@@ -370,7 +373,7 @@ public abstract class MainAuto extends StateMachineOpMode {
 
 		@Override
 		public void stop() {
-			lastPath = poses.redParkingZoneAlliancePush;
+			lastPath = poses.parkingZoneAlliancePush;
 			follower.stop();
 		}
 	}
@@ -387,9 +390,9 @@ public abstract class MainAuto extends StateMachineOpMode {
 		Path leaveFlower;
 
 		public void init() {
-			if (lastPath.y() > 72) goToFlower = Paths.line(lastPath, poses.redScoringFlowerIntake).constant(Math.toRadians(90));
-			else goToFlower = Paths.curve(lastPath, poses.redFirstFlowerControl1, poses.redScoringFlowerIntake)
-					.linear(lastPath, poses.redScoringFlowerIntake);
+			if (lastPath.y() > 72) goToFlower = Paths.line(lastPath, poses.scoringFlowerIntake).constant(Math.toRadians(90));
+			else goToFlower = Paths.curve(lastPath, poses.firstFlowerControl1, poses.scoringFlowerIntake)
+					.linear(lastPath, poses.scoringFlowerIntake);
 			setEndCondition(() -> !follower.following());
 			follower.follow(goToFlower);
 		}
@@ -402,7 +405,7 @@ public abstract class MainAuto extends StateMachineOpMode {
 
 		@Override
 		public void stop() {
-			lastPath = poses.redAudienceFlowerIntake;
+			lastPath = poses.scoringFlowerIntake;
 			follower.stop();
 		}
 	}
@@ -412,7 +415,7 @@ public abstract class MainAuto extends StateMachineOpMode {
 		Path leaveFlower;
 
 		public void init() {
-			leaveFlower = Paths.line(lastPath, poses.redScoringFlowerLeave).constant(Math.toRadians(90));
+			leaveFlower = Paths.line(lastPath, poses.scoringFlowerLeave).constant(Math.toRadians(90));
 			setEndCondition(() -> !follower.following());
 			follower.follow(leaveFlower);
 		}
@@ -425,7 +428,7 @@ public abstract class MainAuto extends StateMachineOpMode {
 
 		@Override
 		public void stop() {
-			lastPath = poses.redAudienceFlowerLeave;
+			lastPath = poses.scoringFlowerLeave;
 			follower.stop();
 		}
 	}
@@ -442,10 +445,10 @@ public abstract class MainAuto extends StateMachineOpMode {
 		Path leaveFlower;
 
 		public void init() {
-			if (lastPath.y() > 72) goToFlower = Paths.curve(lastPath, poses.redAudienceFlowerIntake, poses.redAudienceFlowerIntake)
-					.linear(lastPath, poses.redAudienceFlowerIntake);
-			else goToFlower = Paths.curve(lastPath, poses.redFirstFlowerControl1, poses.redAudienceFlowerIntake)
-					.linear(lastPath, poses.redAudienceFlowerIntake);
+			if (lastPath.y() > 72) goToFlower = Paths.curve(lastPath, poses.audienceFlowerIntake, poses.audienceFlowerIntake)
+					.linear(lastPath, poses.audienceFlowerIntake);
+			else goToFlower = Paths.curve(lastPath, poses.firstFlowerControl1, poses.audienceFlowerIntake)
+					.linear(lastPath, poses.audienceFlowerIntake);
 			setEndCondition(() -> !follower.following());
 			follower.follow(goToFlower);
 		}
@@ -457,7 +460,7 @@ public abstract class MainAuto extends StateMachineOpMode {
 
 		@Override
 		public void stop() {
-			lastPath = poses.redAudienceFlowerIntake;
+			lastPath = poses.audienceFlowerIntake;
 			follower.stop();
 		}
 	}
@@ -467,7 +470,7 @@ public abstract class MainAuto extends StateMachineOpMode {
 		Path leaveFlower;
 
 		public void init() {
-			leaveFlower = Paths.line(lastPath, poses.redScoringFlowerLeave).constant(Math.toRadians(90));
+			leaveFlower = Paths.line(lastPath, poses.scoringFlowerLeave).constant(Math.toRadians(90));
 			setEndCondition(() -> !follower.following());
 			follower.follow(leaveFlower);
 		}
@@ -480,7 +483,7 @@ public abstract class MainAuto extends StateMachineOpMode {
 
 		@Override
 		public void stop() {
-			lastPath = poses.redAudienceFlowerLeave;
+			lastPath = poses.audienceFlowerLeave;
 			follower.stop();
 		}
 	}
@@ -504,7 +507,7 @@ public abstract class MainAuto extends StateMachineOpMode {
 
 		@Override
 		public void init() {
-			leavePath = Paths.line(lastPath, poses.redToGarden).linear(lastPath, poses.redToGarden);
+			leavePath = Paths.line(lastPath, poses.toGarden).linear(lastPath, poses.toGarden);
 			setEndCondition(
 					() -> Math.abs(follower.tangentialVelocity()) < Constants.foresightConfig.velocityConstraint.get()
 							&& follower.distanceToEndpoint() < 4);
@@ -526,7 +529,7 @@ public abstract class MainAuto extends StateMachineOpMode {
 
 		@Override
 		public void stop() {
-			lastPath = poses.redToGarden;
+			lastPath = poses.toGarden;
 			follower.stop();
 		}
 	}
@@ -536,7 +539,7 @@ public abstract class MainAuto extends StateMachineOpMode {
 
 		@Override
 		public void init() {
-			leavePath = Paths.line(lastPath, poses.redPickupGarden).constant(lastPath);
+			leavePath = Paths.line(lastPath, poses.pickupGarden).constant(lastPath);
 			setEndCondition(
 					() -> Math.abs(follower.tangentialVelocity()) < Constants.foresightConfig.velocityConstraint.get()
 							&& follower.distanceToEndpoint() < 4);
@@ -558,7 +561,7 @@ public abstract class MainAuto extends StateMachineOpMode {
 
 		@Override
 		public void stop() {
-			lastPath = poses.redPickupGarden;
+			lastPath = poses.pickupGarden;
 			follower.stop();
 		}
 	}
@@ -568,7 +571,7 @@ public abstract class MainAuto extends StateMachineOpMode {
 
 		@Override
 		public void init() {
-			parkPath = Paths.curve(lastPath, poses.redScoringParkControl1, poses.redScoringParkControl2, poses.redScoringPark)
+			parkPath = Paths.curve(lastPath, poses.scoringParkControl1, poses.scoringParkControl2, poses.scoringPark)
 					.constant(lastPath);
 			setEndCondition(
 					() -> Math.abs(follower.tangentialVelocity()) < Constants.foresightConfig.velocityConstraint.get()
@@ -584,7 +587,7 @@ public abstract class MainAuto extends StateMachineOpMode {
 
 		@Override
 		public void stop() {
-			lastPath = poses.redScoringPark;
+			lastPath = poses.scoringPark;
 			follower.stop();
 		}
 	}
@@ -594,7 +597,7 @@ public abstract class MainAuto extends StateMachineOpMode {
 
 		@Override
 		public void init() {
-			parkPath = Paths.curve(lastPath, poses.redAudienceParkControl, poses.redAudiencePark)
+			parkPath = Paths.curve(lastPath, poses.audienceParkControl, poses.audiencePark)
 					.constant(lastPath);
 			setEndCondition(
 					() -> Math.abs(follower.tangentialVelocity()) < Constants.foresightConfig.velocityConstraint.get()
@@ -610,7 +613,7 @@ public abstract class MainAuto extends StateMachineOpMode {
 
 		@Override
 		public void stop() {
-			lastPath = poses.redAudiencePark;
+			lastPath = poses.audiencePark;
 			follower.stop();
 		}
 	}
@@ -628,11 +631,11 @@ public abstract class MainAuto extends StateMachineOpMode {
 	protected List<State> buildStates() {
 
 		follower = Constants.create(safeMap);
+		poses = Poses.onSide(follower, getTeam());
+		lastPath = getStartingPose();
+		follower.setPose(lastPath);
 		autoStates = new ArrayList<>();
 		setRoute();
-		follower.setPose(getStartingPose());
-		lastPath = getStartingPose();
-		poses = new Poses(follower);
 
 		// The gate holds hardware writes before any other subsystem attempts to run.
 		orchestrator.registerNode("matchGate", new MatchGate(orchestrator));
@@ -668,6 +671,10 @@ public abstract class MainAuto extends StateMachineOpMode {
 		// Auto drives the elevator through its override (see RunTransferState), like the Hood.
 		elevator = new Elevator(orchestrator, safeMap.device(DcMotorEx.class, "elevator"));
 		orchestrator.registerNode("elevator", elevator);
+
+		// The OpMode's alliance decides which HIVE cell the turret aims at, so the auto is right
+		// without the Panels alliance switch being set to match.
+		TurretConfig.alliance = getTeam() == Team.BLUE ? "BLUE" : "RED";
 
 		// Turret shares the intake motor as its encoder, as in MainTeleOp, and aims from the follower.
 		turret = new Turret(
