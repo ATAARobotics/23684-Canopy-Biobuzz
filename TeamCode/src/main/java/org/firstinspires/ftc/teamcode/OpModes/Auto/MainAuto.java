@@ -180,7 +180,6 @@ public abstract class MainAuto extends StateMachineOpMode {
 		follower.setPose(lastPath);
 		autoStates = new ArrayList<>();
 		ctx = new AutoContext(follower, poses, orchestrator, telemetry, lastPath);
-		setRoute();
 
 		// The gate holds hardware writes before any other subsystem attempts to run.
 		orchestrator.registerNode("matchGate", new MatchGate(orchestrator));
@@ -233,6 +232,8 @@ public abstract class MainAuto extends StateMachineOpMode {
 				"g2",
 				allianceLetter);
 		orchestrator.registerNode("turret", turret);
+
+		setRoute();
 
 		follower.holdEnd.set(true);
 

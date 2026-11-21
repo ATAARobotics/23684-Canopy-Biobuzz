@@ -81,14 +81,14 @@ public class Poses {
 		toGarden = pose(23.5, 9.5, 180);
 		pickupGarden = pose(7.5, 9.8, 180);
 		thenShoot = pose(30, 30, 41.9168);
-		audiencePark = pose(16.5, 97.5382, 106.4792);
+		audiencePark = pose(16.5, 96.75, 106.4792);
 		audienceParkControl = pose(3, 38.9097, 0);
 
 		startScoring = pose(60.3538, 133.5359, 270);
 		scoringLeave = pose(60.3538, 116.909, 270);
 		scoringFlowerIntake = pose(46.2697, 127.238, 90);
 		scoringFlowerLeave = pose(51.357346875, 106.5348046875, 90);
-		scoringPark = pose(9.9916, 121.5171, 90);
+		scoringPark = pose(11.3745, 119.344, 90);
 		scoringParkControl1 = pose(52.0623, 99.3749, 0);
 		scoringParkControl2 = pose(32.0284, 126.9064, 0);
 
@@ -122,8 +122,7 @@ public class Poses {
 
 	/** Mirrors a pose through the field's center: X, Y, and heading all flip. */
 	public static Pose mirror(Pose pose) {
-		return pose
-				.withX(FieldMap.mirror(pose.x()))
+		return pose.withX(FieldMap.mirror(pose.x()))
 				.withY(FieldMap.mirror(pose.y()))
 				.withHeading(pose.heading() + Math.PI);
 	}

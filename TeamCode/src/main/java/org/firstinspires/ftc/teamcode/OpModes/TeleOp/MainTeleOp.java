@@ -8,6 +8,7 @@ import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.Servo;
 import org.firstinspires.ftc.teamcode.Config.TurretConfig;
+import org.firstinspires.ftc.teamcode.OpModes.Auto.Poses;
 import org.firstinspires.ftc.teamcode.Subsystems.BulkCache;
 import org.firstinspires.ftc.teamcode.Subsystems.Drive;
 import org.firstinspires.ftc.teamcode.Subsystems.Elevator;
@@ -79,8 +80,13 @@ public abstract class MainTeleOp extends SafeOpMode {
 		GamepadAdaptor.attach(orchestrator, gamepad1, "g1");
 		GamepadAdaptor.attach(orchestrator, gamepad2, "g2");
 
-		pedro = new Pedro(orchestrator, safeMap);
-		pedro.setStartPose(getStartingPose());
+		pedro = new Pedro(orchestrator, safeMap, getStartingPose());
+		if (Poses.finalPose.equals(new Pose(0, 0, 0))) {
+			pedro.setStartPose(getStartingPose());
+		} else {
+			pedro.setStartPose(Poses.finalPose);
+		}
+
 		orchestrator.registerNode("pedro", pedro);
 
 		VisionCameraPose cameraPose = new VisionCameraPose();
