@@ -4,7 +4,7 @@ import com.aaravlabs.safepedropathing.math.Pose;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
 @Autonomous
-public class RedAudienceSide extends MainAuto {
+public class RedAudienceSideAuto extends MainAuto {
 
 	@Override
 	protected Pose getStartingPose() {
@@ -16,12 +16,9 @@ public class RedAudienceSide extends MainAuto {
 		return false;
 	}
 
-	public void SetRoute() {
-//		addStep(AutoStates.leaveAudience);
+	public void setRoute() {
 		addStep(1);
 		addStep(AutoStates.shootPreload);
-//		addStep(AutoStates.pickFromFlowerAudience);
-//		addStep(AutoStates.goToGarden);
 		addStep(AutoStates.parkAudience);
 	}
 }

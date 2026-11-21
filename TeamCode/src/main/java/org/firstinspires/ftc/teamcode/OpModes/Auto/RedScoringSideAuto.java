@@ -16,11 +16,9 @@ public class RedScoringSideAuto extends MainAuto {
 	}
 
 	@Override
-	public void SetRoute() {
+	public void setRoute() {
 		addStep(15);
-//		addStep(AutoStates.leaveScoring);
 		addStep(AutoStates.shootPreload);
-//		addStep(AutoStates.pickFromFlowerScoring);
 		addStep(AutoStates.parkScoring);
 	}
 }

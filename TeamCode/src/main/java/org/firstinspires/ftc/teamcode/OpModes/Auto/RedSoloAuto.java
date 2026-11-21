@@ -16,7 +16,7 @@ public class RedSoloAuto extends MainAuto {
 	}
 
 	@Override
-	public void SetRoute() {
+	public void setRoute() {
 		addStep(AutoStates.leavePushAlliance);
 		addStep(AutoStates.goToGardenShooting);
 		addStep(AutoStates.pickFromFlowerScoring);
