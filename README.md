@@ -28,7 +28,7 @@ dprint fmt
 ./gradlew lintDebug
 ```
 
-Requires **Android Studio Ladybug (2024.2)** or later and **JDK 17**.
+Requires **Android Studio Ladybug (2024.2)** or later and **JDK 17 (Amazon Corretto recommended)**.
 
 ### Installing dprint
 
