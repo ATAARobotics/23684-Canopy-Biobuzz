@@ -17,6 +17,10 @@ public class Poses {
 
 	public static Pose finalPose = new Pose(0, 0, 0);
 
+	public static boolean hasFinalPose() {
+		return finalPose.x() != 0.0 || finalPose.y() != 0.0 || finalPose.heading() != 0.0;
+	}
+
 	private static final PoseFactory DEGREES = PoseFactory.degrees();
 
 	// Audience half.

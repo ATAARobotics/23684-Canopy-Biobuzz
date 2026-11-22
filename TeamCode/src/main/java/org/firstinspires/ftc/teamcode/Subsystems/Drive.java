@@ -52,7 +52,7 @@ public class Drive extends Node {
 		double r = orchestrator
 				.getLatestValue("g1/right_stick_x", Float.class)
 				.map(Float::doubleValue)
-				.orElse(0.0);
+				.orElse(0.0) * 0.7;
 
 		double pFL = y + x + r;
 		double pFR = y - x - r;

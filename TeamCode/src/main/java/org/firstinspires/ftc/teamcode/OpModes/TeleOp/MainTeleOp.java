@@ -81,11 +81,7 @@ public abstract class MainTeleOp extends SafeOpMode {
 		GamepadAdaptor.attach(orchestrator, gamepad2, "g2");
 
 		pedro = new Pedro(orchestrator, safeMap, getStartingPose());
-		if (Poses.finalPose.equals(new Pose(0, 0, 0))) {
-			pedro.setStartPose(getStartingPose());
-		} else {
-			pedro.setStartPose(Poses.finalPose);
-		}
+		pedro.setStartPose(Poses.hasFinalPose() ? Poses.finalPose : getStartingPose());
 
 		orchestrator.registerNode("pedro", pedro);
 
