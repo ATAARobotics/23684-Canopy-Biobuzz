@@ -49,7 +49,7 @@ public class TurretTuning extends SafeOpMode {
 
 	@Override
 	protected void onSafeInit() {
-		GamepadAdaptor.attach(orchestrator, gamepad1, "g1");
+		GamepadAdaptor.attach(orchestrator, gamepad2, "g2");
 
 		joinedTelemetry = new JoinedTelemetry(PanelsTelemetry.INSTANCE.getFtcTelemetry(), telemetry);
 
@@ -63,7 +63,6 @@ public class TurretTuning extends SafeOpMode {
 				safeMap.device(CRServo.class, "turretServo3"),
 				safeMap.device(DcMotorEx.class, "intake"),
 				null,
-				"g1",
 				Team.RED.allianceLetter());
 		orchestrator.registerNode("turret", turret);
 
@@ -184,13 +183,13 @@ public class TurretTuning extends SafeOpMode {
 			turret.setManualGoal(atTarget ? TurretConfig.cycleTargetDeg : base);
 		}
 
-		@SubscribedTo(topic = "g1/a/rising")
+		@SubscribedTo(topic = "g2/a/rising")
 		public void toggleCycle() {
 			running = !running;
 			lastFlipNanos = System.nanoTime();
 		}
 
-		@SubscribedTo(topic = "g1/b/rising")
+		@SubscribedTo(topic = "g2/b/rising")
 		public void baseNow() {
 			running = false;
 			atTarget = false;

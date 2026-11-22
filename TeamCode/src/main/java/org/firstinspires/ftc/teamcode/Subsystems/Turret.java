@@ -7,6 +7,7 @@ import com.aaravlabs.safepedropathing.follower.Follower;
 import com.aaravlabs.safepedropathing.math.Pose;
 import com.aaravlabs.synapse.Node;
 import com.aaravlabs.synapse.Orchestrator;
+import com.aaravlabs.synapse.annotation.OnHardwareThread;
 import com.aaravlabs.synapse.annotation.RunPeriodically;
 import com.aaravlabs.synapse.annotation.SubscribedTo;
 import com.aaravlabs.synapse.ftc.SafeDevice;
@@ -42,6 +43,7 @@ public class Turret extends Node {
 	private static final double MANUAL_TURN_SCALE = 0.5;
 	// Left stick X magnitude below this counts as centred, so drift doesn't creep the turret while disabled.
 	private static final double MANUAL_TURN_DEADZONE = 0.05;
+	private static final double FINE_TRIM_DEADZONE = 0.05;
 	// Only treat the turret as manually moved if it turned this many degrees while disabled.
 	private static final double MANUAL_MOVE_DEADZONE_DEG = 2.0;
 
@@ -52,8 +54,6 @@ public class Turret extends Node {
 	private final SafeHardwareMap safeMap;
 	// Null on the tuner: the tuning OpMode has no odometry.
 	private final Follower follower;
-	// Gamepad that owns the offsets and the enabled toggle: "g1" or "g2".
-	private final String inputPrefix;
 	// Alliance this turret aims for: 'B' or 'R'. Comes from the running OpMode's Team (getTeam().allianceLetter()),
 	// so BlueTeleOp aims at the blue cell instead of a stale config default.
 	private final char allianceLetter;
@@ -70,20 +70,21 @@ public class Turret extends Node {
 	// Driver-set during a run. Instance state, not Panels statics, which outlive a match.
 	private volatile double aimOffsetDeg;
 	private volatile double lateralOffsetCm;
-	private volatile boolean enabled = true;
+	private volatile boolean enabled = TurretConfig.enabledByDefault;
 
 	// Bench override: face this absolute angle instead of a cell.
 	private volatile Double manualGoal;
 
 	// Owning gamepad's left stick X (-1..1), read to spin the turret while it is disabled.
 	private volatile double manualTurnInput;
-
-	// Zero is captured on the first tick, when the turret faces straight ahead at init.
-	private boolean zeroCaptured;
-	private int zeroTicks;
+	private volatile boolean fineTrim;
 
 	// Whether the previous tick had a target. Re-acquiring one re-seeds the profile.
 	private boolean hadTarget;
+
+	private int lastRawTicks;
+	private boolean hasRawTicks;
+	private int unwrappedTicks;
 
 	private int batteryTick;
 	private double batteryVoltage = TurretConfig.nominalVoltage;
@@ -119,7 +120,6 @@ public class Turret extends Node {
 			SafeDevice<CRServo> turretServo3,
 			SafeDevice<DcMotorEx> encoderMotor,
 			Follower follower,
-			String inputPrefix,
 			char allianceLetter) {
 		super(orchestrator);
 		this.safeMap = safeMap;
@@ -128,7 +128,6 @@ public class Turret extends Node {
 		this.turretServo3 = turretServo3;
 		this.encoderMotor = encoderMotor;
 		this.follower = follower;
-		this.inputPrefix = inputPrefix;
 		this.allianceLetter = allianceLetter;
 
 		this.profiledPid = new ProfiledPIDController(
@@ -145,21 +144,24 @@ public class Turret extends Node {
 	@RunPeriodically(hz = 50, hardware = true)
 	public void controlLoop() {
 		double angle = measureAngle();
-
-		Aim aim = computeAim();
-		boolean hasTarget = aim != null;
-		double goal = hasTarget ? track(angle, aim) : holdPosition(angle);
-		hadTarget = hasTarget;
-		if (hasTarget) {
-			recordCycle(goal);
-		}
-
 		refreshBattery();
-		double commandedVolts = ffVolts + pidVolts;
 
+		Aim aim = enabled ? computeAim() : null;
+		boolean hasTarget = aim != null;
+
+		double goal;
 		double power;
 		atLimit = false;
+
 		if (enabled) {
+			goal = hasTarget ? track(angle, aim) : holdPosition(angle);
+			hadTarget = hasTarget;
+			if (hasTarget) {
+				recordCycle(goal);
+			}
+
+			double commandedVolts = ffVolts + pidVolts;
+
 			power = hasTarget ? toPower(commandedVolts) : 0.0;
 
 			// Test the commanded volts, not the servo power. toPower() applies TurretConfig.powerSign, so positive
@@ -177,6 +179,9 @@ public class Turret extends Node {
 			// Disabled: the left stick X spins the turret directly (full stick → MANUAL_TURN_SCALE). Still honour
 			// the travel limits, using the direction the commanded power actually drives the angle:
 			// power * powerSign > 0 raises it (positive volts raise the angle, volts = power · battery / powerSign).
+			goal = angle;
+			hadTarget = false;
+			holdPosition(angle);
 			power = MANUAL_TURN_SCALE * manualTurnInput;
 			double angleDirection = power * TurretConfig.powerSign;
 			if (angle >= TurretConfig.maxAngleDeg - LIMIT_EPS_DEG && angleDirection > 0.0) {
@@ -187,6 +192,7 @@ public class Turret extends Node {
 				atLimit = true;
 			}
 		}
+
 		boolean held = orchestrator.hardware().isRestricted("write");
 
 		if (!held) {
@@ -198,16 +204,33 @@ public class Turret extends Node {
 		publish(angle, goal, aim, power);
 	}
 
-	// Encoder ticks since the zero taken on the first tick, in degrees. That zero is straight ahead.
 	private double measureAngle() {
-		int ticks = encoderMotor.raw().getCurrentPosition();
-		if (!zeroCaptured) {
-			zeroTicks = ticks;
-			zeroCaptured = true;
-		}
-		encoderTicks = ticks - zeroTicks;
+		int raw = encoderMotor.raw().getCurrentPosition();
+		unwrappedTicks = unwrap(raw);
+		encoderTicks = unwrappedTicks - (int) Math.round(TurretConfig.encoderZeroTicks);
 		double sign = TurretConfig.encoderReversed ? -1.0 : 1.0;
-		return encoderTicks * sign / TurretConfig.countsPerTurretDegree();
+		return wrapDeg(encoderTicks * sign / TurretConfig.countsPerTurretDegree());
+	}
+
+	private int unwrap(int raw) {
+		if (!hasRawTicks) {
+			hasRawTicks = true;
+			lastRawTicks = raw;
+			unwrappedTicks = raw;
+			return unwrappedTicks;
+		}
+		int fullScale = (int) Math.round(360.0 * TurretConfig.countsPerTurretDegree());
+		int delta = raw - lastRawTicks;
+		if (fullScale > 0) {
+			if (delta > fullScale / 2) {
+				delta -= fullScale;
+			} else if (delta < -fullScale / 2) {
+				delta += fullScale;
+			}
+		}
+		lastRawTicks = raw;
+		unwrappedTicks += delta;
+		return unwrappedTicks;
 	}
 
 	// Nothing to aim at: hold still and re-seed the profile. Without this, the next target would start
@@ -235,7 +258,8 @@ public class Turret extends Node {
 		profiledPid.setGoal(goal);
 		pidVolts = profiledPid.calculate(angle);
 		TrapezoidProfile.State setpoint = profiledPid.getSetpoint();
-		ffVolts = feedforward.calculate(prevSetpointVel, setpoint.velocity);
+		double acceleration = (setpoint.velocity - prevSetpointVel) / LOOP_PERIOD_SEC;
+		ffVolts = feedforward.calculate(setpoint.velocity, acceleration);
 		prevSetpointVel = setpoint.velocity;
 		setpointDeg = setpoint.position;
 		setpointVelDegPerSec = setpoint.velocity;
@@ -325,22 +349,28 @@ public class Turret extends Node {
 			return new Aim(manual + aimOffsetDeg, SOURCE_MANUAL, String.format(Locale.US, "MANUAL(%.1f)", manual));
 		}
 
-		double[] cell = cellPosition();
 		Pose pose = follower == null ? null : follower.pose();
-		pose.plus(new Pose(TurretConfig.offsetX, TurretConfig.offsetY, pose.heading()));
-		if (cell != null && pose != null) {
-			double dx = cell[0] - pose.x();
-			double dy = cell[1] - pose.y();
-			// Pedro's heading grows counter-clockwise and ours clockwise, so heading − cell azimuth gives the
-			// absolute turret angle. The current angle must not be added.
-			double bearing = wrapDeg(Math.toDegrees(pose.heading() - Math.atan2(dy, dx)));
-			double rangeCm = Math.hypot(dx, dy) * 2.54;
-			return new Aim(
-					bearing + aimOffsetDeg + lateralShift(rangeCm),
-					SOURCE_LOCALIZATION,
-					String.format(Locale.US, "CELL(%.1f, %.1f)", cell[0], cell[1]));
+		if (pose == null) {
+			return null;
 		}
-		return null;
+		String half = fieldHalf(pose);
+		if (half == null) {
+			return null;
+		}
+
+		FieldMap.Cluster cell = FieldMap.forCell(allianceLetter == 'B', "SCORING".equals(half));
+		Pose pivot = pose.compose(new Pose(TurretConfig.offsetX, TurretConfig.offsetY, 0.0));
+
+		double dx = cell.x - pivot.x();
+		double dy = cell.y - pivot.y();
+		// Pedro's heading grows counter-clockwise and ours clockwise, so heading − cell azimuth gives the
+		// absolute turret angle. The current angle must not be added.
+		double bearing = wrapDeg(Math.toDegrees(pose.heading() - Math.atan2(dy, dx)));
+		double rangeCm = Math.hypot(dx, dy) * 2.54;
+		return new Aim(
+				bearing + aimOffsetDeg + lateralShift(rangeCm),
+				SOURCE_LOCALIZATION,
+				String.format(Locale.US, "CELL(%.1f, %.1f)", cell.x, cell.y));
 	}
 
 	// Extra angle for a shooter that sits off the turret axis: the lateral offset seen from the target's range.
@@ -353,25 +383,15 @@ public class Turret extends Node {
 	}
 
 	// "SCORING" or "AUDIENCE" for the half of the field the robot is on, or null if unknown.
-	private String fieldHalf() {
-		if (follower == null) {
-			return null;
-		}
-		Pose pose = follower.pose();
+	private String fieldHalf(Pose pose) {
 		if (pose == null) {
 			return null;
 		}
 		return pose.y() > TurretConfig.halfSplitY ? "SCORING" : "AUDIENCE";
 	}
 
-	// Fixed field position of our HIVE cell, in PedroPathing inches, or null if unknown.
-	private double[] cellPosition() {
-		String half = fieldHalf();
-		if (half == null) {
-			return null;
-		}
-		FieldMap.Cluster cell = FieldMap.forCell(allianceLetter == 'B', "SCORING".equals(half));
-		return new double[] {cell.x, cell.y};
+	private String fieldHalf() {
+		return follower == null ? null : fieldHalf(follower.pose());
 	}
 
 	// Of the wanted angle and ± a whole turn, pick the copy inside the travel range closest to the current
@@ -381,10 +401,11 @@ public class Turret extends Node {
 	private static double selectGoal(double angleWanted, double currentAngle) {
 		double min = TurretConfig.minAngleDeg;
 		double max = TurretConfig.maxAngleDeg;
-		double best = clamp(angleWanted, min, max);
+		double wanted = wrapDeg(angleWanted);
+		double best = clamp(wanted, min, max);
 		double bestDistance = Double.POSITIVE_INFINITY;
 		for (int k = -1; k <= 1; k++) {
-			double candidate = angleWanted + 360.0 * k;
+			double candidate = wanted + 360.0 * k;
 			if (candidate < min || candidate > max) {
 				continue;
 			}
@@ -398,128 +419,93 @@ public class Turret extends Node {
 	}
 
 	// ── gamepad ───────────────────────────────────────────────────────────────────
-	// Dpad left/right trims the aim angle, y zeroes the offsets, and x toggles the turret. While the turret
-	// is disabled, the left stick X spins it directly. There are two handlers per button because each gamepad
-	// has its own topic prefix. The guard picks ours.
 
-	@SubscribedTo(topic = "g1/dpad_left/rising")
-	public void g1DpadLeft() {
-		if ("g1".equals(inputPrefix)) {
-			nudgeAim(-1.0);
-		}
-	}
-
+	@OnHardwareThread
 	@SubscribedTo(topic = "g2/dpad_left/rising")
-	public void g2DpadLeft() {
-		if ("g2".equals(inputPrefix)) {
-			nudgeAim(-0.5);
-		}
+	public void dpadLeft() {
+		nudgeAim(-1.0);
 	}
 
-	@SubscribedTo(topic = "g1/dpad_right/rising")
-	public void g1DpadRight() {
-		if ("g1".equals(inputPrefix)) {
-			nudgeAim(1.0);
-		}
-	}
-
+	@OnHardwareThread
 	@SubscribedTo(topic = "g2/dpad_right/rising")
-	public void g2DpadRight() {
-		if ("g2".equals(inputPrefix)) {
-			nudgeAim(0.5);
-		}
+	public void dpadRight() {
+		nudgeAim(1.0);
 	}
 
-	// One degree per press, or a tenth of a degree while the left bumper is held.
-	private double stepSize() {
-		boolean bumper = orchestrator
-				.getLatestValue(inputPrefix + "/left_bumper", Boolean.class)
-				.orElse(false);
-		return bumper ? 0.1 : 1.0;
+	@OnHardwareThread
+	@SubscribedTo(topic = "g2/dpad_up/rising")
+	public void dpadUp() {
+		nudgeLateral(1.0);
 	}
 
-	@SubscribedTo(topic = "g1/dpad_up/rising")
-	public void g1DpadUp() {
-		if ("g1".equals(inputPrefix)) {
-			nudgeLateral(1.0);
-		}
+	@OnHardwareThread
+	@SubscribedTo(topic = "g2/dpad_down/rising")
+	public void dpadDown() {
+		nudgeLateral(-1.0);
 	}
 
-	@SubscribedTo(topic = "g1/dpad_down/rising")
-	public void g1DpadDown() {
-		if ("g1".equals(inputPrefix)) {
-			nudgeLateral(-1.0);
-		}
-	}
-
-	@SubscribedTo(topic = "g1/y/rising")
-	public void g1ZeroOffsets() {
-		if ("g1".equals(inputPrefix)) {
-			aimOffsetDeg = 0.0;
-			lateralOffsetCm = 0.0;
-		}
-	}
-
+	@OnHardwareThread
 	@SubscribedTo(topic = "g2/y/rising")
-	public void g2ZeroOffsets() {
-		if ("g2".equals(inputPrefix)) {
-			aimOffsetDeg = 0.0;
-			lateralOffsetCm = 0.0;
-		}
+	public void zeroOffsets() {
+		aimOffsetDeg = 0.0;
+		lateralOffsetCm = 0.0;
 	}
 
-	@SubscribedTo(topic = "g1/x/rising")
-	public void g1ToggleEnabled() {
-		if ("g1".equals(inputPrefix)) {
-			toggleEnabled();
-		}
-	}
-
+	@OnHardwareThread
 	@SubscribedTo(topic = "g2/x/rising")
-	public void g2ToggleEnabled() {
-		if ("g2".equals(inputPrefix)) {
-			toggleEnabled();
-		}
-	}
-
-	@SubscribedTo(topic = "g2/b/rising")
-	public void g2B() {
-		if ("g2".equals(inputPrefix) && !enabled) {
-			// Re-enable. If the turret was turned by hand past the deadzone, shift the aim so it holds where it
-			// was left instead of snapping back. Use the target, not the disable-time angle: the robot keeps
-			// moving while disabled, so the target drifts away from where the turret was parked.
-			double moved = wrapDeg(angleDeg - disabledAngle);
-			if (Math.abs(moved) > MANUAL_MOVE_DEADZONE_DEG) {
-				aimOffsetDeg += wrapDeg(angleDeg - aimDeg);
-			}
-			enabled = true;
-		}
-	}
-
-	private void toggleEnabled() {
+	public void toggleEnabled() {
 		if (enabled) {
 			disabledAngle = angleDeg;
 			enabled = false;
 		} else {
-			enabled = true;
+			reenable();
 		}
 	}
 
-	@SubscribedTo(topic = "g2/left_stick_x")
-	public void g2LeftStickX(Float stickX) {
-		if ("g2".equals(inputPrefix)) {
-			double raw = stickX != null ? stickX : 0.0;
-			// Deadzone: ignore tiny deflections so stick drift doesn't spin the disabled turret.
-			manualTurnInput = Math.abs(raw) < MANUAL_TURN_DEADZONE ? 0.0 : raw;
+	@OnHardwareThread
+	@SubscribedTo(topic = "g2/b/rising")
+	public void reenableFromB() {
+		if (!enabled) {
+			reenable();
 		}
+	}
+
+	@OnHardwareThread
+	@SubscribedTo(topic = "g2/left_stick_x")
+	public void leftStickX(Float stickX) {
+		double raw = stickX != null ? stickX : 0.0;
+		// Deadzone: ignore tiny deflections so stick drift doesn't spin the disabled turret.
+		manualTurnInput = Math.abs(raw) < MANUAL_TURN_DEADZONE ? 0.0 : raw;
+	}
+
+	@OnHardwareThread
+	@SubscribedTo(topic = "g2/right_stick_x")
+	public void rightStickX(Float stickX) {
+		double raw = stickX != null ? stickX : 0.0;
+		fineTrim = Math.abs(raw) >= FINE_TRIM_DEADZONE;
+	}
+
+	// Re-enable. If the turret was turned by hand past the deadzone, shift the aim so it holds where it was
+	// left instead of snapping back. Use the target, not the disable-time angle: the robot keeps moving while
+	// disabled, so the target drifts away from where the turret was parked.
+	private void reenable() {
+		double moved = wrapDeg(angleDeg - disabledAngle);
+		if (Math.abs(moved) > MANUAL_MOVE_DEADZONE_DEG) {
+			aimOffsetDeg += wrapDeg(angleDeg - aimDeg);
+		}
+		enabled = true;
+	}
+
+	private double trimStep() {
+		return fineTrim ? 0.1 : 1.0;
 	}
 
 	private void nudgeAim(double direction) {
-		aimOffsetDeg += direction * stepSize();
+		aimOffsetDeg += direction * trimStep();
 	}
 
 	private void nudgeLateral(double direction) {
-		lateralOffsetCm += direction * stepSize();
+		lateralOffsetCm += direction * trimStep();
 	}
 
 	// ── helpers ───────────────────────────────────────────────────────────────────
@@ -582,6 +568,15 @@ public class Turret extends Node {
 	/** Bench override: face this absolute angle instead of a cell. Null returns to the cells. */
 	public void setManualGoal(Double goal) {
 		manualGoal = goal;
+	}
+
+	public void captureZero() {
+		try {
+			TurretConfig.encoderZeroTicks = encoderMotor.call(DcMotorEx::getCurrentPosition);
+			orchestrator.log("turret: encoderZeroTicks captured at " + (int) TurretConfig.encoderZeroTicks);
+		} catch (Exception e) {
+			orchestrator.warn("turret zero capture failed: " + e.getMessage());
+		}
 	}
 
 	public double getAngleDeg() {
@@ -664,7 +659,7 @@ public class Turret extends Node {
 				enabled
 						? "ON"
 						: "OFF");
-		telemetry.addData("Feild half", fieldHalf());
+		telemetry.addData("Field half", fieldHalf());
 	}
 
 	/** Extra detail, only shown when TurretConfig.verboseTelemetry is on. */
@@ -690,9 +685,9 @@ public class Turret extends Node {
 
 	@Override
 	public void close() {
-		turretServo1.run(m -> m.setPower(0.0));
-		turretServo2.run(m -> m.setPower(0.0));
-		turretServo3.run(m -> m.setPower(0.0));
+		turretServo1.labels("write/turret").run(m -> m.setPower(0.0));
+		turretServo2.labels("write/turret").run(m -> m.setPower(0.0));
+		turretServo3.labels("write/turret").run(m -> m.setPower(0.0));
 	}
 
 	/** Running average of the most recent |error| samples. */

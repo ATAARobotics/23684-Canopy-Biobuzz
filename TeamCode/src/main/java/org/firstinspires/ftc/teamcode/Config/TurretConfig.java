@@ -9,7 +9,7 @@ public class TurretConfig {
 	// ── Field ────────────────────────────────────────────────────────────────────
 
 	// Y of the field midline in inches; above is the scoring half, below the audience half.
-	public static double halfSplitY = 70.5;
+	public static double halfSplitY = FieldMap.MIDLINE;
 
 	// HIVE cell anchors live in FieldMap as surveyed CAD positions in PedroPathing inches
 
@@ -27,6 +27,8 @@ public class TurretConfig {
 
 	public static double encoderGearTeeth = 60.0;
 
+	public static double encoderZeroTicks = 0.0;
+
 	public static double offsetX = -1.1023622;
 	public static double offsetY = -0.62992126;
 
@@ -35,6 +37,8 @@ public class TurretConfig {
 
 	// Output check: +1 if positive power turns clockwise, -1 if counter-clockwise; wrong sign = runaway.
 	public static double powerSign = -1.0;
+
+	public static boolean enabledByDefault = true;
 
 	// ── Feedforward (volts, degrees, seconds) ─────────────────────────────────────
 

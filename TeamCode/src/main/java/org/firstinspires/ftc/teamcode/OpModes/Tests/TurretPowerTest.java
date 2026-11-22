@@ -21,13 +21,14 @@ public class TurretPowerTest extends SafeOpMode {
 	private SafeDevice<CRServo> turretServo3;
 	private SafeDevice<DcMotorEx> encoder;
 
-	private boolean zeroCaptured;
-	private int zeroTicks;
+	private boolean zeroButtonDown;
 	private int ticks;
 
 	@Override
 	protected void onSafeInit() {
 		turretServo1 = safeMap.device(CRServo.class, "turretServo1");
+		turretServo2 = safeMap.device(CRServo.class, "turretServo2");
+		turretServo3 = safeMap.device(CRServo.class, "turretServo3");
 		encoder = safeMap.device(DcMotorEx.class, "intake");
 	}
 
@@ -35,19 +36,31 @@ public class TurretPowerTest extends SafeOpMode {
 	protected void onSafeLoop() {
 		double power = deadzone(gamepad2.left_stick_y);
 		turretServo1.run(m -> m.setPower(power));
+		turretServo2.run(m -> m.setPower(power));
+		turretServo3.run(m -> m.setPower(power));
 
 		ticks = readTicks();
-		if (!zeroCaptured) {
-			zeroTicks = ticks;
-			zeroCaptured = true;
+		boolean zeroButton = gamepad2.a;
+		if (zeroButton && !zeroButtonDown) {
+			try {
+				TurretConfig.encoderZeroTicks = encoder.call(DcMotorEx::getCurrentPosition);
+				orchestrator.log("turret: encoderZeroTicks captured at " + (int) TurretConfig.encoderZeroTicks);
+			} catch (Exception e) {
+				orchestrator.warn("turret zero capture failed: " + e.getMessage());
+			}
 		}
+		zeroButtonDown = zeroButton;
+
 		// Push the stick up: the angle must read positive and follow the turret's real motion. A
 		// backwards sign means positive feedback in MainTeleOp.
 		double sign = TurretConfig.encoderReversed ? -1.0 : 1.0;
-		double angleDeg = (ticks - zeroTicks) * sign / TurretConfig.countsPerTurretDegree();
+		int relative = ticks - (int) Math.round(TurretConfig.encoderZeroTicks);
+		double angleDeg = relative * sign / TurretConfig.countsPerTurretDegree();
 
 		telemetry.addData("Turret", "power %+.2f   angle %+.1f deg clockwise", power, angleDeg);
-		telemetry.addData("Encoder", "%d counts from zero", ticks - zeroTicks);
+		telemetry.addData(
+				"Encoder", "%d counts raw   zero %d   %d from zero", ticks, (int) TurretConfig.encoderZeroTicks, relative);
+		telemetry.addData("Zero", "point straight ahead and press A to capture");
 		telemetry.addData(
 				"Signs",
 				"powerSign %+.0f   encoderReversed %s",
@@ -61,6 +74,8 @@ public class TurretPowerTest extends SafeOpMode {
 	@Override
 	protected void onSafeStop() {
 		turretServo1.run(m -> m.setPower(0.0));
+		turretServo2.run(m -> m.setPower(0.0));
+		turretServo3.run(m -> m.setPower(0.0));
 	}
 
 	private int readTicks() {

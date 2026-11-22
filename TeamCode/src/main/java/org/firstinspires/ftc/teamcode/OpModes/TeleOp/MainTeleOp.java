@@ -99,7 +99,6 @@ public abstract class MainTeleOp extends SafeOpMode {
 				safeMap.device(CRServo.class, "turretServo3"),
 				intake,
 				pedro.follower(),
-				"g2",
 				getTeam().allianceLetter());
 		orchestrator.registerNode("turret", turret);
 

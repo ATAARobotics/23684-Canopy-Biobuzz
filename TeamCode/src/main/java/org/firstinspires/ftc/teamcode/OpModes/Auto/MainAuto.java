@@ -229,7 +229,6 @@ public abstract class MainAuto extends StateMachineOpMode {
 				safeMap.device(CRServo.class, "turretServo3"),
 				intake,
 				follower,
-				"g2",
 				allianceLetter);
 		orchestrator.registerNode("turret", turret);
 
