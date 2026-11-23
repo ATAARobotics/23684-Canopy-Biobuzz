@@ -32,18 +32,18 @@ public class TurretConfig {
 	public static double offsetX = -1.1023622;
 	public static double offsetY = -0.62992126;
 
-	// Bench check (measurement only): true if the encoder counts backwards as the turret turns clockwise.
-	public static boolean encoderReversed = false;
+	// True if the encoder counts backwards as the turret turns clockwise.
+	public static boolean encoderReversed = true;
 
 	// Output check: +1 if positive power turns clockwise, -1 if counter-clockwise; wrong sign = runaway.
-	public static double powerSign = -1.0;
+	public static final double powerSign = -1.0;
 
 	public static boolean enabledByDefault = true;
 
 	// ── Feedforward (volts, degrees, seconds) ─────────────────────────────────────
 
 	public static double ks = 0.9;
-	public static double kv = 0.01;
+	public static double kv = 0.009;
 	public static double ka = 0.0;
 
 	// Trapezoid profile limits, degrees/s and degrees/s².
@@ -55,7 +55,7 @@ public class TurretConfig {
 
 	// ── PID (volts) ───────────────────────────────────────────────────────────────
 
-	public static double kp = 0.09;
+	public static double kp = 0.04;
 	public static double ki = 0.0;
 	public static double kd = 0.0;
 
@@ -76,7 +76,7 @@ public class TurretConfig {
 
 	// ── Tuning OpMode step cycle ──────────────────────────────────────────────────
 
-	public static double cycleBaseDeg = -1.0;
+	public static double cycleBaseDeg = 0.0;
 	public static double cycleTargetDeg = 90.0;
 	public static double cycleHalfPeriodSec = 2.0;
 

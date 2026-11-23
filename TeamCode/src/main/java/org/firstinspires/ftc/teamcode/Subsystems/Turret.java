@@ -22,7 +22,7 @@ import org.firstinspires.ftc.teamcode.Config.TurretConfig;
 
 /**
  * Aims the turret at our alliance's HIVE cell from the cell's field position and the robot pose. A manual goal
- * overrides it. Angles grow clockwise from straight ahead.
+ * overrides it. Angles grow clockwise from straight ahead and are not wrapped.
  */
 public class Turret extends Node {
 
@@ -182,8 +182,8 @@ public class Turret extends Node {
 			goal = angle;
 			hadTarget = false;
 			holdPosition(angle);
-			power = MANUAL_TURN_SCALE * manualTurnInput;
-			double angleDirection = power * TurretConfig.powerSign;
+			power = MANUAL_TURN_SCALE * manualTurnInput * TurretConfig.powerSign;
+			double angleDirection = power;
 			if (angle >= TurretConfig.maxAngleDeg - LIMIT_EPS_DEG && angleDirection > 0.0) {
 				power = 0.0;
 				atLimit = true;
@@ -209,7 +209,7 @@ public class Turret extends Node {
 		unwrappedTicks = unwrap(raw);
 		encoderTicks = unwrappedTicks - (int) Math.round(TurretConfig.encoderZeroTicks);
 		double sign = TurretConfig.encoderReversed ? -1.0 : 1.0;
-		return wrapDeg(encoderTicks * sign / TurretConfig.countsPerTurretDegree());
+		return encoderTicks * sign / TurretConfig.countsPerTurretDegree();
 	}
 
 	private int unwrap(int raw) {
@@ -258,8 +258,7 @@ public class Turret extends Node {
 		profiledPid.setGoal(goal);
 		pidVolts = profiledPid.calculate(angle);
 		TrapezoidProfile.State setpoint = profiledPid.getSetpoint();
-		double acceleration = (setpoint.velocity - prevSetpointVel) / LOOP_PERIOD_SEC;
-		ffVolts = feedforward.calculate(setpoint.velocity, acceleration);
+		ffVolts = feedforward.calculate(prevSetpointVel, setpoint.velocity);
 		prevSetpointVel = setpoint.velocity;
 		setpointDeg = setpoint.position;
 		setpointVelDegPerSec = setpoint.velocity;
@@ -365,7 +364,7 @@ public class Turret extends Node {
 		double dy = cell.y - pivot.y();
 		// Pedro's heading grows counter-clockwise and ours clockwise, so heading − cell azimuth gives the
 		// absolute turret angle. The current angle must not be added.
-		double bearing = wrapDeg(Math.toDegrees(pose.heading() - Math.atan2(dy, dx)));
+		double bearing = Math.toDegrees(pose.heading() - Math.atan2(dy, dx));
 		double rangeCm = Math.hypot(dx, dy) * 2.54;
 		return new Aim(
 				bearing + aimOffsetDeg + lateralShift(rangeCm),
@@ -394,18 +393,19 @@ public class Turret extends Node {
 		return follower == null ? null : fieldHalf(follower.pose());
 	}
 
-	// Of the wanted angle and ± a whole turn, pick the copy inside the travel range closest to the current
-	// angle, so a small correction is not sent the long way round. In the dead band of 360 − (max − min)
-	// degrees (69° at the current limits), no copy fits. This clamps to the nearest end, so the turret gets
-	// as close to the target as the mechanics allow.
+	// Of the wanted angle and every whole turn of it, pick the copy inside the travel range closest to the
+	// current angle, so a small correction is not sent the long way round. If no copy fits (the travel range
+	// is narrower than 360°), this clamps to the nearest end, so the turret gets as close to the target as
+	// the mechanics allow.
 	private static double selectGoal(double angleWanted, double currentAngle) {
 		double min = TurretConfig.minAngleDeg;
 		double max = TurretConfig.maxAngleDeg;
-		double wanted = wrapDeg(angleWanted);
-		double best = clamp(wanted, min, max);
+		double best = clamp(angleWanted, min, max);
 		double bestDistance = Double.POSITIVE_INFINITY;
-		for (int k = -1; k <= 1; k++) {
-			double candidate = wanted + 360.0 * k;
+		int firstTurn = (int) Math.floor((min - angleWanted) / 360.0);
+		int lastTurn = (int) Math.ceil((max - angleWanted) / 360.0);
+		for (int k = firstTurn; k <= lastTurn; k++) {
+			double candidate = angleWanted + 360.0 * k;
 			if (candidate < min || candidate > max) {
 				continue;
 			}
@@ -489,9 +489,9 @@ public class Turret extends Node {
 	// left instead of snapping back. Use the target, not the disable-time angle: the robot keeps moving while
 	// disabled, so the target drifts away from where the turret was parked.
 	private void reenable() {
-		double moved = wrapDeg(angleDeg - disabledAngle);
+		double moved = angleDeg - disabledAngle;
 		if (Math.abs(moved) > MANUAL_MOVE_DEADZONE_DEG) {
-			aimOffsetDeg += wrapDeg(angleDeg - aimDeg);
+			aimOffsetDeg += angleDeg - aimDeg;
 		}
 		enabled = true;
 	}
@@ -551,16 +551,6 @@ public class Turret extends Node {
 
 	private static double clamp(double value, double min, double max) {
 		return Math.max(min, Math.min(value, max));
-	}
-
-	private static double wrapDeg(double degrees) {
-		double d = degrees % 360.0;
-		if (d > 180.0) {
-			d -= 360.0;
-		} else if (d <= -180.0) {
-			d += 360.0;
-		}
-		return d;
 	}
 
 	// ── tuning & telemetry ────────────────────────────────────────────────────
@@ -675,6 +665,13 @@ public class Turret extends Node {
 				atLimit
 						? "  AT LIMIT"
 						: "");
+		// TEMP: manual-turn sign check; remove once the left-stick X direction is confirmed.
+		telemetry.addData(
+				"  manual",
+				"stickX %+.2f  power %+.2f  angle %+.1f°",
+				orchestrator.getLatestValue("g2/left_stick_x", Float.class).orElse(0f),
+				power,
+				angleDeg);
 		if (follower != null) {
 			Pose pose = follower.pose();
 			if (pose != null) {

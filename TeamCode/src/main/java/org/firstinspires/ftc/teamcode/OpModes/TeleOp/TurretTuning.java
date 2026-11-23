@@ -92,6 +92,13 @@ public class TurretTuning extends SafeOpMode {
 
 		joinedTelemetry.addData("setpoint", turret.getSetpointDeg());
 		joinedTelemetry.addData("current", turret.getAngleDeg());
+		// TEMP: manual-turn sign check; remove once the left-stick X direction is confirmed.
+		joinedTelemetry.addData(
+				"  manual",
+				"stickX %+.2f  power %+.2f  angle %+.1f°",
+				gamepad2.left_stick_x,
+				turret.getPower(),
+				turret.getAngleDeg());
 
 		joinedTelemetry.addData(
 				"  track",

@@ -34,7 +34,7 @@ public class TurretPowerTest extends SafeOpMode {
 
 	@Override
 	protected void onSafeLoop() {
-		double power = deadzone(gamepad2.left_stick_y);
+		double power = deadzone(gamepad2.left_stick_y) * TurretConfig.powerSign;
 		turretServo1.run(m -> m.setPower(power));
 		turretServo2.run(m -> m.setPower(power));
 		turretServo3.run(m -> m.setPower(power));
