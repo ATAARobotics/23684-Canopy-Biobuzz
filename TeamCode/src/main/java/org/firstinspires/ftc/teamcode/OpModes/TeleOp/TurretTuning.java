@@ -28,17 +28,15 @@ import org.firstinspires.ftc.teamcode.Utils.Team;
 public class TurretTuning extends SafeOpMode {
 
 	// Checks before running in TeleOp: full rotation of the turret to the limit should match the expected
-	// limit, positive power must turn the turret clockwise (otherwise flip powerSign), and the angle should
-	// increase clockwise (otherwise flip encoderReversed). These three are required for the shooter to
-	// function in TeleOp.
+	// limit, positive power must turn the turret clockwise (set servo direction in the Turret constructor),
+	// and the angle should increase clockwise. These three are required for the shooter to function in TeleOp.
 	//
 	// Gamepad 1: dpad left/right steps the aim offset in degrees and dpad up/down steps the lateral offset in cm,
 	// 1.0 per press or 0.1 with left bumper held, y zeroes both, x toggles always-face, a pauses with the
 	// turret at base, and b jumps to base.
 	//
 	// All gains at zero leave the turret still. The gain echo line shows what is loaded. Tune ks to break
-	// static friction, kv for a smooth sweep, then ka only when movement during acceleration is poor. Use kp
-	// to fix error, and kd only if it oscillates. Rarely touch ki.
+	// static friction, then kp to fix error, and kd only if it oscillates. Rarely touch ki.
 
 	private static final long RENDER_PERIOD_NANOS = 100_000_000L; // ~10 Hz screen updates
 
@@ -90,7 +88,7 @@ public class TurretTuning extends SafeOpMode {
 								? "RUNNING"
 								: "PAUSED"));
 
-		joinedTelemetry.addData("setpoint", turret.getSetpointDeg());
+		joinedTelemetry.addData("goal", turret.getGoalDeg());
 		joinedTelemetry.addData("current", turret.getAngleDeg());
 		// TEMP: manual-turn sign check; remove once the left-stick X direction is confirmed.
 		joinedTelemetry.addData(
@@ -104,10 +102,8 @@ public class TurretTuning extends SafeOpMode {
 				"  track",
 				String.format(
 						Locale.US,
-						"goal %.1f°   setpoint %.1f° @ %.0f°/s   angle %.1f°   err %+.1f°",
+						"goal %.1f°   angle %.1f°   err %+.1f°",
 						turret.getGoalDeg(),
-						turret.getSetpointDeg(),
-						turret.getSetpointVelocityDegPerSec(),
 						turret.getAngleDeg(),
 						turret.getErrorDeg()));
 		joinedTelemetry.addData(
@@ -149,10 +145,8 @@ public class TurretTuning extends SafeOpMode {
 				"  gains",
 				String.format(
 						Locale.US,
-						"ks %.2f kv %.3f ka %.3f | kp %.2f ki %.3f kd %.3f",
+						"ks %.2f | kp %.2f ki %.2f kd %.2f",
 						TurretConfig.ks,
-						TurretConfig.kv,
-						TurretConfig.ka,
 						TurretConfig.kp,
 						TurretConfig.ki,
 						TurretConfig.kd));

@@ -34,7 +34,7 @@ public class TurretPowerTest extends SafeOpMode {
 
 	@Override
 	protected void onSafeLoop() {
-		double power = deadzone(gamepad2.left_stick_y) * TurretConfig.powerSign;
+		double power = deadzone(gamepad2.left_stick_y);
 		turretServo1.run(m -> m.setPower(power));
 		turretServo2.run(m -> m.setPower(power));
 		turretServo3.run(m -> m.setPower(power));
@@ -53,21 +53,13 @@ public class TurretPowerTest extends SafeOpMode {
 
 		// Push the stick up: the angle must read positive and follow the turret's real motion. A
 		// backwards sign means positive feedback in MainTeleOp.
-		double sign = TurretConfig.encoderReversed ? -1.0 : 1.0;
 		int relative = ticks - (int) Math.round(TurretConfig.encoderZeroTicks);
-		double angleDeg = relative * sign / TurretConfig.countsPerTurretDegree();
+		double angleDeg = relative / TurretConfig.countsPerTurretDegree();
 
 		telemetry.addData("Turret", "power %+.2f   angle %+.1f deg clockwise", power, angleDeg);
 		telemetry.addData(
 				"Encoder", "%d counts raw   zero %d   %d from zero", ticks, (int) TurretConfig.encoderZeroTicks, relative);
 		telemetry.addData("Zero", "point straight ahead and press A to capture");
-		telemetry.addData(
-				"Signs",
-				"powerSign %+.0f   encoderReversed %s",
-				TurretConfig.powerSign,
-				TurretConfig.encoderReversed
-						? "on"
-						: "off");
 		telemetry.update();
 	}
 

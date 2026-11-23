@@ -32,23 +32,13 @@ public class TurretConfig {
 	public static double offsetX = -1.1023622;
 	public static double offsetY = -0.62992126;
 
-	// True if the encoder counts backwards as the turret turns clockwise.
-	public static boolean encoderReversed = true;
-
-	// Output check: +1 if positive power turns clockwise, -1 if counter-clockwise; wrong sign = runaway.
-	public static final double powerSign = -1.0;
-
 	public static boolean enabledByDefault = true;
 
-	// ── Feedforward (volts, degrees, seconds) ─────────────────────────────────────
+	// ── Static friction feedforward (volts) ──────────────────────────────────────
 
+	// Voltage added in the direction of the goal to break static friction; same role as
+	// SimpleMotorFeedforward.ks but without the velocity/acceleration terms.
 	public static double ks = 0.9;
-	public static double kv = 0.009;
-	public static double ka = 0.0;
-
-	// Trapezoid profile limits, degrees/s and degrees/s².
-	public static double maxVelocityDegPerSec = 240.0;
-	public static double maxAccelerationDegPerSec2 = 720.0;
 
 	// Fallback when the battery voltage read fails.
 	public static double nominalVoltage = 12.0;

@@ -1,8 +1,6 @@
 package org.firstinspires.ftc.teamcode.Subsystems;
 
-import com.aaravlabs.control.controller.ProfiledPIDController;
-import com.aaravlabs.control.controller.SimpleMotorFeedforward;
-import com.aaravlabs.control.trajectory.TrapezoidProfile;
+import com.aaravlabs.control.controller.PIDController;
 import com.aaravlabs.safepedropathing.follower.Follower;
 import com.aaravlabs.safepedropathing.math.Pose;
 import com.aaravlabs.synapse.Node;
@@ -13,6 +11,7 @@ import com.aaravlabs.synapse.annotation.SubscribedTo;
 import com.aaravlabs.synapse.ftc.SafeDevice;
 import com.aaravlabs.synapse.ftc.SafeHardwareMap;
 import com.qualcomm.robotcore.hardware.CRServo;
+import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 import java.util.Locale;
@@ -31,7 +30,6 @@ public class Turret extends Node {
 	public static final String SOURCE_OFF = "OFF";
 
 	private static final double LOOP_PERIOD_SEC = 0.02;
-	private static final double MIN_PROFILE_CONSTRAINT = 1e-3;
 	// Stop pushing once the turret is this close to a limit.
 	private static final double LIMIT_EPS_DEG = 0.5;
 	// 25 ticks is 0.5 s at 50 Hz. The voltage read is the slow part.
@@ -61,11 +59,7 @@ public class Turret extends Node {
 	// Angle when the turret was disabled; compared on re-enable to detect manual movement.
 	private volatile double disabledAngle;
 
-	private final ProfiledPIDController profiledPid;
-	private final SimpleMotorFeedforward feedforward;
-	private double constraintsV = -1.0;
-	private double constraintsA = -1.0;
-	private double prevSetpointVel;
+	private final PIDController pid;
 
 	// Driver-set during a run. Instance state, not Panels statics, which outlive a match.
 	private volatile double aimOffsetDeg;
@@ -79,7 +73,7 @@ public class Turret extends Node {
 	private volatile double manualTurnInput;
 	private volatile boolean fineTrim;
 
-	// Whether the previous tick had a target. Re-acquiring one re-seeds the profile.
+	// Whether the previous tick had a target. Re-acquiring one re-seeds the controller.
 	private boolean hadTarget;
 
 	private int lastRawTicks;
@@ -102,8 +96,6 @@ public class Turret extends Node {
 	private volatile double aimDeg;
 	private volatile double goalDeg;
 	private volatile double errorDeg;
-	private volatile double setpointDeg;
-	private volatile double setpointVelDegPerSec;
 	private volatile double ffVolts;
 	private volatile double pidVolts;
 	private volatile double power;
@@ -130,15 +122,13 @@ public class Turret extends Node {
 		this.follower = follower;
 		this.allianceLetter = allianceLetter;
 
-		this.profiledPid = new ProfiledPIDController(
-				0.0,
-				0.0,
-				0.0,
-				new TrapezoidProfile.Constraints(
-						Math.max(TurretConfig.maxVelocityDegPerSec, MIN_PROFILE_CONSTRAINT),
-						Math.max(TurretConfig.maxAccelerationDegPerSec2, MIN_PROFILE_CONSTRAINT)),
-				LOOP_PERIOD_SEC);
-		this.feedforward = new SimpleMotorFeedforward(0.0, 0.0, 0.0, LOOP_PERIOD_SEC);
+		this.pid = new PIDController(TurretConfig.kp, TurretConfig.ki, TurretConfig.kd, LOOP_PERIOD_SEC);
+
+		// Set servo direction so positive power turns the turret clockwise, matching the
+		// encoder sign convention. Replaces the old powerSign constant.
+		turretServo1.raw().setDirection(DcMotor.Direction.REVERSE);
+		turretServo2.raw().setDirection(DcMotor.Direction.REVERSE);
+		turretServo3.raw().setDirection(DcMotor.Direction.REVERSE);
 	}
 
 	@RunPeriodically(hz = 50, hardware = true)
@@ -164,10 +154,8 @@ public class Turret extends Node {
 
 			power = hasTarget ? toPower(commandedVolts) : 0.0;
 
-			// Test the commanded volts, not the servo power. toPower() applies TurretConfig.powerSign, so positive
-			// volts raise the angle under either sign. The power sign only agrees with the volts when powerSign is
-			// +1. Inverted, this check would cut the volts that back the turret off a limit, and it would latch at
-			// the travel end.
+			// Test the commanded volts, not the servo power, so the limit check is independent of
+			// the servo direction set in the constructor.
 			if (angle >= TurretConfig.maxAngleDeg - LIMIT_EPS_DEG && commandedVolts > 0.0) {
 				power = 0.0;
 				atLimit = true;
@@ -176,13 +164,12 @@ public class Turret extends Node {
 				atLimit = true;
 			}
 		} else {
-			// Disabled: the left stick X spins the turret directly (full stick → MANUAL_TURN_SCALE). Still honour
-			// the travel limits, using the direction the commanded power actually drives the angle:
-			// power * powerSign > 0 raises it (positive volts raise the angle, volts = power · battery / powerSign).
+			// Disabled: the left stick X spins the turret directly (full stick → MANUAL_TURN_SCALE).
+			// Still honour the travel limits.
 			goal = angle;
 			hadTarget = false;
 			holdPosition(angle);
-			power = MANUAL_TURN_SCALE * manualTurnInput * TurretConfig.powerSign;
+			power = MANUAL_TURN_SCALE * manualTurnInput;
 			double angleDirection = power;
 			if (angle >= TurretConfig.maxAngleDeg - LIMIT_EPS_DEG && angleDirection > 0.0) {
 				power = 0.0;
@@ -208,8 +195,8 @@ public class Turret extends Node {
 		int raw = encoderMotor.raw().getCurrentPosition();
 		unwrappedTicks = unwrap(raw);
 		encoderTicks = unwrappedTicks - (int) Math.round(TurretConfig.encoderZeroTicks);
-		double sign = TurretConfig.encoderReversed ? -1.0 : 1.0;
-		return encoderTicks * sign / TurretConfig.countsPerTurretDegree();
+		// Encoder counts clockwise as positive, matching the servo direction set in the constructor.
+		return encoderTicks / TurretConfig.countsPerTurretDegree();
 	}
 
 	private int unwrap(int raw) {
@@ -233,42 +220,35 @@ public class Turret extends Node {
 		return unwrappedTicks;
 	}
 
-	// Nothing to aim at: hold still and re-seed the profile. Without this, the next target would start
+	// Nothing to aim at: hold still and re-seed the controller. Without this, the next target would start
 	// from a stale setpoint.
 	private double holdPosition(double angle) {
-		profiledPid.reset(angle);
-		prevSetpointVel = 0.0;
+		pid.reset();
 		ffVolts = 0.0;
 		pidVolts = 0.0;
-		setpointDeg = angle;
-		setpointVelDegPerSec = 0.0;
 		errorDeg = 0.0;
 		return angle;
 	}
 
-	// Pick the goal inside the travel range, then advance the trapezoid profile and the PID by one tick.
+	// Pick the goal inside the travel range, then advance the PID by one tick.
 	// Re-seed from the measurement on the first tick and whenever a target is re-acquired.
 	private double track(double angle, Aim aim) {
 		double goal = selectGoal(aim.angleDeg, angle);
 		if (!goalInitialized || !hadTarget) {
-			profiledPid.reset(angle);
-			prevSetpointVel = 0.0;
+			pid.reset();
 		}
 		refreshController();
-		profiledPid.setGoal(goal);
-		pidVolts = profiledPid.calculate(angle);
-		TrapezoidProfile.State setpoint = profiledPid.getSetpoint();
-		ffVolts = feedforward.calculate(prevSetpointVel, setpoint.velocity);
-		prevSetpointVel = setpoint.velocity;
-		setpointDeg = setpoint.position;
-		setpointVelDegPerSec = setpoint.velocity;
-		errorDeg = profiledPid.getPositionError();
+		pidVolts = pid.calculate(angle, goal);
+		// Static friction feedforward: ks * sign(error), inlining SimpleMotorFeedforward's
+		// ks term without the velocity/acceleration terms that need a motion profile.
+		double error = goal - angle;
+		ffVolts = Math.abs(error) > 1e-9 ? TurretConfig.ks * Math.signum(error) : 0.0;
+		errorDeg = error;
 		return goal;
 	}
 
 	private double toPower(double volts) {
-		double power = TurretConfig.powerSign * volts / Math.max(batteryVoltage, 1e-6);
-		return clamp(power, -1.0, 1.0);
+		return clamp(volts / Math.max(batteryVoltage, 1e-6), -1.0, 1.0);
 	}
 
 	private void refreshBattery() {
@@ -401,7 +381,7 @@ public class Turret extends Node {
 		double min = TurretConfig.minAngleDeg;
 		double max = TurretConfig.maxAngleDeg;
 		double best = clamp(angleWanted, min, max);
-		double bestDistance = Double.POSITIVE_INFINITY;
+		double bestDistance = Math.abs(best - currentAngle);
 		int firstTurn = (int) Math.floor((min - angleWanted) / 360.0);
 		int lastTurn = (int) Math.ceil((max - angleWanted) / 360.0);
 		for (int k = firstTurn; k <= lastTurn; k++) {
@@ -512,22 +492,10 @@ public class Turret extends Node {
 
 	// Push the live Panels gains and limits into the controller so edits land immediately.
 	private void refreshController() {
-		profiledPid.setPID(nonNegative(TurretConfig.kp), nonNegative(TurretConfig.ki), nonNegative(TurretConfig.kd));
-		profiledPid.setIZone(Math.max(TurretConfig.iZone, 0.0));
-		profiledPid.setIntegratorRange(TurretConfig.integratorMin, TurretConfig.integratorMax);
-		profiledPid.setTolerance(Math.max(TurretConfig.positionToleranceDeg, 0.0));
-
-		double v = Math.max(TurretConfig.maxVelocityDegPerSec, MIN_PROFILE_CONSTRAINT);
-		double a = Math.max(TurretConfig.maxAccelerationDegPerSec2, MIN_PROFILE_CONSTRAINT);
-		if (v != constraintsV || a != constraintsA) {
-			profiledPid.setConstraints(new TrapezoidProfile.Constraints(v, a));
-			constraintsV = v;
-			constraintsA = a;
-		}
-
-		feedforward.setKs(TurretConfig.ks);
-		feedforward.setKv(nonNegative(TurretConfig.kv));
-		feedforward.setKa(nonNegative(TurretConfig.ka));
+		pid.setPID(nonNegative(TurretConfig.kp), nonNegative(TurretConfig.ki), nonNegative(TurretConfig.kd));
+		pid.setIZone(Math.max(TurretConfig.iZone, 0.0));
+		pid.setIntegratorRange(TurretConfig.integratorMin, TurretConfig.integratorMax);
+		pid.setTolerance(Math.max(TurretConfig.positionToleranceDeg, 0.0));
 	}
 
 	// First positive reading on the bus, or the configured nominal voltage if none are.
@@ -579,14 +547,6 @@ public class Turret extends Node {
 
 	public double getGoalDeg() {
 		return goalDeg;
-	}
-
-	public double getSetpointDeg() {
-		return setpointDeg;
-	}
-
-	public double getSetpointVelocityDegPerSec() {
-		return setpointVelDegPerSec;
 	}
 
 	public double getErrorDeg() {
@@ -656,11 +616,10 @@ public class Turret extends Node {
 	public void publishVerboseTelemetry(Telemetry telemetry) {
 		telemetry.addData(
 				"Turret ctrl",
-				"ff %+.2fV  pid %+.2fV  setpoint %.1f° @ %.0f°/s  battery %.1fV%s",
+				"ff %+.2fV  pid %+.2fV  total %+.2fV  battery %.1fV%s",
 				ffVolts,
 				pidVolts,
-				setpointDeg,
-				setpointVelDegPerSec,
+				ffVolts + pidVolts,
 				batteryVoltage,
 				atLimit
 						? "  AT LIMIT"
