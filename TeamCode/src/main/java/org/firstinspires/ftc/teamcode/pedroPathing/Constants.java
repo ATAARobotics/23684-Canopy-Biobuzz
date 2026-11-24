@@ -29,6 +29,7 @@ public class Constants {
 		c.frontRightDirection.set(DcMotorSimple.Direction.FORWARD);
 		c.backLeftDirection.set(DcMotorSimple.Direction.REVERSE);
 		c.backRightDirection.set(DcMotorSimple.Direction.FORWARD);
+		c.manualBrakeMode.set(true);
 	});
 
 	public static PinpointConfig localizerConfig = new PinpointConfig(c -> {
@@ -46,7 +47,7 @@ public class Constants {
 		Controller primaryTranslationalForward = Controller.proportional(0.37896964180832216);
 		Controller secondaryTranslationalForward = Controller.proportional(0.14001915639284798);
 		Controller primaryTranslationalLateral = Controller.proportional(0.6548744924255762);
-		Controller secondaryTranslationalLateral = Controller.proportional(0.241958626382537);
+		Controller secondaryTranslationalLateral = Controller.proportional(0.101958626382537);
 
 		c.forwardTranslational.set(
 				Controller.piecewise(secondaryTranslationalForward).put(2.5, primaryTranslationalForward));
@@ -56,7 +57,7 @@ public class Constants {
 		c.coast.set(Controller.proportionalFeedforward(0.016011949604487406));
 		c.brake.set(Controller.proportionalFeedforward(0.013610157163814295));
 
-		c.headingFeedback.set(Controller.proportional(6.252230412369482));
+		c.headingFeedback.set(Controller.proportional(3.252230412369482));
 		c.headingBrakeCoefficients.set(Vector2D.cartesian(0.062298130410495096, 0.006782664649322631));
 
 		c.linearBrakeCoefficients.set(Matrix.diag(0.07443458604818866, 0.044285585881211745));
