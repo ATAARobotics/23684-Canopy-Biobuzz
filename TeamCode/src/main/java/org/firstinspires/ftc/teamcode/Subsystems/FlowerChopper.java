@@ -10,23 +10,23 @@ import com.qualcomm.robotcore.hardware.Servo;
 
 @Configurable
 public class FlowerChopper extends Node {
-    private final SafeDevice<Servo> flowerChopper;
-    public static double CLOSED_POSITION = 0.45;
-    private double position = 0.0;
+	private final SafeDevice<Servo> flowerChopper;
+	public static double CLOSED_POSITION = 0.45;
+	private double position = 0.0;
 
-    public FlowerChopper(Orchestrator orchestrator, SafeDevice<Servo> flowerChopper) {
-        super(orchestrator);
-        this.flowerChopper = flowerChopper;
-        orchestrator.getOrCreateTopic("flowerChopper/position", Double.class);
-    }
+	public FlowerChopper(Orchestrator orchestrator, SafeDevice<Servo> flowerChopper) {
+		super(orchestrator);
+		this.flowerChopper = flowerChopper;
+		orchestrator.getOrCreateTopic("flowerChopper/position", Double.class);
+	}
 
-    @OnHardwareThread
-    @SubscribedTo(topic = "g2/left_bumper/rising")
-    public void flowerIntake() {
-        synchronized (FlowerChopper.class) {
-            position = CLOSED_POSITION - position;
-        }
-        flowerChopper.raw().setPosition(position);
-        orchestrator.publish("flowerChopper/position", position);
-    }
+	@OnHardwareThread
+	@SubscribedTo(topic = "g2/left_bumper/rising")
+	public void flowerIntake() {
+		synchronized (FlowerChopper.class) {
+			position = CLOSED_POSITION - position;
+		}
+		flowerChopper.raw().setPosition(position);
+		orchestrator.publish("flowerChopper/position", position);
+	}
 }
