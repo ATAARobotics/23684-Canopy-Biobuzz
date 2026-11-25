@@ -29,6 +29,7 @@ public class Constants {
 		c.frontRightDirection.set(DcMotorSimple.Direction.FORWARD);
 		c.backLeftDirection.set(DcMotorSimple.Direction.REVERSE);
 		c.backRightDirection.set(DcMotorSimple.Direction.FORWARD);
+		// BRAKE on drive motors instead of FLOAT.
 		c.manualBrakeMode.set(true);
 	});
 
