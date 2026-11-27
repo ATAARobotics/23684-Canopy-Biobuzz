@@ -228,7 +228,6 @@ public abstract class MainAuto extends StateMachineOpMode {
 				safeMap,
 				safeMap.device(CRServo.class, "turretServo1"),
 				safeMap.device(CRServo.class, "turretServo2"),
-				safeMap.device(CRServo.class, "turretServo3"),
 				intake,
 				follower,
 				"g2",

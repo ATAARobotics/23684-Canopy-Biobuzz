@@ -96,7 +96,6 @@ public abstract class MainTeleOp extends SafeOpMode {
 				safeMap,
 				safeMap.device(CRServo.class, "turretServo1"),
 				safeMap.device(CRServo.class, "turretServo2"),
-				safeMap.device(CRServo.class, "turretServo3"),
 				intake,
 				pedro.follower(),
 				"g2",

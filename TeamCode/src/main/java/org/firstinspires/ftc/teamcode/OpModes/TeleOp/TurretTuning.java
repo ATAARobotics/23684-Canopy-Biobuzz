@@ -60,7 +60,6 @@ public class TurretTuning extends SafeOpMode {
 				safeMap,
 				safeMap.device(CRServo.class, "turretServo1"),
 				safeMap.device(CRServo.class, "turretServo2"),
-				safeMap.device(CRServo.class, "turretServo3"),
 				safeMap.device(DcMotorEx.class, "intake"),
 				null,
 				"g1",
