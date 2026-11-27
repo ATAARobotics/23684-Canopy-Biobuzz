@@ -31,29 +31,29 @@ public class TurretConfig {
 	public static double offsetY = -0.62992126;
 
 	// Bench check (measurement only): true if the encoder counts backwards as the turret turns clockwise.
-	public static boolean encoderReversed = false;
+	public static boolean encoderReversed = true;
 
 	// Output check: +1 if positive power turns clockwise, -1 if counter-clockwise; wrong sign = runaway.
 	public static double powerSign = -1.0;
 
 	// ── Feedforward (volts, degrees, seconds) ─────────────────────────────────────
 
-	public static double ks = 0.9;
-	public static double kv = 0.01;
-	public static double ka = 0.0;
+	public static double ks = 0.3;
+	public static double kv = 0.026;
+	public static double ka = 0.001;
 
 	// Trapezoid profile limits, degrees/s and degrees/s².
-	public static double maxVelocityDegPerSec = 240.0;
-	public static double maxAccelerationDegPerSec2 = 720.0;
+	public static double maxVelocityDegPerSec = 400;
+	public static double maxAccelerationDegPerSec2 = 4000.0;
 
 	// Fallback when the battery voltage read fails.
 	public static double nominalVoltage = 12.0;
 
 	// ── PID (volts) ───────────────────────────────────────────────────────────────
 
-	public static double kp = 0.09;
+	public static double kp = 0.15;
 	public static double ki = 0.0;
-	public static double kd = 0.0;
+	public static double kd = 0.0015;
 
 	// Integral acts only within this many degrees of the goal; Infinity disables the check.
 	public static double iZone = Double.POSITIVE_INFINITY;

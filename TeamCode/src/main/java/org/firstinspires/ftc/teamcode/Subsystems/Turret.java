@@ -13,6 +13,7 @@ import com.aaravlabs.synapse.ftc.SafeDevice;
 import com.aaravlabs.synapse.ftc.SafeHardwareMap;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 import java.util.Locale;
 import org.firstinspires.ftc.robotcore.external.Telemetry;
@@ -131,6 +132,10 @@ public class Turret extends Node {
 		this.inputPrefix = inputPrefix;
 		this.allianceLetter = allianceLetter;
 
+
+        turretServo1.run((s)-> s.setDirection(DcMotorSimple.Direction.REVERSE));
+        turretServo3.run((s)-> s.setDirection(DcMotorSimple.Direction.FORWARD));
+
 		this.profiledPid = new ProfiledPIDController(
 				0.0,
 				0.0,
@@ -142,7 +147,7 @@ public class Turret extends Node {
 		this.feedforward = new SimpleMotorFeedforward(0.0, 0.0, 0.0, LOOP_PERIOD_SEC);
 	}
 
-	@RunPeriodically(hz = 50, hardware = true)
+	@RunPeriodically(hz = 120, hardware = true)
 	public void controlLoop() {
 		double angle = measureAngle();
 
@@ -252,7 +257,7 @@ public class Turret extends Node {
 		batteryTick--;
 		if (batteryTick <= 0) {
 			batteryTick = BATTERY_REFRESH_TICKS;
-			batteryVoltage = readBatteryVoltage();
+			batteryVoltage = Math.abs(readBatteryVoltage());
 		}
 	}
 

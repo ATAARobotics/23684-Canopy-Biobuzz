@@ -69,6 +69,7 @@ public class TurretTuning extends SafeOpMode {
 
 		cycle = new TuningCycle(orchestrator, turret);
 		orchestrator.registerNode("tuningCycle", cycle);
+		TurretConfig.encoderReversed = true;
 	}
 
 	@Override

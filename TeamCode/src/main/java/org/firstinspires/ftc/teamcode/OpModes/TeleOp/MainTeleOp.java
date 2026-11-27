@@ -102,6 +102,7 @@ public abstract class MainTeleOp extends SafeOpMode {
 				"g2",
 				getTeam().allianceLetter());
 		orchestrator.registerNode("turret", turret);
+		TurretConfig.encoderReversed = false;
 
 		orchestrator.registerNode("drive", new Drive(orchestrator, frontLeft, frontRight, backLeft, backRight));
 		intakeNode = new Intake(orchestrator, intake);

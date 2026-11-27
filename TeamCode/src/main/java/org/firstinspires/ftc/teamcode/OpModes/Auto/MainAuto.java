@@ -13,6 +13,8 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.Servo;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.firstinspires.ftc.teamcode.Config.TurretConfig;
 import org.firstinspires.ftc.teamcode.OpModes.Auto.States.AutoContext;
 import org.firstinspires.ftc.teamcode.OpModes.Auto.States.FlowerAudienceSub;
 import org.firstinspires.ftc.teamcode.OpModes.Auto.States.FlowerScoringSub;
@@ -232,6 +234,7 @@ public abstract class MainAuto extends StateMachineOpMode {
 				"g2",
 				allianceLetter);
 		orchestrator.registerNode("turret", turret);
+		TurretConfig.encoderReversed = false;
 
 		setRoute();
 
