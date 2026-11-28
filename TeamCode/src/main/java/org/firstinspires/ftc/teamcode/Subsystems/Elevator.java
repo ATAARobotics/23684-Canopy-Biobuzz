@@ -60,11 +60,11 @@ public class Elevator extends Node {
 		apply();
 	}
 
-	@SubscribedTo(topic = "g2/left_bumper")
-	public void onBumper(Boolean pressed) {
-		bumperPressed = Boolean.TRUE.equals(pressed);
-		apply();
-	}
+//	@SubscribedTo(topic = "g2/left_bumper")
+//	public void onBumper(Boolean pressed) {
+//		bumperPressed = Boolean.TRUE.equals(pressed);
+//		apply();
+//	}
 
 	@SubscribedTo(topic = "g2/left_trigger_pressed/rising")
 	public void onLeftTriggerPressed() {

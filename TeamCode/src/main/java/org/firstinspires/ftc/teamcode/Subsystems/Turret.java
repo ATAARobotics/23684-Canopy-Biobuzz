@@ -11,6 +11,7 @@ import com.aaravlabs.synapse.annotation.RunPeriodically;
 import com.aaravlabs.synapse.annotation.SubscribedTo;
 import com.aaravlabs.synapse.ftc.SafeDevice;
 import com.aaravlabs.synapse.ftc.SafeHardwareMap;
+import com.bylazar.configurables.annotations.Configurable;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
@@ -24,13 +25,15 @@ import org.firstinspires.ftc.teamcode.Config.TurretConfig;
  * Aims the turret at our alliance's HIVE cell from the cell's field position and the robot pose. A manual goal
  * overrides it. Angles grow clockwise from straight ahead.
  */
+
+@Configurable
 public class Turret extends Node {
 
 	public static final String SOURCE_LOCALIZATION = "LOCALIZATION";
 	public static final String SOURCE_MANUAL = "MANUAL";
 	public static final String SOURCE_OFF = "OFF";
 
-	private static final double LOOP_PERIOD_SEC = 0.02;
+	private static final double LOOP_PERIOD_SEC = 0.00833333333;
 	private static final double MIN_PROFILE_CONSTRAINT = 1e-3;
 	// Stop pushing once the turret is this close to a limit.
 	private static final double LIMIT_EPS_DEG = 0.5;
@@ -129,7 +132,9 @@ public class Turret extends Node {
 		this.inputPrefix = inputPrefix;
 		this.allianceLetter = allianceLetter;
 
-        turretServo1.run((s)-> s.setDirection(DcMotorSimple.Direction.REVERSE));
+
+        turretServo1.run((s)-> s.setDirection(DcMotorSimple.Direction.FORWARD));
+        turretServo2.run((s)-> s.setDirection(DcMotorSimple.Direction.REVERSE));
 
 		this.profiledPid = new ProfiledPIDController(
 				0.0,

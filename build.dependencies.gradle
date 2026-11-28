@@ -27,6 +27,6 @@ dependencies {
     implementation 'com.aaravlabs:control:0.1.0'
     implementation "com.bylazar:fullpanels:1.0.13"
     implementation 'com.aaravlabs:autonomy:0.2.0'
-    implementation 'com.aaravlabs.safepedropathing:revhub:0.3.01'
+    implementation 'com.aaravlabs.safepedropathing:revhub:3.0.2-1'
 }
 

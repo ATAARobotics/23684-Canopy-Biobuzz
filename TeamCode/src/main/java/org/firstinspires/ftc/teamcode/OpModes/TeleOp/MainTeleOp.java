@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.OpModes.TeleOp;
 
+import com.aaravlabs.safepedropathing.drivetrain.DrivePowers;
 import com.aaravlabs.safepedropathing.math.Pose;
 import com.aaravlabs.synapse.ftc.GamepadAdaptor;
 import com.aaravlabs.synapse.ftc.SafeDevice;
@@ -12,6 +13,7 @@ import org.firstinspires.ftc.teamcode.OpModes.Auto.Poses;
 import org.firstinspires.ftc.teamcode.Subsystems.BulkCache;
 import org.firstinspires.ftc.teamcode.Subsystems.Drive;
 import org.firstinspires.ftc.teamcode.Subsystems.Elevator;
+import org.firstinspires.ftc.teamcode.Subsystems.FlowerChopper;
 import org.firstinspires.ftc.teamcode.Subsystems.Gate;
 import org.firstinspires.ftc.teamcode.Subsystems.Hood;
 import org.firstinspires.ftc.teamcode.Subsystems.Intake;
@@ -53,6 +55,8 @@ public abstract class MainTeleOp extends SafeOpMode {
 	private Hood hood;
 	private Intake intakeNode;
 	private ShooterKicker shooterKickerNode;
+
+	private FlowerChopper flowerChopper;
 
 	// Which alliance this TeleOp is for (BLUE or RED).
 	protected abstract Team getTeam();
@@ -127,6 +131,9 @@ public abstract class MainTeleOp extends SafeOpMode {
 		gate = new Gate(orchestrator, safeMap.device(Servo.class, "gate"));
 		orchestrator.registerNode("gate", gate);
 
+		flowerChopper = new FlowerChopper(orchestrator,safeMap.device(Servo.class,"flowerChopper"));
+		orchestrator.registerNode("flowerChoper", flowerChopper);
+
 		// Release every override position so teleop starts with the drivers in control. Each
 		// subsystem already defaults to released, so this is defensive, but it keeps init from
 		// depending on whatever a previous caller (e.g. Auto) may have latched.
@@ -186,6 +193,8 @@ public abstract class MainTeleOp extends SafeOpMode {
 				"Hood",
 				"%.2f",
 				orchestrator.getLatestValue("hood/targetPosition", Double.class).orElse(0.0));
+
+		telemetry.addData("FlowerChoper", orchestrator.getLatestValue("flowerChopper/position",Double.class).orElse(0.0));
 		vision.publishTelemetry(telemetry);
 
 		turret.publishTelemetry(telemetry);
