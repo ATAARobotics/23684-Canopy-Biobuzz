@@ -79,6 +79,8 @@ public class Turret extends Node {
 	private int lastRawTicks;
 	private boolean hasRawTicks;
 	private int unwrappedTicks;
+	// Zero captured on the first tick, when the turret faces straight ahead at init.
+	private boolean zeroCaptured;
 
 	private int batteryTick;
 	private double batteryVoltage = TurretConfig.nominalVoltage;
@@ -194,9 +196,18 @@ public class Turret extends Node {
 	private double measureAngle() {
 		int raw = encoderMotor.raw().getCurrentPosition();
 		unwrappedTicks = unwrap(raw);
+		// Capture the zero on the first tick, when the turret faces straight ahead at init. Without this the
+		// fixed encoderZeroTicks (default 0) leaves the aim offset by however far the encoder reads from 0 at
+		// power-on. This is the same auto-zero the staging turret used.
+		if (!zeroCaptured) {
+			TurretConfig.encoderZeroTicks = unwrappedTicks;
+			zeroCaptured = true;
+		}
 		encoderTicks = unwrappedTicks - (int) Math.round(TurretConfig.encoderZeroTicks);
-		// Encoder counts clockwise as positive, matching the servo direction set in the constructor.
-		return encoderTicks / TurretConfig.countsPerTurretDegree();
+		// encoderReversed flips the sign so a positive angle is clockwise, matching the servo direction set in
+		// the constructor and the staging config. Wrong sign here runs the turret away from the target.
+		double sign = TurretConfig.encoderReversed ? -1.0 : 1.0;
+		return sign * encoderTicks / TurretConfig.countsPerTurretDegree();
 	}
 
 	private int unwrap(int raw) {
@@ -528,13 +539,11 @@ public class Turret extends Node {
 		manualGoal = goal;
 	}
 
+	/** Capture the current position as the zero (straight ahead). Also re-arms the first-tick auto-zero. */
 	public void captureZero() {
-		try {
-			TurretConfig.encoderZeroTicks = encoderMotor.call(DcMotorEx::getCurrentPosition);
-			orchestrator.log("turret: encoderZeroTicks captured at " + (int) TurretConfig.encoderZeroTicks);
-		} catch (Exception e) {
-			orchestrator.warn("turret zero capture failed: " + e.getMessage());
-		}
+		TurretConfig.encoderZeroTicks = unwrappedTicks;
+		zeroCaptured = true;
+		orchestrator.log("turret: encoderZeroTicks captured at " + (int) TurretConfig.encoderZeroTicks);
 	}
 
 	public double getAngleDeg() {

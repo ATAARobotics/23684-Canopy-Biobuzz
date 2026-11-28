@@ -29,6 +29,10 @@ public class TurretConfig {
 
 	public static double encoderZeroTicks = 0.0;
 
+	// True when the encoder counts backwards as the turret turns clockwise; flips the measured angle sign.
+	// Matches the staging config, which turns the turret in the right direction.
+	public static boolean encoderReversed = true;
+
 	public static double offsetX = -1.1023622;
 	public static double offsetY = -0.62992126;
 
